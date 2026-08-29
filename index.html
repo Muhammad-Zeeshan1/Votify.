@@ -370,6 +370,29 @@ function timeLeft(t){let d=Math.max(0,t-Date.now())/1e3;if(d<=0)return'Ended';co
 function acctAge(ts){if(!ts)return'new';const d=Math.floor((Date.now()-ts)/864e5);if(d<1)return'<1 day';if(d<30)return d+' days';if(d<365)return Math.floor(d/30)+' months';const y=Math.floor(d/365),m=Math.floor((d%365)/30);return m?y+'y '+m:'y years';}
 const localKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 
+/* ===== 🔒 PERSISTENT SESSION (localStorage + cookie + sessionStorage) ===== */
+function setCookie(k,v,days){try{const d=new Date();d.setTime(d.getTime()+days*864e5);document.cookie=k+'='+encodeURIComponent(v)+';expires='+d.toUTCString()+';path=/';}catch(e){}}
+function getCookie(k){try{const m=document.cookie.match(new RegExp('(?:^|; )'+k+'=([^;]*)'));return m?decodeURIComponent(m[1]):null;}catch(e){return null;}}
+function delCookie(k){try{document.cookie=k+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';}catch(e){}}
+function saveSession(email,uid,remember){
+const data=JSON.stringify({email,uid});
+if(remember===false){
+/* "Keep me signed in" OFF — sirf tab tak (browser band = session khatam) */
+try{localStorage.removeItem('basiler_session');}catch(e){}
+delCookie('basiler_session');
+try{sessionStorage.setItem('basiler_session',data);}catch(e){}
+}else{
+/* permanent — localStorage + 365 din cookie (dono backup) */
+try{localStorage.setItem('basiler_session',data);}catch(e){}
+setCookie('basiler_session',data,365);
+}}
+function loadSession(){
+try{const l=localStorage.getItem('basiler_session');if(l)return JSON.parse(l);}catch(e){}
+const c=getCookie('basiler_session');if(c){try{return JSON.parse(c);}catch(e){}}
+try{const s=sessionStorage.getItem('basiler_session');if(s)return JSON.parse(s);}catch(e){}
+return null;}
+function clearSession(){try{localStorage.removeItem('basiler_session');}catch(e){}try{sessionStorage.removeItem('basiler_session');}catch(e){}delCookie('basiler_session');}
+
 function hideWelcome(){const w=document.getElementById('welcome');if(w){w.classList.add('hide');setTimeout(()=>w.remove(),800);}}
 setTimeout(hideWelcome,2600);
 
@@ -393,7 +416,6 @@ let soundOn=localStorage.getItem('basiler_sound')!=='off';
 function beep(){if(!soundOn)return;try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(.0001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.1,ctx.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.22);o.start();o.stop(ctx.currentTime+.25);}catch(e){}}
 function dmBeep(){if(!soundOn)return;try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='triangle';o.frequency.setValueAtTime(1318,ctx.currentTime);o.frequency.setValueAtTime(1046,ctx.currentTime+.12);g.gain.setValueAtTime(.0001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.12,ctx.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.3);o.start();o.stop(ctx.currentTime+.32);}catch(e){}}
 function waIcon(size=28){return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#fff"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.4A10 10 0 1 0 12 2Zm5.4 14.1c-.2.7-1.3 1.3-1.9 1.4-.5.1-1.1.1-1.8-.1-.4-.1-.9-.3-1.6-.6-2.7-1.2-4.4-3.9-4.6-4.1-.1-.2-1-1.4-1-2.7 0-1.3.7-1.9.9-2.2.2-.3.5-.3.7-.3h.5c.2 0 .4-.1.6.4l.9 2.1c.1.2.1.4 0 .6l-.4.5-.3.4c-.1.1-.3.3-.1.6.2.3.8 1.4 1.8 2.3 1.3 1.1 2.3 1.5 2.7 1.6.3.1.5.1.7-.1l1-1.1c.2-.3.5-.2.8-.1l1.6.9c.3.1.5.2.6.4.1.1.1.7-.2 1.4Z"/></svg>`;}
-function igIcon(size=15){return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle"><rect x="2" y="2" width="20" height="20"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>`;}
 let _ci=0;
 function chatterIcon(size=22){const g='ci'+(++_ci);return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><defs><linearGradient id="${g}" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse"><stop stop-color="#22D3EE"/><stop offset="1" stop-color="#A855F7"/></linearGradient></defs><path d="M12 2C6.477 2 2 5.94 2 10.8c0 2.5 1.3 4.76 3.35 6.3L4 22l4.45-1.8c1.1.3 2.3.5 3.55.5 5.523 0 10-3.94 10-8.8S17.523 2 12 2Z" fill="url(#${g})"/><path d="M7 9.5h10M7 13h6" stroke="#05060D" stroke-width="1.5" stroke-linecap="round"/></svg>`;}
 
@@ -1019,7 +1041,8 @@ const uid='u'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const avatar=AVATAR_PRESETS[Math.floor(Math.random()*20)];
 await db.ref('accounts/'+key).set({uid,name,email,pass:hashPass(pass),pw:encPass(pass),createdAt:Date.now()});
 await db.ref('users/'+uid).set({name,email,avatar,xp:0,votesCount:0,streakDays:0,bio:'',links:[],createdAt:Date.now(),followersCount:0,followingCount:0,postsCount:0,loginCount:1,lastLogin:Date.now()});
-localStorage.setItem('basiler_session',JSON.stringify({email,uid}));
+/* 🔒 PERMANENT SESSION — web band karke dobara kholne par sign-in ki zaroorat nahi */
+saveSession(email,uid,true);
 startApp({uid,name,email,avatar,xp:0,links:[],bio:'',createdAt:Date.now()});
 toast('Welcome to Votify, '+name+'! ID: '+userCode(uid)+' 🎉','success');fireConfetti();
 }catch(e){console.error(e);toast('Signup failed — check connection','error');}}
@@ -1032,11 +1055,13 @@ const acc=(await db.ref('accounts/'+emailKey(email)).once('value')).val();
 if(!acc)return toast('No account found','error');
 if(acc.pass!==hashPass(pass))return toast('Wrong password','error');
 let u=(await db.ref('users/'+acc.uid).once('value')).val()||{name:acc.name,email:acc.email,avatar:AVATAR_PRESETS[0],xp:0};
-localStorage.setItem('basiler_session',JSON.stringify({email,uid:acc.uid}));
+/* 🔒 "Keep me signed in" ON = permanent (localStorage+cookie), OFF = tab tak */
+const remember=!$('#li-remember')||$('#li-remember').checked;
+saveSession(email,acc.uid,remember);
 startApp({uid:acc.uid,...u});
 toast('Welcome back, '+u.name+'! 👋','success');
 }catch(e){console.error(e);toast('Sign in failed','error');}}
-function doLogout(){if(MY)db.ref('presence/'+MY.uid).remove();stopAlarmSound();sessionStorage.removeItem('basiler_admin');localStorage.removeItem('basiler_session');localStorage.removeItem('basiler_impersonate');location.reload();}
+function doLogout(){if(MY)db.ref('presence/'+MY.uid).remove();stopAlarmSound();sessionStorage.removeItem('basiler_admin');clearSession();localStorage.removeItem('basiler_impersonate');location.reload();}
 
 function applyDayNight(){document.body.classList.toggle('day',isDay);}
 function toggleDayNight(){isDay=!isDay;localStorage.setItem('basiler_daynight',isDay?'day':'night');applyDayNight();if(view==='chat')applyChatTheme();render();toast(isDay?'☀️ Day Mode ON':'🌙 Night Mode ON','info');}
@@ -1070,12 +1095,12 @@ db.ref('tournaments').limitToLast(50).on('value',s=>{allTournaments=s.val()||{};
 db.ref('suggestions').limitToLast(200).on('value',s=>{allSuggestions=Object.entries(s.val()||{}).map(([k,v])=>({id:k,...v})).sort((a,b)=>(b.ts||0)-(a.ts||0));if((view==='admin'&&adminPage==='suggestions')||view==='suggest')render();},()=>{});
 db.ref('users/'+MY.uid+'/bookmarks').on('value',s=>{myBookmarks=new Set(Object.keys(s.val()||{}));if(['profile','battle','home'].includes(view))render();},()=>{});
 setInterval(checkTournaments,30000);
-db.ref('diary/'+MY.uid+'/entries').on('value',s=>{diaryEntries=Object.entries(s.val()||{}).map(([k,v])=>({id:k,...v})).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||((b.ts||0)-(a.ts||0)));if(['diary','home'].includes(view))render();},()=>{});
+db.ref('diary/'+MY.uid+'/entries').on('value',s=>{diaryEntries=Object.entries(s.val()||{}).map(([k,v])=>({id:k,...v})).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||((b.ts||0)-(a.ts||0)));if(['diary','home','discover'].includes(view))render();},()=>{});
 db.ref('diary/'+MY.uid+'/schedule').on('value',s=>{diarySchedule=Object.entries(s.val()||{}).map(([k,v])=>({id:k,...v})).sort((a,b)=>((a.day||0)-(b.day||0))||String(a.time||'').localeCompare(String(b.time||'')));if(view==='diary')render();},()=>{});
 db.ref('diary/'+MY.uid+'/alarms').on('value',s=>{diaryAlarms=Object.entries(s.val()||{}).map(([k,v])=>({id:k,...v})).sort((a,b)=>String(a.time||'').localeCompare(String(b.time||'')));if(['diary','home'].includes(view))render();},()=>{});
 db.ref('diary/'+MY.uid+'/todos').on('value',s=>{diaryTodos=Object.entries(s.val()||{}).map(([k,v])=>({id:k,...v}));if(view==='diary')render();},()=>{});
 db.ref('diary/'+MY.uid+'/events').on('value',s=>{diaryEvents=Object.entries(s.val()||{}).map(([k,v])=>({id:k,...v}));if(view==='diary')render();},()=>{});
-db.ref('diary/'+MY.uid+'/settings').on('value',s=>{window._diaryPin=((s.val()||{}).pin)||'';if(view==='diary')render();},()=>{});
+db.ref('diary/'+MY.uid+'/settings').on('value',s=>{window._diaryPin=((s.val()||{}).pin)||'';if(['diary','discover'].includes(view))render();},()=>{});
 setInterval(checkAlarms,1000);
 db.ref('notifs/'+MY.uid).limitToLast(40).on('value',s=>{
   notifs=Object.entries(s.val()||{}).map(([k,v])=>({id:k,...v})).sort((a,b)=>(a.ts||0)-(b.ts||0));
@@ -1146,7 +1171,34 @@ function homeListHTML(){const battles=Object.entries(allBattles).filter(([,b])=>
 function homeRender(){const el=$('#home-list');if(el)el.innerHTML=homeListHTML();lucide.createIcons();}
 function battleCard(b,id){const cat=catOf(b.category),total=votesOf(b),ended=Date.now()>(b.endsAt||0);const opts=b.options||[];const lead=opts.length?opts.reduce((m,o,i,arr)=>Object.keys(o.votes||{}).length>Object.keys(arr[m].votes||{}).length?i:m,0):0;const pair=opts.length>=2?[opts[0],opts[1]]:null;const saved=myBookmarks.has(id);return `<div class="glass card-hover p-5 cursor-pointer fade-up" onclick="openBattle('${id}')"><div class="flex items-center gap-2 mb-3"><span class="badge" style="color:${cat.color};border-color:${cat.color}44"><i data-lucide="${cat.icon}" class="w-3.5 h-3.5"></i>${cat.name}</span>${ended?'<span class="badge" style="color:#F43F5E">Ended</span>':'<span class="badge" style="color:#10B981"><span class="live-dot"></span>Live</span>'}${b.tournament?'<span class="badge" style="color:#FCD34D">🥇</span>':''}${b.anon?'<span class="badge" style="color:#8A8DA3">🙈</span>':''}<button onclick="event.stopPropagation();toggleBookmark('${id}')" class="ml-auto ${saved?'text-yellow-300':'text-white/30'} hover:text-yellow-300" title="Save"><i data-lucide="bookmark" class="w-4 h-4"></i></button><button onclick="event.stopPropagation();computerCalc('${id}')" class="text-white/30 hover:text-cyan-400" title="Computer Calculator"><i data-lucide="bot" class="w-4 h-4"></i></button><button onclick="event.stopPropagation();shareBattleWA('${id}')" class="text-white/30 hover:text-green-400" title="Share"><i data-lucide="share-2" class="w-4 h-4"></i></button></div><div class="font-display font-bold text-[16px] leading-snug mb-3 clamp2">${esc(b.title)}</div>${pair?`<div class="flex items-stretch gap-2 mb-3"><div class="flex-1 min-w-0">${pair[0].img?`<img src="${pair[0].img}" class="w-full aspect-video object-contain mb-1.5" style="background:#0A0B16">`:`<div class="w-full aspect-video mb-1.5 flex items-center justify-center" style="background:rgba(255,255,255,.05)">🖼</div>`}<div class="text-[12px] text-white/70 font-semibold truncate">${esc(pair[0].label)}</div></div><div class="font-display font-extrabold text-white/30 text-sm flex items-center">VS</div><div class="flex-1 min-w-0">${pair[1].img?`<img src="${pair[1].img}" class="w-full aspect-video object-contain mb-1.5" style="background:#0A0B16">`:`<div class="w-full aspect-video mb-1.5 flex items-center justify-center" style="background:rgba(255,255,255,.05)">🖼</div>`}<div class="text-[12px] text-white/70 font-semibold truncate">${esc(pair[1].label)}</div></div></div>`:`<div class="text-[12.5px] text-white/50 mb-3">${opts.map(o=>esc(o.label)).join(' vs ')}</div>`}${(b.tags||[]).length?`<div class="flex gap-1.5 flex-wrap mb-2">${b.tags.slice(0,3).map(t=>`<span class="badge" style="color:#67E8F9">#${esc(t)}</span>`).join('')}</div>`:''}<div class="flex justify-between text-[11.5px] text-white/40 font-semibold"><span>🗳 ${fmt(total)}</span>${ended?`<span>🏆 ${esc(opts[lead]?opts[lead].label:'Tie')}</span>`:`<span class="tl" data-end="${b.endsAt}">${timeLeft(b.endsAt)}</span>`}</div></div>`;}
 
-function pageDiscover(){const live=Object.entries(allBattles).filter(([,b])=>Date.now()<=(b.endsAt||0));let list=live.filter(([,b])=>(discCat==='all'||b.category===discCat)&&(!searchQ||(b.title||'').toLowerCase().includes(searchQ)||(b.tags||[]).some(t=>t.toLowerCase().includes(searchQ.toLowerCase()))));list.sort((a,b)=>votesOf(b[1])-votesOf(a[1]));return `<div class="fade-up"><h2 class="font-display font-extrabold text-2xl mb-1">Discover</h2><p class="text-white/45 text-sm mb-5">Search battles & tags, filter by category.</p><div class="glass p-3 flex items-center gap-2 mb-4"><i data-lucide="search" class="w-4 h-4 text-white/30"></i><input class="bg-transparent border-none flex-1 text-white text-sm" placeholder="Search battles & #tags..." value="${esc(searchQ)}" oninput="searchQ=this.value;render()"></div><div class="flex gap-2 flex-wrap mb-5"><button class="a-tab ${discCat==='all'?'active':''}" onclick="discCat='all';render()">All</button>${CATEGORIES.map(c=>`<button class="a-tab ${discCat===c.id?'active':''}" onclick="discCat='${c.id}';render()">${c.name}</button>`).join('')}</div><div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">${list.map(([id,b])=>battleCard(b,id)).join('')}</div></div>`;}
+/* ===== 📖 TODAY'S DIARY (Discover page ke liye) ===== */
+function todayDiaryHTML(){
+const today=localKey(new Date());
+const locked=diaryPinHash()&&!diaryUnlocked;
+const todayEntries=diaryEntries.filter(e=>e.date===today);
+return `<div class="glass-strong p-5 mb-5" style="border-color:rgba(16,185,129,.35)">
+<div class="flex items-center gap-2 mb-3 flex-wrap">
+<div class="w-9 h-9 flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,#10B981,#06B6D4)"><i data-lucide="book-open" class="w-4 h-4 text-white"></i></div>
+<div class="flex-1 min-w-[150px]"><b class="font-display text-[15px]">📖 Today's Diary</b><div class="text-[10.5px] text-white/40">${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div></div>
+ ${locked?`<button class="a-btn" onclick="navTo('diary')">🔒 Unlock Diary</button>`:`<button class="a-btn" onclick="openDiEntry()">➕ Add Entry</button><button class="a-btn" onclick="navTo('diary')">Open Diary →</button>`}
+</div>
+ ${locked?`<div class="text-center text-white/35 text-[13px] py-4">🔒 Your diary is PIN-locked — unlock it in My Diary to see today's entry.</div>`
+:todayEntries.length?todayEntries.map(e=>`<div class="glass p-3 mb-2"><div class="flex items-center gap-2 mb-1 flex-wrap"><span class="text-lg">${e.mood||'😐'}</span><b class="text-[12px]">${esc(e.date)}</b>${e.fav?'<span class="text-yellow-300 text-[12px]">⭐</span>':''}<div style="margin-left:auto" class="flex gap-1"><button class="a-btn" onclick="openDiEntry('${e.id}')">✏️</button><button class="a-btn danger" onclick="diDel('entries','${e.id}')">🗑</button></div></div><div class="text-[13px] text-white/85 whitespace-pre-wrap">${esc(e.text)}</div></div>`).join('')
+:`<div class="text-center text-white/35 text-[13px] py-4">No entry for today yet — write how your day went! ✍️</div>`}
+</div>`;}
+
+function pageDiscover(){const live=Object.entries(allBattles).filter(([,b])=>Date.now()<=(b.endsAt||0));let list=live.filter(([,b])=>(discCat==='all'||b.category===discCat)&&(!searchQ||(b.title||'').toLowerCase().includes(searchQ)||(b.tags||[]).some(t=>t.toLowerCase().includes(searchQ.toLowerCase()))));list.sort((a,b)=>votesOf(b[1])-votesOf(a[1]));return `<div class="fade-up">
+<div class="home-hero glass-strong mb-5"><div class="hero-glow"></div>
+<div class="grid md:grid-cols-2 gap-5 items-center">
+<div><h1 class="font-display font-extrabold text-3xl md:text-[38px] leading-tight">Every opinion<br><span class="gradient-text">starts a war.</span></h1><p class="golden-quote text-base mt-3">"${GOLDEN}"</p><div class="flex gap-3 mt-4 flex-wrap"><button class="btn-primary px-5 py-3 font-bold text-sm" onclick="navTo('create')">⚔ Create Battle</button><button class="btn-ghost px-5 py-3 font-bold text-sm flex items-center gap-2" onclick="navTo('chat')">${chatterIcon(18)} ${esc(SETTINGS.chatName)}</button></div></div>
+<div class="flex flex-col gap-3">
+<button class="glass card-hover p-4 flex items-center gap-3 text-left" onclick="navTo('gift')"><div class="w-11 h-11 flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,#FBBF24,#F97316);box-shadow:0 10px 30px -8px rgba(251,191,36,.55)"><i data-lucide="gift" class="w-5 h-5 text-white"></i></div><div class="min-w-0"><div class="font-display font-bold text-[15px]">🎁 Send Gift</div><div class="text-[12px] text-white/45">Gift your XP to any user</div></div><i data-lucide="chevron-right" class="w-4 h-4 text-white/25 ml-auto flex-shrink-0"></i></button>
+<button class="glass card-hover p-4 flex items-center gap-3 text-left" onclick="navTo('suggest')"><div class="w-11 h-11 flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,#8B5CF6,#06B6D4);box-shadow:0 10px 30px -8px rgba(139,92,246,.55)"><i data-lucide="lightbulb" class="w-5 h-5 text-white"></i></div><div class="min-w-0"><div class="font-display font-bold text-[15px]">💡 Suggest an Idea</div><div class="text-[12px] text-white/45">Tell the admin what to add next</div></div><i data-lucide="chevron-right" class="w-4 h-4 text-white/25 ml-auto flex-shrink-0"></i></button>
+</div>
+</div>
+</div>
+ ${todayDiaryHTML()}
+<h2 class="font-display font-extrabold text-2xl mb-1">Discover</h2><p class="text-white/45 text-sm mb-5">Search battles & tags, filter by category.</p><div class="glass p-3 flex items-center gap-2 mb-4"><i data-lucide="search" class="w-4 h-4 text-white/30"></i><input class="bg-transparent border-none flex-1 text-white text-sm" placeholder="Search battles & #tags..." value="${esc(searchQ)}" oninput="searchQ=this.value;render()"></div><div class="flex gap-2 flex-wrap mb-5"><button class="a-tab ${discCat==='all'?'active':''}" onclick="discCat='all';render()">All</button>${CATEGORIES.map(c=>`<button class="a-tab ${discCat===c.id?'active':''}" onclick="discCat='${c.id}';render()">${c.name}</button>`).join('')}</div><div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">${list.map(([id,b])=>battleCard(b,id)).join('')}</div></div>`;}
 
 function analyzeImage(src){return new Promise(res=>{const img=new Image();img.crossOrigin='anonymous';img.onload=()=>{try{if(!img.width||!img.height)return res({ok:false});const S=56;const sc=Math.min(1,S/Math.max(img.width,img.height));const w=Math.max(2,Math.round(img.width*sc)),h=Math.max(2,Math.round(img.height*sc));const cv=document.createElement('canvas');cv.width=w;cv.height=h;const ctx=cv.getContext('2d');ctx.drawImage(img,0,0,w,h);const d=ctx.getImageData(0,0,w,h).data;let lum=0,sat=0,n=w*h;const lums=new Array(n);for(let i=0;i<n;i++){const j=i*4;const r=d[j],g=d[j+1],b2=d[j+2];const l=.299*r+.587*g+.114*b2;lums[i]=l;lum+=l;const mx=Math.max(r,g,b2),mn=Math.min(r,g,b2);sat+=mx===0?0:(mx-mn)/mx;}lum/=n;sat/=n;let vr=0;for(let i=0;i<n;i++)vr+=(lums[i]-lum)*(lums[i]-lum);const std=Math.sqrt(vr/n);let edges=0;for(let y=1;y<h;y++)for(let x=1;x<w;x++){const i2=(y*w+x)*4;const lc=.299*d[i2-4]+.587*d[i2-3]+.114*d[i2-2];const lb=.299*d[i2-w*4]+.587*d[i2-w*4+1]+.114*d[i2-w*4+2];if(Math.abs(lc-lb)>18)edges++;}const edgeD=edges/Math.max(1,(w-1)*(h-1));res({ok:true,brightness:lum/255,saturation:sat,contrast:std/128,detail:Math.min(1,edgeD*3)});}catch(e){res({ok:false});}};img.onerror=()=>res({ok:false});img.src=src;});}
 async function computerCalc(bid){
@@ -1413,16 +1465,24 @@ const msg='Hi! My name is '+MY.name+' 👋\n'
 window.open('https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(msg),'_blank');}
 function markNotifsRead(){notifLastRead=Date.now();localStorage.setItem('basiler_notifread',notifLastRead);$$('.notif-badge,.dm-badge').forEach(b=>b.style.display='none');render();}
 
-/* ===== WORLD CHATTER (STRICT SERVER ORDER) ===== */
+/* ===== WORLD CHATTER (C-ID DEDUPE — NO DOUBLE MESSAGES) ===== */
 function renderChat(){const existed=!!document.querySelector('.chat-page');if(!existed){$('#app').innerHTML=`<div class="chat-page"><div class="chat-header"><button class="icobtn" onclick="navBack()" title="Back"><i data-lucide="arrow-left" class="w-[18px] h-[18px]"></i></button><button class="icobtn" onclick="toggleChatSide()" title="☰ Search people & messages"><i data-lucide="menu" class="w-[18px] h-[18px]"></i></button><div class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0" onclick="chatMode='global';dmTarget=null;attachChat();renderChat()"><div class="chat-logo-badge">${chatterIcon(24)}</div><div><div class="font-display font-extrabold text-[18px] leading-tight truncate">${esc(SETTINGS.chatName)}</div><div class="text-[11px] text-white/45"><span class="online-count">${onlineUsers.length}</span> online</div></div></div><button class="icobtn" onclick="openLoveCalc()" title="💕 Love Calculator" style="color:#F472B6"><i data-lucide="heart" class="w-[18px] h-[18px]"></i></button><button class="icobtn" onclick="openAdmin()" title="Admin Panel"><i data-lucide="shield" class="w-[18px] h-[18px]"></i></button><button class="icobtn" onclick="openChatSettings()" title="Settings"><i data-lucide="more-vertical" class="w-[18px] h-[18px]"></i></button></div><div class="chat-layout"><div class="chat-side-back" id="chat-side-back" onclick="toggleChatSide()"></div><div class="chat-side" id="chat-side"><div class="side-search"><div class="side-search-wrap"><i data-lucide="search" class="w-4 h-4"></i><input type="text" id="side-search-inp" placeholder="Search chats & people..." oninput="sideSearchQ=this.value;renderUserPanel()"></div></div><div class="flex" style="border-bottom:1px solid rgba(255,255,255,.1)"><button class="side-tab" id="st-users" onclick="chatSideTab='users';renderUserPanel()">👥 People</button><button class="side-tab" id="st-dms" onclick="chatSideTab='dms';renderUserPanel()">💬 Messages<span class="dm-tab-badge">0</span></button></div><div style="overflow-y:auto;flex:1" id="user-panel"></div></div><div style="display:flex;flex-direction:column;min-height:0;flex:1;min-width:0"><div class="chat-header" id="room-head"></div><div class="typing-bar" id="typing-bar"></div><div class="chat-msgs fs-${chatFont}" id="chat-msgs"></div><div class="chat-input-area"><div id="ci-prev"></div><div id="reply-bar"></div><div id="emoji-wrap"></div><div class="chat-bar"><button class="ci-btn" onclick="toggleEmoji()" title="Emoji"><i data-lucide="smile" class="w-[18px] h-[18px]"></i></button><input id="chat-inp" placeholder="Message..." onkeydown="if(event.key==='Enter'){event.preventDefault();sendChat();}" oninput="chatTyping()"><label class="ci-btn" title="Send image" style="cursor:pointer"><i data-lucide="image" class="w-[18px] h-[18px]"></i><input type="file" accept="image/*" hidden onchange="pickChatImg(this)"></label><button class="ci-btn ci-send" onclick="sendChat()" title="Send"><i data-lucide="send" class="w-[17px] h-[17px]"></i></button></div></div></div></div>${impersonateBarHTML(false)}<div id="chat-modal-root"></div></div>`;attachChat();}renderUserPanel();renderRoomHeader();renderChatMsgs();applyChatTheme();lucide.createIcons();scrollChat(true);}
 function toggleChatSide(){const s=$('#chat-side'),b=$('#chat-side-back');if(!s)return;const open=s.classList.toggle('open');if(b)b.classList.toggle('open',open);}
 function attachChat(){detachChat();chatMsgs=[];chatNeedScroll=true;pendingKeys={};chatListenPath=chatPath();
-/* STRICT SEQUENCE: Firebase Object.entries always come in push-key order (server chronological) —
-   both users will see the same A,B,A,B order */
+/* 💬 UNIQUE C-ID DEDUPE:
+   har message ke saath ek unique cid save hota hai —
+   temp (optimistic) aur server copy cid se match ho kar merge ho jati hain,
+   is liye message kabhi do dafa nahi dikhta (sender aur receiver dono par).
+   Agar DB mein kabhi galti se double write ho jaye to bhi cid se sirf ek dikhega. */
 onChatMsg=db.ref(chatListenPath).limitToLast(200).on('value',s=>{
-const real=Object.entries(s.val()||{}).map(([k,v])=>({id:k,...v}));
-/* my pending temp messages not yet confirmed by server */
-const temps=chatMsgs.filter(m=>m.pending&&!real.some(r=>r.id===pendingKeys[m.id]));
+const raw=Object.entries(s.val()||{}).map(([k,v])=>({id:k,...v}));
+/* server messages: cid ke base par dedupe */
+const seen=new Set();const real=[];
+for(const m of raw){if(m.cid){if(seen.has(m.cid))continue;seen.add(m.cid);}real.push(m);}
+const realCids=new Set(real.map(m=>m.cid).filter(Boolean));
+const nowT=Date.now();
+/* sirf apne pending temps rakho jinke cid abhi server par nahi aaye (max 20s) */
+const temps=chatMsgs.filter(m=>m.pending&&(!m.cid||!realCids.has(m.cid))&&(nowT-(m.localTs||nowT))<20000);
 chatMsgs=[...real,...temps];
 renderChatMsgs();
 if(chatNeedScroll){chatNeedScroll=false;setTimeout(()=>scrollChat(true),80);}},showFirebaseError);
@@ -1460,21 +1520,30 @@ if(chatMode==='dm'&&dmTarget&&blockedUsers.has(dmTarget.uid))return toast('You b
 const inp=$('#chat-inp');
 const text=inp?inp.value.trim():'';
 if(!text&&!pendingImage)return;
-const msg={uid:MY.uid,name:MY.name,avatar:MY.avatar,ts:Date.now()};
+/* 💬 UNIQUE C-ID — isi se message single baar dikhega (double prevention) */
+const cid='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const msg={uid:MY.uid,name:MY.name,avatar:MY.avatar,ts:Date.now(),cid};
 if(text)msg.text=text;
 if(pendingImage){msg.img=pendingImage;pendingImage=null;const p=$('#ci-prev');if(p)p.innerHTML='';}
 if(replyTo){msg.reply={name:replyTo.name,text:String(replyTo.text||'[image]').slice(0,80)};replyTo=null;const r=$('#reply-bar');if(r)r.innerHTML='';}
 /* INSTANT: clear input + optimistic local append */
 if(inp)inp.value='';
 const tmpId='tmp'+Date.now()+Math.random().toString(36).slice(2,5);
-chatMsgs.push({id:tmpId,pending:true,...msg});
+chatMsgs.push({id:tmpId,pending:true,localTs:Date.now(),...msg});
 renderChatMsgs();scrollChat(true);
 try{db.ref(typingPath+'/'+MY.uid).remove();}catch(e){}
 incDaily('chat');
-/* push: match pending via returned key — server order guaranteed */
+try{
 const pushed=await db.ref(chatPath()).push(msg);
 pendingKeys[tmpId]=pushed.key;
-if(chatMode==='dm'&&dmTarget){db.ref('dms/'+MY.uid+'/'+dmTarget.uid).set({name:dmTarget.name,avatar:dmTarget.avatar,ts:Date.now()});db.ref('dms/'+dmTarget.uid+'/'+MY.uid).set({name:MY.name,avatar:MY.avatar,ts:Date.now()});pushNotif(dmTarget.uid,'dm',MY.name+' sent you a message',{});}}
+/* agar server value pehle aa chuki hai (cid match) to temp hata do — double nahi dikhega */
+const ti=chatMsgs.findIndex(m=>m.id===tmpId);
+if(ti>=0&&chatMsgs.some(m=>m.cid===cid&&m.id!==tmpId)){chatMsgs.splice(ti,1);renderChatMsgs();}
+if(chatMode==='dm'&&dmTarget){db.ref('dms/'+MY.uid+'/'+dmTarget.uid).set({name:dmTarget.name,avatar:dmTarget.avatar,ts:Date.now()});db.ref('dms/'+dmTarget.uid+'/'+MY.uid).set({name:MY.name,avatar:MY.avatar,ts:Date.now()});pushNotif(dmTarget.uid,'dm',MY.name+' sent you a message',{});}
+}catch(e){
+/* send fail — temp hata do taak duplicate na rahe */
+chatMsgs=chatMsgs.filter(m=>m.id!==tmpId);renderChatMsgs();toast('Message failed to send','error');
+}}
 
 async function reactMsg(id,emo){if(bannedUsers.has(MY.uid))return;const cur=chatMsgs.find(m=>m.id===id);if(!cur||cur.pending)return;const ref=db.ref(chatListenPath+'/'+id+'/rx/'+MY.uid);const mine=cur&&cur.rx&&cur.rx[MY.uid];if(mine===emo)await ref.remove();else await ref.set(emo);}
 async function delMsg(id){const m=chatMsgs.find(x=>x.id===id);if(!m||m.uid!==MY.uid)return toast('You can only delete your own messages','error');if(!confirm('Delete this message?'))return;await db.ref(chatListenPath+'/'+id).remove();toast('Message deleted','info');}
@@ -1841,14 +1910,30 @@ removeElonBattle();
 createDefaultBattles();
 const h=location.hash.match(/#battle=(.+)/);
 if(h){view='battle';viewParam=h[1];}
-const sess=JSON.parse(localStorage.getItem('basiler_session')||'null');
+/* ===== 🔒 AUTO-LOGIN: localStorage → cookie → sessionStorage (dobara sign-in ki zaroorat nahi) ===== */
+const sess=loadSession();
 const impUid=isAdmin?localStorage.getItem('basiler_impersonate'):null;
 if(impUid){
 try{const u=(await db.ref('users/'+impUid).once('value')).val();
 if(u){startApp({uid:impUid,...u});return;}}catch(e){}
 localStorage.removeItem('basiler_impersonate');
 }
-if(sess&&sess.uid){try{const u=(await db.ref('users/'+sess.uid).once('value')).val();if(u){startApp({uid:sess.uid,...u});return;}}catch(e){}}
+if(sess&&sess.uid){
+try{
+const u=(await db.ref('users/'+sess.uid).once('value')).val();
+if(u){startApp({uid:sess.uid,...u});return;}
+/* user record missing — accounts se rebuild karo taake login zinda rahe */
+if(sess.email){
+const acc=(await db.ref('accounts/'+emailKey(sess.email)).once('value')).val();
+if(acc&&acc.uid===sess.uid){
+await db.ref('users/'+sess.uid).set({name:acc.name,email:acc.email,avatar:acc.avatar||AVATAR_PRESETS[0],xp:0,votesCount:0,streakDays:0,bio:'',links:[],createdAt:acc.createdAt||Date.now(),followersCount:0,followingCount:0,postsCount:0,loginCount:1,lastLogin:Date.now()});
+startApp({uid:sess.uid,name:acc.name,email:acc.email,avatar:acc.avatar||AVATAR_PRESETS[0],xp:0,links:[],bio:'',createdAt:acc.createdAt||Date.now()});
+return;}
+}
+}catch(e){}
+/* invalid session — clean up */
+clearSession();
+}
 showAuth();})();
 </script>
 </body>
