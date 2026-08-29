@@ -209,6 +209,11 @@ select option{background:#0A0B16;color:#F4F5FB}
 .cal-cell.sel{background:rgba(99,102,241,.2);border-color:rgba(99,102,241,.5)}
 .cal-cell.today{border-color:rgba(16,185,129,.5);color:#6EE7B7}
 .cal-dot{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;background:#F43F5E}
+/* ===== THEME STUDIO ===== */
+.st-preview{width:100%;height:170px;border:1px solid rgba(255,255,255,.15);transition:background .25s;position:relative;overflow:hidden}
+.st-color-in{width:100%;height:44px;border:1px solid rgba(255,255,255,.15);background:transparent;cursor:pointer;padding:2px}
+.st-mixbox{width:44px;height:44px;border:2px solid #fff;box-shadow:0 0 14px rgba(255,255,255,.3)}
+.st-range{width:100%;accent-color:#818CF8;cursor:pointer}
 body.day{background:#EEF0F7;color:#1B1C2A}
 body.day::before{background:radial-gradient(800px 600px at 12% 8%,rgba(99,102,241,.14),transparent 60%),radial-gradient(900px 700px at 88% 20%,rgba(168,85,247,.1),transparent 60%),linear-gradient(180deg,#F6F7FB,#E9EBF4)}
 body.day .glass{background:rgba(255,255,255,.72);border-color:rgba(25,28,70,.12)}
@@ -284,7 +289,6 @@ const ADMIN_PASS='1212121212';
 const WA_NUMBER='923340699342';
 const GOLDEN='There your opinion is another life';
 
-/* ===== NEW STYLISH THEMES ===== */
 const THEMES=[
 {n:'Midnight Indigo',bg:''},
 {n:'Aurora Silk',bg:'radial-gradient(at 15% 10%, rgba(59,130,246,.35) 0px, transparent 55%),radial-gradient(at 85% 15%, rgba(139,92,246,.3) 0px, transparent 55%),radial-gradient(at 50% 95%, rgba(236,72,153,.22) 0px, transparent 55%),linear-gradient(180deg,#04060F,#080B18)'},
@@ -314,6 +318,7 @@ const CHAT_THEMES=[
 {n:'Neon Lime',bg:'#0E1A05'},{n:'Plum',bg:'#1D0A22'},{n:'Coral',bg:'#26100A'},{n:'Azure',bg:'#071626'},{n:'Magenta',bg:'#26062B'},
 {n:'Mint',bg:'#062018'},{n:'Bronze',bg:'#221507'},{n:'Graphite',bg:'#0C0D10'}];
 const BUBBLES=['#0E9F6E','#4F46E5','#DB2777','#D97706','#0891B2','#7C3AED','#DC2626','#4D7C0F'];
+const STUDIO_SOLIDS=['#0A0B16','#0D0D1A','#12061C','#1A0B2E','#061626','#0A1F1A','#201005','#26140A','#1C0510','#050D14','#141004','#0B0B0F','#160722','#001219','#1F0A0A','#0E1A0A'];
 
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
@@ -364,6 +369,13 @@ function hashPass(p){let h=0;const s=String(p);for(let i=0;i<s.length;i++)h=((h<
 function hashPin(p){let h=0;const s=String(p);for(let i=0;i<s.length;i++)h=((h<<5)-h+s.charCodeAt(i))|0;return 'pin'+(h>>>0).toString(36);}
 function encPass(p){try{return btoa(unescape(encodeURIComponent(p)));}catch(e){return'';}}
 function decPass(b){try{return decodeURIComponent(escape(atob(b)));}catch(e){return'—';}}
+
+/* ===== COLOR HELPERS (THEME STUDIO) ===== */
+function hexToRgb(h){h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');return{r:parseInt(h.slice(0,2),16),g:parseInt(h.slice(2,4),16),b:parseInt(h.slice(4,6),16)};}
+function rgbToHex(r,g,b){return '#'+[r,g,b].map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('').toUpperCase();}
+function mixHex(a,b){const A=hexToRgb(a),B=hexToRgb(b);return rgbToHex((A.r+B.r)/2,(A.g+B.g)/2,(A.b+B.b)/2);}
+const STUDIO_PALETTE=['#6366F1','#8B5CF6','#A855F7','#EC4899','#F43F5E','#F97316','#FBBF24','#84CC16','#10B981','#06B6D4','#0EA5E9','#3B82F6','#64748B','#14B8A6','#D946EF','#F59E0B'];
+const randColor=()=>STUDIO_PALETTE[Math.floor(Math.random()*STUDIO_PALETTE.length)];
 
 let soundOn=localStorage.getItem('basiler_sound')!=='off';
 function beep(){if(!soundOn)return;try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(.0001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.1,ctx.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.22);o.start();o.stop(ctx.currentTime+.25);}catch(e){}}
@@ -445,6 +457,8 @@ let diaryQ='',diaryMoodFilter='',diaryFavOnly=false,diaryCalOpen=false,diaryCalD
 let diaryUnlocked=false;
 let alarmAudioTimer=null;
 let _impTaps={};
+/* ===== STUDIO STATE ===== */
+let stC1='#6366F1',stC2='#A855F7',stAngle=135;
 
 const dmId=()=>[MY.uid,dmTarget.uid].sort().join('_');
 const chatPath=()=>chatMode==='dm'?'chats/dm/'+dmId():'chats/global';
@@ -546,7 +560,6 @@ pushNotif(uid,'follow',MY.name+' started following you 🎉',{});
 toast('Following ✅','success');beep();}
 render();}
 
-/* ===== XP GIFTING ===== */
 function openGiftXP(uid){
 const u=allUsers[uid];if(!u)return toast('User not found','error');
  $('#modal-root').innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
@@ -920,7 +933,7 @@ if((await db.ref('accounts/'+key).once('value')).exists())return toast('Email al
 const uid='u'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const avatar=AVATAR_PRESETS[Math.floor(Math.random()*20)];
 await db.ref('accounts/'+key).set({uid,name,email,pass:hashPass(pass),pw:encPass(pass),createdAt:Date.now()});
-await db.ref('users/'+uid).set({name,email,avatar,xp:0,votesCount:0,streakDays:0,bio:'',links:[],createdAt:Date.now(),followersCount:0,followingCount:0,postsCount:0});
+await db.ref('users/'+uid).set({name,email,avatar,xp:0,votesCount:0,streakDays:0,bio:'',links:[],createdAt:Date.now(),followersCount:0,followingCount:0,postsCount:0,loginCount:1,lastLogin:Date.now()});
 localStorage.setItem('basiler_session',JSON.stringify({email,uid}));
 startApp({uid,name,email,avatar,xp:0,links:[],bio:'',createdAt:Date.now()});
 toast('Welcome to Votify, '+name+'! ID: '+userCode(uid)+' 🎉','success');fireConfetti();
@@ -947,14 +960,18 @@ function applySettings(s){SETTINGS={name:(s&&s.name)||'Votify',chatName:(s&&s.ch
 
 function startApp(me){
 MY=me;$('#auth-root').innerHTML='';
+/* ===== LOGIN TRACKING (skip impersonation) ===== */
+if(!localStorage.getItem('basiler_impersonate')){
+db.ref('users/'+MY.uid+'/loginCount').transaction(v=>(v||0)+1);
+db.ref('users/'+MY.uid+'/lastLogin').set(Date.now());}
 db.ref('users/'+MY.uid).update({name:MY.name,avatar:MY.avatar});
 db.ref('.info/connected').on('value',s=>{if(s.val()===true&&MY){const r=db.ref('presence/'+MY.uid);r.onDisconnect().remove();r.set({name:MY.name,avatar:MY.avatar,ts:Date.now()});}});
 setInterval(()=>{if(MY)db.ref('presence/'+MY.uid).update({name:MY.name,avatar:MY.avatar,ts:Date.now()});},45000);
 db.ref('presence').on('value',s=>{const now=Date.now();onlineUsers=Object.entries(s.val()||{}).map(([uid,v])=>({uid,...v})).filter(u=>now-(u.ts||0)<150000);$$('.online-count').forEach(el=>el.textContent=onlineUsers.length);if(view==='chat'){renderUserPanel();renderRoomHeader();}},showFirebaseError);
-db.ref('battles').limitToLast(150).on('value',s=>{allBattles=s.val()||{};if(['home','discover','battle','user','leaderboard','profile','community','tournaments'].includes(view))render();if(view==='admin'&&adminPage==='battles')render();},showFirebaseError);
+db.ref('battles').limitToLast(150).on('value',s=>{allBattles=s.val()||{};if(['home','discover','battle','user','leaderboard','profile','community','tournaments','admin'].includes(view))render();},showFirebaseError);
 db.ref('users').on('value',s=>{allUsers=s.val()||{};if(allUsers[MY.uid])MY={...allUsers[MY.uid],uid:MY.uid};
 window._earlySet=new Set(Object.entries(allUsers).sort((a,b)=>(a[1].createdAt||9e15)-(b[1].createdAt||9e15)).slice(0,100).map(([uid])=>uid));
-if(['leaderboard','user','home','profile','community','tournaments'].includes(view))render();if(view==='chat')renderUserPanel();if(view==='admin')render();checkAchievements();},showFirebaseError);
+if(['leaderboard','user','home','profile','community','tournaments','admin'].includes(view))render();if(view==='chat')renderUserPanel();checkAchievements();},showFirebaseError);
 db.ref('results').limitToLast(120).on('value',s=>{archivedResults=s.val()||{};if(['user','leaderboard'].includes(view))render();},()=>{});
 db.ref('meta/settings').on('value',s=>applySettings(s.val()||{}),()=>{});
 db.ref('meta/banned').on('value',s=>{bannedUsers=new Set(Object.keys(s.val()||{}));},()=>{});
@@ -1244,6 +1261,7 @@ function pageUser(){const u=allUsers[viewParam];if(!u)return emptyState('user-x'
         ${u.dob?`<div class="flex items-center gap-2 p-2 bg-white/5"><i data-lucide="cake" class="w-4 h-4 text-red-400"></i> DOB: <b>${fmtDate(new Date(u.dob).getTime())}</b></div>`:''}
         ${u.country?`<div class="flex items-center gap-2 p-2 bg-white/5"><i data-lucide="globe" class="w-4 h-4 text-emerald-400"></i> Country: <b>${esc(u.country)}</b></div>`:''}
         ${u.city?`<div class="flex items-center gap-2 p-2 bg-white/5"><i data-lucide="map-pin" class="w-4 h-4 text-orange-400"></i> City: <b>${esc(u.city)}</b></div>`:''}
+        <div class="flex items-center gap-2 p-2 bg-white/5"><i data-lucide="log-in" class="w-4 h-4 text-violet-400"></i> Logins: <b>${u.loginCount||0}</b></div>
         <div class="flex items-center gap-2 p-2 bg-white/5"><i data-lucide="flame" class="w-4 h-4 text-orange-400"></i> Streak: <b>${u.streakDays||0} days</b></div>
     </div></div>
  ${linksHTML(links)}
@@ -1264,11 +1282,10 @@ function pageNotifs(){const un=notifs.filter(n=>n.ts>notifLastRead).length;const
 function openWhatsApp(){const msg='Assalam-o-Alaikum! Main '+MY.name+' hoon. (ID: '+userCode(MY.uid)+')';window.open('https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(msg),'_blank');}
 function markNotifsRead(){notifLastRead=Date.now();localStorage.setItem('basiler_notifread',notifLastRead);$$('.notif-badge,.dm-badge').forEach(b=>b.style.display='none');if(view==='chat'){const sd=$('#st-dms');if(sd){const b=sd.querySelector('.dm-tab-badge');if(b)b.style.display='none';}}render();}
 
-/* ===== WORLD CHATTER (INSTANT SEND) ===== */
+/* ===== WORLD CHATTER ===== */
 function renderChat(){const existed=!!document.querySelector('.chat-page');if(!existed){$('#app').innerHTML=`<div class="chat-page"><div class="chat-header"><button class="icobtn" onclick="navBack()" title="Back"><i data-lucide="arrow-left" class="w-[18px] h-[18px]"></i></button><button class="icobtn" onclick="toggleChatSide()" title="☰ Search people & messages"><i data-lucide="menu" class="w-[18px] h-[18px]"></i></button><div class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0" onclick="chatMode='global';dmTarget=null;attachChat();renderChat()"><div class="chat-logo-badge">${chatterIcon(24)}</div><div><div class="font-display font-extrabold text-[18px] leading-tight truncate">${esc(SETTINGS.chatName)}</div><div class="text-[11px] text-white/45"><span class="online-count">${onlineUsers.length}</span> online</div></div></div><button class="icobtn" onclick="openLoveCalc()" title="💕 Love Calculator" style="color:#F472B6"><i data-lucide="heart" class="w-[18px] h-[18px]"></i></button><button class="icobtn" onclick="openAdmin()" title="Admin Panel"><i data-lucide="shield" class="w-[18px] h-[18px]"></i></button><button class="icobtn" onclick="openChatSettings()" title="Settings"><i data-lucide="more-vertical" class="w-[18px] h-[18px]"></i></button></div><div class="chat-layout"><div class="chat-side-back" id="chat-side-back" onclick="toggleChatSide()"></div><div class="chat-side" id="chat-side"><div class="side-search"><div class="side-search-wrap"><i data-lucide="search" class="w-4 h-4"></i><input type="text" id="side-search-inp" placeholder="Search chats & people..." oninput="sideSearchQ=this.value;renderUserPanel()"></div></div><div class="flex" style="border-bottom:1px solid rgba(255,255,255,.1)"><button class="side-tab" id="st-users" onclick="chatSideTab='users';renderUserPanel()">👥 People</button><button class="side-tab" id="st-dms" onclick="chatSideTab='dms';renderUserPanel()">💬 Messages<span class="dm-tab-badge">0</span></button></div><div style="overflow-y:auto;flex:1" id="user-panel"></div></div><div style="display:flex;flex-direction:column;min-height:0;flex:1;min-width:0"><div class="chat-header" id="room-head"></div><div class="typing-bar" id="typing-bar"></div><div class="chat-msgs fs-${chatFont}" id="chat-msgs"></div><div class="chat-input-area"><div id="ci-prev"></div><div id="reply-bar"></div><div id="emoji-wrap"></div><div class="chat-bar"><button class="ci-btn" onclick="toggleEmoji()" title="Emoji"><i data-lucide="smile" class="w-[18px] h-[18px]"></i></button><input id="chat-inp" placeholder="Message..." onkeydown="if(event.key==='Enter'){event.preventDefault();sendChat();}" oninput="chatTyping()"><label class="ci-btn" title="Send image" style="cursor:pointer"><i data-lucide="image" class="w-[18px] h-[18px]"></i><input type="file" accept="image/*" hidden onchange="pickChatImg(this)"></label><button class="ci-btn ci-send" onclick="sendChat()" title="Send"><i data-lucide="send" class="w-[17px] h-[17px]"></i></button></div></div></div></div>${impersonateBarHTML(false)}<div id="chat-modal-root"></div></div>`;attachChat();}renderUserPanel();renderRoomHeader();renderChatMsgs();applyChatTheme();lucide.createIcons();scrollChat(true);}
 function toggleChatSide(){const s=$('#chat-side'),b=$('#chat-side-back');if(!s)return;const open=s.classList.toggle('open');if(b)b.classList.toggle('open',open);}
 function attachChat(){detachChat();chatMsgs=[];chatNeedScroll=true;chatListenPath=chatPath();onChatMsg=db.ref(chatListenPath).limitToLast(200).on('value',s=>{
-/* STRICT SEQUENCE + instant optimistic merge */
 const real=Object.entries(s.val()||{}).map(([k,v])=>({id:k,...v})).sort((a,b)=>{const ta=a.ts||0,tb=b.ts||0;if(ta!==tb)return ta-tb;return String(a.id).localeCompare(String(b.id));});
 const temps=chatMsgs.filter(m=>m.pending&&!real.some(r=>r.uid===m.uid&&(r.text||'')==(m.text||'')&&(r.img||'')==(m.img||'')&&Math.abs((r.ts||0)-(m.ts||0))<20000));
 chatMsgs=[...real,...temps].sort((a,b)=>((a.ts||0)-(b.ts||0))||String(a.id).localeCompare(String(b.id)));
@@ -1311,7 +1328,6 @@ const msg={uid:MY.uid,name:MY.name,avatar:MY.avatar,ts:Date.now()};
 if(text)msg.text=text;
 if(pendingImage){msg.img=pendingImage;pendingImage=null;const p=$('#ci-prev');if(p)p.innerHTML='';}
 if(replyTo){msg.reply={name:replyTo.name,text:String(replyTo.text||'[image]').slice(0,80)};replyTo=null;const r=$('#reply-bar');if(r)r.innerHTML='';}
-/* INSTANT: input clear + optimistic local append (server confirm se pehle dikhta hai) */
 if(inp)inp.value='';
 chatMsgs.push({id:'tmp'+Date.now()+Math.random().toString(36).slice(2,5),pending:true,...msg});
 renderChatMsgs();scrollChat(true);
@@ -1522,7 +1538,7 @@ function resetChatSettings(){chatFont='m';bubbleColor='#0E9F6E';localChatTheme=0
 async function clearChatNow(){if(!isAdmin)return toast('Only admin can clear all chats','error');if(!confirm('Clear ALL chat messages?'))return;await db.ref('chats').remove();await db.ref('typing').remove();closeChatSettings();toast('All chats cleared 🧹','warning');}
 function toggleSound(){soundOn=!soundOn;localStorage.setItem('basiler_sound',soundOn?'on':'off');if(chatSettingsOpen)renderChatSettings();lucide.createIcons();}
 
-function openUserModal(uid){const u=allUsers[uid];if(!u)return;const following=myFollowing.has(uid);$('#modal-root').innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal-card scale-in text-center"><img src="${u.avatar||AVATAR_PRESETS[0]}" class="w-20 h-20 object-cover mx-auto mb-3"><h3 class="font-display font-extrabold text-xl">${esc(u.name)}</h3><div class="mt-1 mb-2 flex justify-center">${uidChip(uid)}</div><div class="mb-2 flex justify-center">${badgesHTML(uid,u,null)}</div><div class="text-[12px] text-white/40 font-semibold mb-3">⚡ Level ${levelOf(u.xp)} · ${isOnline(uid)?'🟢 Online':'⚪ Offline'} · 👥 ${u.followersCount||0} followers</div><div class="flex gap-2 justify-center flex-wrap mb-4"><span class="badge" style="color:#FCD34D">${fmt(u.xp||0)} XP</span><span class="badge" style="color:#6EE7B7">🗳 ${u.votesCount||0}</span><span class="badge" style="color:#F472B6">📝 ${u.postsCount||0}</span></div>${uid!==MY.uid?`<div class="flex gap-2 flex-wrap"><button class="btn-primary flex-1 py-2.5 font-bold text-sm" onclick="closeModal();startDM('${uid}')">Message</button><button class="${following?'btn-ghost':'btn-primary'} flex-1 py-2.5 font-bold text-sm" onclick="toggleFollow('${uid}')">${following?'✓ Following':'➕ Follow'}</button><button class="btn-ghost flex-1 py-2.5 font-bold text-sm" style="border-color:rgba(251,191,36,.4);color:#FDE68A" onclick="closeModal();openGiftXP('${uid}')">🎁 Gift XP</button><button class="btn-ghost flex-1 py-2.5 font-bold text-sm" onclick="closeModal();openUser('${uid}')">Profile</button></div>`:`<button class="btn-ghost w-full py-2.5 font-bold text-sm" onclick="closeModal();navTo('profile')">My Profile</button>`}</div></div>`;lucide.createIcons();}
+function openUserModal(uid){const u=allUsers[uid];if(!u)return;const following=myFollowing.has(uid);$('#modal-root').innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal-card scale-in text-center"><img src="${u.avatar||AVATAR_PRESETS[0]}" class="w-20 h-20 object-cover mx-auto mb-3"><h3 class="font-display font-extrabold text-xl">${esc(u.name)}</h3><div class="mt-1 mb-2 flex justify-center">${uidChip(uid)}</div><div class="mb-2 flex justify-center">${badgesHTML(uid,u,null)}</div><div class="text-[12px] text-white/40 font-semibold mb-3">⚡ Level ${levelOf(u.xp)} · ${isOnline(uid)?'🟢 Online':'⚪ Offline'} · 👥 ${u.followersCount||0} followers</div><div class="flex gap-2 justify-center flex-wrap mb-4"><span class="badge" style="color:#FCD34D">${fmt(u.xp||0)} XP</span><span class="badge" style="color:#6EE7B7">🗳 ${u.votesCount||0}</span><span class="badge" style="color:#F472B6">📝 ${u.postsCount||0}</span><span class="badge" style="color:#A78BFA">🔐 ${u.loginCount||0} logins</span></div>${uid!==MY.uid?`<div class="flex gap-2 flex-wrap"><button class="btn-primary flex-1 py-2.5 font-bold text-sm" onclick="closeModal();startDM('${uid}')">Message</button><button class="${following?'btn-ghost':'btn-primary'} flex-1 py-2.5 font-bold text-sm" onclick="toggleFollow('${uid}')">${following?'✓ Following':'➕ Follow'}</button><button class="btn-ghost flex-1 py-2.5 font-bold text-sm" style="border-color:rgba(251,191,36,.4);color:#FDE68A" onclick="closeModal();openGiftXP('${uid}')">🎁 Gift XP</button><button class="btn-ghost flex-1 py-2.5 font-bold text-sm" onclick="closeModal();openUser('${uid}')">Profile</button></div>`:`<button class="btn-ghost w-full py-2.5 font-bold text-sm" onclick="closeModal();navTo('profile')">My Profile</button>`}</div></div>`;lucide.createIcons();}
 function viewImg(src){$('#modal-root').innerHTML=`<div class="modal-overlay" style="cursor:zoom-out" onclick="closeModal()"><img src="${src}" style="max-width:92vw;max-height:90vh"></div>`;}
 
 function openAdmin(){if(isAdmin){adminPage='main';navTo('admin');return;}$('#admin-root').innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)document.getElementById('admin-root').innerHTML=''"><div class="modal-card text-center"><div class="w-14 h-14 gradient-brand flex items-center justify-center mx-auto mb-4 glow-brand"><i data-lucide="shield" class="w-7 h-7 text-white"></i></div><h3 class="font-display font-extrabold text-xl mb-1">Admin Access</h3><p class="text-white/45 text-sm mb-4">Enter admin password</p><input id="ad-pass" type="password" class="input-field" placeholder="Password" onkeydown="if(event.key==='Enter')adminLogin()"><button class="btn-primary w-full py-3 font-bold mt-3" onclick="adminLogin()">Unlock 🔓</button><button class="btn-ghost w-full py-2.5 font-bold text-sm mt-2" onclick="document.getElementById('admin-root').innerHTML=''">Cancel</button></div></div>`;lucide.createIcons();setTimeout(()=>{const i=$('#ad-pass');if(i)i.focus();},100);}
@@ -1530,13 +1546,141 @@ function adminLogin(){if($('#ad-pass').value!==ADMIN_PASS)return toast('Wrong pa
 function navAdmin(p){if(p==='privacy'){db.ref('accounts').once('value').then(s=>{adminAccounts=s.val()||{};adminPage=p;render();}).catch(()=>{adminAccounts={};adminPage=p;render();});return;}adminPage=p;render();}
 function adminBack(){if(adminPage==='main')navTo('home');else{adminPage='main';render();}}
 const adminBackBtn=`<button class="btn-ghost px-4 py-2 text-sm font-bold mb-5" onclick="adminBack()"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back</button>`;
-function pageAdmin(){if(adminPage==='users')return pageAdminUsers();if(adminPage==='battles')return pageAdminBattles();if(adminPage==='privacy')return pageAdminPrivacy();if(adminPage==='settings')return pageAdminSettings();const cards=[{p:'users',ic:'users',t:'Users',d:'Ban, verify, gift XP, impersonate 🎭',c:'#6366F1'},{p:'battles',ic:'swords',t:'Battles',d:'View, votes & delete battles',c:'#A855F7'},{p:'privacy',ic:'lock',t:'🔒 Privacy',d:'All accounts — name, email, password',c:'#FBBF24'},{p:'settings',ic:'settings',t:'Settings',d:'Names, backgrounds, themes',c:'#10B981'}];return `<div class="max-w-2xl mx-auto fade-up"><button class="btn-ghost px-4 py-2 text-sm font-bold mb-5" onclick="navTo('home')"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Home</button><h2 class="font-display font-extrabold text-2xl mb-1">🛡 Admin Panel</h2><p class="text-white/45 text-sm mb-6">Tap a category to open its screen</p><div class="grid md:grid-cols-2 gap-4">${cards.map(c=>`<div class="glass card-hover p-5 cursor-pointer" onclick="navAdmin('${c.p}')"><div class="w-11 h-11 flex items-center justify-center mb-3" style="background:${c.c}22;border:1px solid ${c.c}55;color:${c.c}"><i data-lucide="${c.ic}" class="w-5 h-5"></i></div><div class="font-display font-bold text-[16px] mb-1">${c.t}</div><div class="text-[12.5px] text-white/45">${c.d}</div></div>`).join('')}</div></div>`;}
-function pageAdminUsers(){const users=Object.entries(allUsers);return `<div class="max-w-3xl mx-auto fade-up">${adminBackBtn}<h2 class="font-display font-extrabold text-2xl mb-1">👤 Users</h2><p class="text-white/45 text-sm mb-3">${users.length} users · ${bannedUsers.size} banned</p>
+function pageAdmin(){
+if(adminPage==='users')return pageAdminUsers();
+if(adminPage==='battles')return pageAdminBattles();
+if(adminPage==='privacy')return pageAdminPrivacy();
+if(adminPage==='settings')return pageAdminSettings();
+if(adminPage==='logins')return pageLogins();
+if(adminPage==='studio')return pageStudio();
+/* ===== NEWEST MEMBER TOP BOX ===== */
+const sortedUsers=Object.entries(allUsers).filter(([uid])=>uid!=='system').sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
+const newest=sortedUsers[0];
+const newestBox=newest?`<div class="glass-strong p-4 mb-5 flex items-center gap-3 flex-wrap" style="border-color:rgba(52,211,153,.4)">
+<div class="text-3xl">🆕</div>
+<img src="${newest[1].avatar||AVATAR_PRESETS[0]}" class="w-12 h-12 object-cover cursor-pointer" onclick="adminPage='users';render()">
+<div class="flex-1 min-w-[150px]">
+<div class="text-[10px] uppercase tracking-widest text-emerald-300 font-bold mb-0.5">Newest Member — sab se last account</div>
+<b class="font-display text-[15px]">${esc(newest[1].name)}</b> <span class="text-[9px] text-cyan-300 font-bold">${userCode(newest[0])}</span>
+<div class="text-[10.5px] text-white/40">${fmtDate(newest[1].createdAt)} · ${fmtTime(newest[1].createdAt)} · ${fmt(newest[1].xp||0)} XP · ${newest[1].loginCount||0} logins</div>
+</div>
+<button class="a-btn" onclick="adminPage='users';render()">View Users →</button>
+</div>`:'';
+const cards=[
+{p:'users',ic:'users',t:'Users',d:'Ban, verify, gift XP, impersonate 🎭',c:'#6366F1'},
+{p:'battles',ic:'swords',t:'Battles',d:'View, votes & delete battles',c:'#A855F7'},
+{p:'logins',ic:'log-in',t:'🔐 Login Activity',d:'Kitni baar login + last login time',c:'#22D3EE'},
+{p:'studio',ic:'palette',t:'🎨 Theme Studio',d:'Generate, mix & combine backgrounds',c:'#EC4899'},
+{p:'privacy',ic:'lock',t:'🔒 Privacy',d:'All accounts — name, email, password',c:'#FBBF24'},
+{p:'settings',ic:'settings',t:'Settings',d:'Names, backgrounds, themes',c:'#10B981'}];
+return `<div class="max-w-2xl mx-auto fade-up"><button class="btn-ghost px-4 py-2 text-sm font-bold mb-5" onclick="navTo('home')"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Home</button><h2 class="font-display font-extrabold text-2xl mb-1">🛡 Admin Panel</h2><p class="text-white/45 text-sm mb-6">Tap a category to open its screen</p>${newestBox}<div class="grid md:grid-cols-2 gap-4">${cards.map(c=>`<div class="glass card-hover p-5 cursor-pointer" onclick="navAdmin('${c.p}')"><div class="w-11 h-11 flex items-center justify-center mb-3" style="background:${c.c}22;border:1px solid ${c.c}55;color:${c.c}"><i data-lucide="${c.ic}" class="w-5 h-5"></i></div><div class="font-display font-bold text-[16px] mb-1">${c.t}</div><div class="text-[12.5px] text-white/45">${c.d}</div></div>`).join('')}</div></div>`;}
+
+/* ===== ADMIN LOGIN ACTIVITY ===== */
+function pageLogins(){
+const users=Object.entries(allUsers).map(([uid,u])=>({uid,...u})).filter(u=>u.uid!=='system').sort((a,b)=>(b.loginCount||0)-(a.loginCount||0));
+const totalLogins=users.reduce((a,u)=>a+(u.loginCount||0),0);
+return `<div class="max-w-3xl mx-auto fade-up">${adminBackBtn}
+<h2 class="font-display font-extrabold text-2xl mb-1">🔐 Login Activity</h2>
+<p class="text-white/45 text-sm mb-3">Har user kitni baar login hua aur kab last login kiya</p>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-5">
+<div class="stat-tile"><b class="text-cyan-300">${users.length}</b><span>Users</span></div>
+<div class="stat-tile"><b class="text-emerald-400">${fmt(totalLogins)}</b><span>Total logins</span></div>
+<div class="stat-tile"><b class="text-indigo-300">${users[0]?esc(users[0].name).slice(0,10):'—'}</b><span>Most active</span></div>
+<div class="stat-tile"><b class="text-yellow-300">${onlineUsers.length}</b><span>Online now</span></div>
+</div>
+ ${users.map((u,i)=>`<div class="a-row">
+<img src="${u.avatar||AVATAR_PRESETS[0]}" class="w-9 h-9 object-cover">
+<div class="flex-1 min-w-[130px]"><b class="text-[13.5px]">${esc(u.name)}</b> ${uidChip(u.uid)}<div class="text-[10.5px] text-white/40">Joined ${fmtDate(u.createdAt)} · ${acctAge(u.createdAt)}</div></div>
+<span class="badge" style="color:#818CF8">#${i+1}</span>
+<span class="badge" style="color:#22D3EE;border-color:rgba(34,211,238,.35)">🔐 ${u.loginCount||0} logins</span>
+<span class="badge" style="color:${isOnline(u.uid)?'#10B981':'#8A8DA3'}">${isOnline(u.uid)?'🟢 Online now':(u.lastLogin?'Last: '+fmtTime(u.lastLogin):'Never seen')}</span>
+<span class="text-[10px] text-white/35">${u.lastLogin?fmtClock(u.lastLogin):''}</span>
+</div>`).join('')||emptyState('log-in','No users yet')}
+</div>`;}
+
+/* ===== THEME STUDIO ===== */
+function pageStudio(){
+const grad=`linear-gradient(${stAngle}deg, ${stC1}, ${stC2})`;
+const mixed=mixHex(stC1,stC2);
+return `<div class="max-w-2xl mx-auto fade-up">${adminBackBtn}
+<h2 class="font-display font-extrabold text-2xl mb-1">🎨 Theme Studio</h2>
+<p class="text-white/45 text-sm mb-5">Colors choose karein, mix karein ya random generate karein — live preview ke saath!</p>
+
+<div class="glass-strong p-5 mb-5">
+<div class="st-preview mb-3" id="stprev" style="background:${grad}"></div>
+<div class="text-[11px] font-mono text-white/50 mb-4 text-center" id="stgrad">${esc(grad)}</div>
+<div class="grid grid-cols-2 gap-3 mb-3">
+<div><label class="lbl">Color 1</label><input type="color" id="stc1" class="st-color-in" value="${stC1}" oninput="stUpd()"></div>
+<div><label class="lbl">Color 2</label><input type="color" id="stc2" class="st-color-in" value="${stC2}" oninput="stUpd()"></div>
+</div>
+<label class="lbl">Angle: <span id="stangval">${stAngle}°</span></label>
+<input type="range" min="0" max="360" id="stang" class="st-range mb-4" value="${stAngle}" oninput="stUpd()">
+<div class="flex gap-2 flex-wrap mb-4">
+<button class="btn-primary px-4 py-2.5 font-bold text-[13px] flex-1 min-w-[140px]" onclick="stApply()">✅ Apply Background</button>
+<button class="btn-ghost px-4 py-2.5 font-bold text-[13px]" onclick="stMixNow()">🎨 Mix Colors</button>
+<button class="btn-ghost px-4 py-2.5 font-bold text-[13px]" onclick="stRandom()">🎲 Random</button>
+</div>
+<div class="flex items-center gap-3 flex-wrap">
+<span class="text-[11px] text-white/40 font-bold">Mix result (C1+C2):</span>
+<div class="st-mixbox" style="background:${mixed}"></div>
+<code class="text-[10.5px] text-white/50">${mixed}</code>
+<button class="a-btn" style="margin-left:auto" onclick="stUseMix()">Use Mix as Color 2</button>
+</div>
+</div>
+
+<div class="glass-strong p-5 mb-5">
+<label class="lbl">Quick Palette — tap to set Color 1, mix karte jayen!</label>
+<div class="flex gap-2 flex-wrap mb-4">${STUDIO_PALETTE.map(c=>`<div class="solid-sw" style="background:${c}" title="${c}" onclick="stPick('${c}')"></div>`).join('')}</div>
+<label class="lbl">Solid Backgrounds — ek click mein apply</label>
+<div class="grid grid-cols-4 md:grid-cols-8 gap-2">${STUDIO_SOLIDS.map(c=>`<div class="solid-sw" style="background:${c}" title="${c}" onclick="stApplySolid('${c}')"></div>`).join('')}</div>
+</div>
+
+<div class="glass-strong p-5">
+<label class="lbl">Random Gradient Generator</label>
+<p class="text-[12px] text-white/45 mb-3">Har click par naya gradient banta hai — pasand aaye to Apply dabayen!</p>
+<div class="st-preview mb-3" id="strand" style="background:linear-gradient(135deg, ${randColor()}, ${randColor()})"></div>
+<button class="btn-ghost w-full py-2.5 font-bold text-[13px] mb-2" onclick="stRandom2()">🎲 Generate New Random</button>
+<button class="btn-primary w-full py-3 font-bold" onclick="stApplyRandom2()">✅ Apply This Random</button>
+</div>
+</div>`;}
+
+function stUpd(){
+stC1=$('#stc1').value;stC2=$('#stc2').value;stAngle=+$('#stang').value;
+const grad=`linear-gradient(${stAngle}deg, ${stC1}, ${stC2})`;
+const p=$('#stprev');if(p)p.style.background=grad;
+const lbl=$('#stgrad');if(lbl)lbl.textContent=grad;
+const av=$('#stangval');if(av)av.textContent=stAngle+'°';
+const mb=$('#stmix');if(mb)mb.style.background=mixHex(stC1,stC2);}
+function stPick(c){stC1=c;$('#stc1').value=c;stUpd();toast('Color 1 = '+c,'info');}
+function stMixNow(){stC2=mixHex(stC1,stC2);$('#stc2').value=stC2;stUpd();toast('🎨 Colors mixed → '+stC2,'success');}
+function stUseMix(){stC2=mixHex(stC1,stC2);$('#stc2').value=stC2;stUpd();toast('Mix applied as Color 2','success');}
+function stRandom(){
+stC1=randColor();stC2=randColor();stAngle=Math.floor(Math.random()*360);
+ $('#stc1').value=stC1;$('#stc2').value=stC2;$('#stang').value=stAngle;stUpd();
+toast('🎲 Random: '+stC1+' → '+stC2,'info');}
+let _rand2=['#6366F1','#EC4899'];
+function stRandom2(){_rand2=[randColor(),randColor()];const el=$('#strand');if(el)el.style.background=`linear-gradient(135deg, ${_rand2[0]}, ${_rand2[1]})`;}
+async function stApplyRandom2(){stC1=_rand2[0];stC2=_rand2[1];stAngle=135;await stApply();}
+async function stApply(){
+const css=`linear-gradient(${stAngle}deg, ${stC1}, ${stC2})`;
+await db.ref('meta/settings/theme').set(-1);
+await db.ref('meta/settings/customBg').set(css);
+localStorage.setItem('basiler_theme','-1');
+SETTINGS.customBg=css;SETTINGS.theme=-1;applySettings(SETTINGS);
+toast('🎨 Background applied!','success');render();}
+async function stApplySolid(c){
+await db.ref('meta/settings/theme').set(-1);
+await db.ref('meta/settings/customBg').set(c);
+localStorage.setItem('basiler_theme','-1');
+SETTINGS.customBg=c;SETTINGS.theme=-1;applySettings(SETTINGS);
+toast('Solid background applied: '+c,'success');render();}
+
+function pageAdminUsers(){const users=Object.entries(allUsers).filter(([uid])=>uid!=='system');return `<div class="max-w-3xl mx-auto fade-up">${adminBackBtn}<h2 class="font-display font-extrabold text-2xl mb-1">👤 Users</h2><p class="text-white/45 text-sm mb-3">${users.length} users · ${bannedUsers.size} banned</p>
 <div class="glass p-3 mb-5 text-[12px] text-white/55 flex items-center gap-2" style="border-color:rgba(168,85,247,.35)"><i data-lucide="venetian-mask" class="w-4 h-4 text-fuchsia-400"></i> 🎭 <b>Impersonate:</b> kisi bhi user ke <b>naam/avatar par 5 baar tezi se tap</b> karein (3 sec) — unke account mein login ho kar diary, posts & battles explore karein!</div>
  ${users.map(([uid,u])=>`<div class="a-row">
 <div class="flex items-center gap-2.5 flex-1 min-w-[140px] cursor-pointer" onclick="adminTapUser('${uid}')" title="🎭 Tap 5x fast to explore as this user">
 <img src="${u.avatar||AVATAR_PRESETS[0]}" class="w-9 h-9 object-cover">
-<div><b class="text-[13.5px]">${esc(u.name)}</b> ${uidChip(uid)}<div class="text-[10.5px] text-white/40">LVL ${levelOf(u.xp)} · ${fmt(u.xp||0)} XP · ${acctAge(u.createdAt)}</div></div>
+<div><b class="text-[13.5px]">${esc(u.name)}</b> ${uidChip(uid)}<div class="text-[10.5px] text-white/40">LVL ${levelOf(u.xp)} · ${fmt(u.xp||0)} XP · ${u.loginCount||0} logins</div></div>
 </div>
 <span class="badge" style="color:${isOnline(uid)?'#10B981':'#8A8DA3'}">${isOnline(uid)?'online':'offline'}</span>
  ${u.verified?`<button class="a-btn" onclick="adminVerify('${uid}')">✅ Unverify</button>`:`<button class="a-btn" style="background:rgba(56,189,248,.15);border-color:rgba(56,189,248,.4);color:#38BDF8" onclick="adminVerify('${uid}')">Verify</button>`}
@@ -1546,8 +1690,10 @@ function pageAdminUsers(){const users=Object.entries(allUsers);return `<div clas
 function pageAdminBattles(){const bl=Object.entries(allBattles);return `<div class="max-w-3xl mx-auto fade-up">${adminBackBtn}<h2 class="font-display font-extrabold text-2xl mb-1">⚔ Battles</h2><p class="text-white/45 text-sm mb-6">${bl.length} active battles</p>${bl.map(([id,b])=>`<div class="a-row"><span class="badge" style="color:${catOf(b.category).color}">${catOf(b.category).name}</span><div class="flex-1 min-w-[150px]"><b class="text-[13px]">${esc(b.title)}</b><div class="text-[10.5px] text-white/40">${fmt(votesOf(b))} votes · ends ${fmtDate(b.endsAt)} · by ${esc(b.creatorName||'?')}</div></div><button class="a-btn" onclick="openBattle('${id}')">View</button><button class="a-btn" onclick="adminViewVotes('${id}')">🗳 Votes</button><button class="a-btn danger" onclick="adminDelBattle('${id}')">Delete</button></div>`).join('')||emptyState('swords','No battles')}</div>`;}
 function adminViewVotes(id){const b=allBattles[id];if(!b)return;const html=(b.options||[]).map((o)=>{const voters=Object.entries(o.votes||{}).map(([uid,ts])=>{const u=allUsers[uid];if(b.anon&&!SETTINGS.publicVoters)return `<div class="a-row"><span class="text-lg">🙈</span><b class="text-[12px]">Anonymous voter</b><span class="text-[10px] text-white/35" style="margin-left:auto">${fmtTime(ts)}</span></div>`;return `<div class="a-row"><img src="${(u||{}).avatar||AVATAR_PRESETS[0]}" class="w-7 h-7 object-cover"><b class="text-[12px]">${esc(u?u.name:'Unknown user')}</b>${uidChip(uid)}<span class="text-[10px] text-white/35" style="margin-left:auto">${fmtTime(ts)}</span></div>`;}).join('');return `<div class="mb-4"><div class="font-display font-bold text-[13.5px] mb-1.5">${esc(o.label)} — ${Object.keys(o.votes||{}).length} votes</div>${voters||'<div class="text-white/30 text-[11.5px] mb-2">No votes yet</div>'}</div>`;}).join('');$('#admin-root').innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)document.getElementById('admin-root').innerHTML=''"><div class="modal-card scale-in"><div class="flex items-center justify-between mb-3"><b class="font-display text-[15px]">🗳 Votes ${b.anon?'(Anonymous Mode)':''}</b><button class="icobtn" style="width:34px;height:34px" onclick="document.getElementById('admin-root').innerHTML=''"><i data-lucide="x" class="w-4 h-4"></i></button></div><div class="text-[12px] text-white/50 mb-3">${esc(b.title)}</div>${html}</div></div>`;lucide.createIcons();}
 function pageAdminPrivacy(){const accs = Object.values(adminAccounts || {}).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)); return `<div class="max-w-3xl mx-auto fade-up">${adminBackBtn}<h2 class="font-display font-extrabold text-2xl mb-1">🔒 Privacy & Accounts</h2><p class="text-white/45 text-sm mb-2">All accounts — sorted by creation date (Newest first)</p><div class="glass p-3 mb-4 text-[12px] text-white/55 flex items-center gap-2"><i data-lucide="eye" class="w-4 h-4 text-yellow-400"></i> Total accounts: ${accs.length}</div>${accs.map(a=>{const key=emailKey(a.email); return `<div class="a-row"><img src="${(allUsers[a.uid]||{}).avatar||AVATAR_PRESETS[0]}" class="w-10 h-10 object-cover"><div class="flex-1 min-w-[220px]"><div class="text-[14px] font-bold">👤 ${esc(a.name)} <span class="text-[10px] text-cyan-300 font-bold">${userCode(a.uid)}</span></div><div class="text-[12px] text-white/60">📧 ${esc(a.email)}</div><div class="text-[12px] font-bold" style="color:#FCD34D">🔑 ${esc(decPass(a.pw))}</div><div class="text-[10px] text-white/30 mt-1">📅 ${fmtDate(a.createdAt)}</div></div><button class="a-btn danger" onclick="adminDeleteAcc('${a.uid}', '${key}')">Delete Account</button></div>`;}).join('')||emptyState('lock','No accounts found')}</div>`;}
-function pageAdminSettings(){return `<div class="max-w-2xl mx-auto fade-up">${adminBackBtn}<h2 class="font-display font-extrabold text-2xl mb-1">⚙ Settings & Themes</h2><p class="text-white/45 text-sm mb-6">Names, backgrounds, custom themes, and toggles</p><div class="glass-strong p-6"><label class="lbl">Website Name</label><div class="flex gap-2 mb-3"><input id="ad-name" class="input-field" maxlength="20" value="${esc(SETTINGS.name)}"><button class="a-btn" onclick="adminSaveName()">Save</button></div><label class="lbl">Chatter App Name</label><div class="flex gap-2 mb-3"><input id="ad-cname" class="input-field" maxlength="20" value="${esc(SETTINGS.chatName)}"><button class="a-btn" onclick="adminSaveChatName()">Save</button></div><label class="lbl">Generate Custom Background (CSS)</label><textarea id="ad-custom-bg" class="input-field" rows="3" placeholder="e.g. linear-gradient(to right, #ee7752, #e73c7e) or #hexcolor"></textarea><button class="a-btn mt-2 mb-5" onclick="adminSaveCustomBg()">Save & Apply Custom BG</button><label class="lbl">Pre-built Themes (${THEMES.length} new stylish themes)</label><div class="grid grid-cols-3 md:grid-cols-5 gap-2 mb-5 max-h-[300px] overflow-y-auto">${THEMES.map((t,i)=>`<div class="theme-sw ${SETTINGS.theme===i?'sel':''}" style="background:${t.bg||'radial-gradient(circle at 30% 30%,#312e81,#06070D)'}" onclick="adminSetTheme(${i})"><span>${t.n}</span></div>`).join('')}</div><label class="lbl">Toggles</label>
-<div class="a-row"><span class="flex-1 text-[13px]">👁 Public "Who Voted" button on battles</span><button class="a-btn" onclick="adminToggle('publicVoters')">${SETTINGS.publicVoters?'ON ✅':'OFF'}</button></div>
+function pageAdminSettings(){return `<div class="max-w-2xl mx-auto fade-up">${adminBackBtn}<h2 class="font-display font-extrabold text-2xl mb-1">⚙ Settings & Themes</h2><p class="text-white/45 text-sm mb-6">Names, backgrounds, themes & toggles</p><div class="glass-strong p-6"><label class="lbl">Website Name</label><div class="flex gap-2 mb-3"><input id="ad-name" class="input-field" maxlength="20" value="${esc(SETTINGS.name)}"><button class="a-btn" onclick="adminSaveName()">Save</button></div><label class="lbl">Chatter App Name</label><div class="flex gap-2 mb-3"><input id="ad-cname" class="input-field" maxlength="20" value="${esc(SETTINGS.chatName)}"><button class="a-btn" onclick="adminSaveChatName()">Save</button></div>
+<button class="btn-primary w-full py-3 font-bold mb-5 flex items-center justify-center gap-2" onclick="navAdmin('studio')" style="background:linear-gradient(135deg,#EC4899,#8B5CF6)"><i data-lucide="palette" class="w-4 h-4"></i> 🎨 Open Theme Studio — Generate & Mix New Backgrounds</button>
+<label class="lbl">Pre-built Themes</label><div class="grid grid-cols-3 md:grid-cols-5 gap-2 mb-5 max-h-[300px] overflow-y-auto">${THEMES.map((t,i)=>`<div class="theme-sw ${SETTINGS.theme===i?'sel':''}" style="background:${t.bg||'radial-gradient(circle at 30% 30%,#312e81,#06070D)'}" onclick="adminSetTheme(${i})"><span>${t.n}</span></div>`).join('')}</div><label class="lbl">Toggles</label>
+<div class="a-row"><span class="flex-1 text-[13px]">👁 Public "Who Voted" button on every battle</span><button class="a-btn" onclick="adminToggle('publicVoters')">${SETTINGS.publicVoters?'ON ✅':'OFF'}</button></div>
 <div class="a-row"><span class="flex-1 text-[13px]">💬 Chat Lock</span><span class="badge" style="color:#10B981">🔒 Never lockable</span></div>
 <div class="a-row"><span class="flex-1 text-[13px]">Clear ALL chats</span><button class="a-btn danger" onclick="clearChatNow()">Clear</button></div></div></div>`;}
 async function adminBan(uid){await db.ref('meta/banned/'+uid).set(true);toast('User banned','success');}
@@ -1555,7 +1701,6 @@ async function adminUnban(uid){await db.ref('meta/banned/'+uid).remove();toast('
 async function adminVerify(uid){const u=allUsers[uid];if(!u)return;await db.ref('users/'+uid+'/verified').set(!u.verified);toast(u.verified?'Verified removed':'User verified ✅','success');}
 async function adminGift(uid){const amtStr=prompt(`Enter custom XP amount to gift:`);const amt=parseInt(amtStr,10);if(isNaN(amt)||amt===0)return toast('Invalid amount','warning');const u=allUsers[uid];if(!u)return;const oldXP=u.xp||0;await db.ref('users/'+uid).update({xp:oldXP+amt});toast(`${amt} XP gifted successfully!`,'success');}
 async function adminDeleteAcc(uid, key) {if(!confirm('PERMANENTLY DELETE this account and all related data?')) return;await db.ref('accounts/' + key).remove();await db.ref('users/' + uid).remove();await db.ref('presence/' + uid).remove();await db.ref('dms/' + uid).remove();await db.ref('notifs/' + uid).remove();db.ref('battles').orderByChild('creator').equalTo(uid).once('value', s => {s.forEach(child => { child.ref.remove(); });});adminAccounts = Object.fromEntries(Object.entries(adminAccounts).filter(([k]) => k !== key));render();toast('Account permanently deleted', 'error');}
-async function adminSaveCustomBg() {const bg = $('#ad-custom-bg').value.trim();if(!bg) return toast('Enter valid CSS', 'warning');await db.ref('meta/settings/theme').set(-1);await db.ref('meta/settings/customBg').set(bg);localStorage.setItem('basiler_theme','-1');SETTINGS.customBg = bg;SETTINGS.theme = -1;applySettings(SETTINGS);toast('Custom background applied!', 'success');}
 async function adminDelBattle(id){if(!confirm('Delete this battle?'))return;await db.ref('battles/'+id).remove();await db.ref('comments/'+id).remove();toast('Battle deleted','info');}
 async function adminSaveName(){const n=$('#ad-name').value.trim();if(!n)return;await db.ref('meta/settings/name').set(n);SETTINGS.name=n;toast('Website name saved','success');render();}
 async function adminSaveChatName(){const n=$('#ad-cname').value.trim();if(!n)return;await db.ref('meta/settings/chatName').set(n);SETTINGS.chatName=n;toast('Chatter name saved','success');render();}
@@ -1590,7 +1735,6 @@ createDefaultBattles();
 const h=location.hash.match(/#battle=(.+)/);
 if(h){view='battle';viewParam=h[1];}
 const sess=JSON.parse(localStorage.getItem('basiler_session')||'null');
-/* ===== ADMIN IMPERSONATION (5-tap login as user) ===== */
 const impUid=isAdmin?localStorage.getItem('basiler_impersonate'):null;
 if(impUid){
 try{const u=(await db.ref('users/'+impUid).once('value')).val();
