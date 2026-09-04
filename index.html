@@ -1674,26 +1674,29 @@ function diEventsHTML(){return `<button class="di-tab active mb-3" onclick="open
 function openDiEvent(id){const ev=id?diaryEvents.find(x=>x.id===id):null;diaryEditEventId=id||null;$('#modal-root').innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal-card scale-in"><b class="font-display text-[16px] block mb-3">${ev?'✏️ Edit':'🎉 Event'}</b><label class="lbl">Date</label><input id="dv-date" type="date" class="input-field" value="${esc(ev?ev.date:localKey(new Date()))}"><label class="lbl">Title</label><input id="dv-title" class="input-field" maxlength="60" value="${esc(ev?ev.title:'')}"><button class="btn-primary w-full py-3 font-bold mt-3" onclick="saveDiEvent()">💾 Save</button></div></div>`;}
 async function saveDiEvent(){const date=$('#dv-date').value,title=$('#dv-title').value.trim();if(!date||!title)return toast('Both required','warning');if(diaryEditEventId)await db.ref('diary/'+MY.uid+'/events/'+diaryEditEventId).update({date,title});else await db.ref('diary/'+MY.uid+'/events').push({date,title,ts:Date.now()});closeModal();toast('Saved 🎉','success');}
 /* ==================================================================
-   ★ PART 9.9 — MEGA PATCH (Part 10 se PEHLE paste karo)
-   1. Drawer compact (bottom bar NAHI)   2. Corner toasts SILENT
-   3. 10 nayi animations                 4. Results: sirf ended + READ-ONLY
-   5. XP Shop: 5 categories full screen
+   ★ PART 9.9 v2 — MEGA PATCH (Part 10 se PEHLE paste karo)
+   🔇 Corner silent · 📱 Compact drawer · 🕳 Owner hidden in chat
+   + 32 NAYE FEATURES + Read-only results + Mega Shop + 10 animations
    ================================================================== */
 
-/* ---- 0: Purane VV patch ka CSS hatao (agar laga ho) ---- */
+/* ---- 0: Purana VV/bbar cleanup ---- */
 document.querySelectorAll('style').forEach(function(s){try{if(s.textContent&&s.textContent.indexOf('.vot-bbar{position:fixed')>=0)s.remove();}catch(e){}});
+setInterval(function(){try{var b=document.querySelector('.vot-bbar');if(b)b.remove();}catch(e){}},1500);
 
 /* ---- 1: CSS ---- */
 document.head.insertAdjacentHTML('beforeend',`<style>
-/* purana bottom bar kill */
-.vot-bbar{display:none!important}
-/* drawer compact — Mode/Sound/User sab chote */
-.drawer .btn-ghost{padding:5px 8px!important;font-size:11px!important;font-weight:700!important}
-.drawer .flex.gap-2.mb-2{gap:6px!important;margin-bottom:6px!important}
-.drawer .flex.items-center.gap-3.p-2{padding:3px 6px!important;gap:8px!important}
-.drawer .flex.items-center.gap-3.p-2 img{width:26px!important;height:26px!important}
-.drawer .flex.items-center.gap-3.p-2 .font-bold{font-size:12px!important}
-/* ===== ★ 10 NAYI ANIMATIONS (q9-*) ===== */
+.p99-mini{display:flex;align-items:center;gap:8px;width:100%;padding:7px 10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#F4F5FB;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;transition:.2s;position:relative;overflow:hidden}
+.p99-mini:hover{background:rgba(99,102,241,.16);border-color:rgba(129,140,248,.5)}
+.p99-me{display:flex;align-items:center;gap:10px;padding:8px 10px;background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(168,85,247,.1));border:1px solid rgba(129,140,248,.35);cursor:pointer;transition:.2s}
+.p99-me:hover{border-color:rgba(129,140,248,.7);transform:translateY(-2px)}
+.p99-me img{width:38px;height:38px;object-fit:cover;border:2px solid rgba(129,140,248,.6)}
+.p99-me .n{font-family:'Sora';font-weight:800;font-size:13px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p99-me .c{font-size:9px;color:#67E8F9;font-weight:800;margin-top:1px}
+body.day .p99-mini{background:rgba(25,28,70,.05);border-color:rgba(25,28,70,.14);color:#24253E}
+body.day .p99-me{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.3)}
+body.day .p99-me .n{color:#1B1C2A}
+body.day .p99-me .c{color:#0E7490}
+/* ===== ★ 10 NAYI ANIMATIONS ===== */
 @keyframes q9-aura{0%,100%{box-shadow:0 0 8px rgba(129,140,248,.6),0 0 20px rgba(129,140,248,.3)}50%{box-shadow:0 0 18px rgba(240,171,252,.95),0 0 42px rgba(240,171,252,.5)}}
 @keyframes q9-wave{0%,100%{transform:translateY(0)}25%{transform:translateY(-5px)}75%{transform:translateY(5px)}}
 @keyframes q9-glitch{0%,100%{text-shadow:2px 0 #F472B6,-2px 0 #67E8F9;transform:translateX(0)}20%{text-shadow:-3px 0 #F472B6,3px 0 #67E8F9;transform:translateX(2px)}40%{text-shadow:3px 0 #FCD34D,-3px 0 #F472B6;transform:translateX(-2px)}60%{text-shadow:-2px 0 #67E8F9,2px 0 #FCD34D;transform:translateX(1px)}}
@@ -1710,7 +1713,7 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .q9-rgb{animation:q9-rgb 3s linear infinite;display:inline-block}
 .q9-floatGlow{animation:q9-floatGlow 2.2s ease-in-out infinite;display:inline-block}
 .q9-borderFlow{animation:q9-borderFlow 2.4s linear infinite}
-.q9-bounceShadow{animation:q9-bounceShadow 1.6s ease-in-out infinite}
+.q9-bounceShadow{animation:q9-bounceShadow 1.6s ease-in-out infinite;display:inline-block}
 .q9-spin3d{animation:q9-spin3d 3s linear infinite;display:inline-block}
 .q9-beatGlow{animation:q9-beatGlow 1.6s ease-in-out infinite;display:inline-block}
 .q9-shine{background:linear-gradient(90deg,#F87171,#FCD34D,#6EE7B7,#67E8F9,#A78BFA,#F472B6,#F87171);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent!important;animation:q9-shineMove 3s linear infinite}
@@ -1734,52 +1737,91 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .shopframe-crown{border:2px solid #FBBF24!important;box-shadow:0 0 14px rgba(251,191,36,.85)!important;animation:a-tada 2.4s ease-in-out infinite!important}
 .shopframe-blood{border:2px solid #EF4444!important;box-shadow:0 0 14px rgba(239,68,68,.9)!important;animation:a-ringPulse 1.8s ease-out infinite!important}
 .shop-title{display:inline-block;margin-left:6px;padding:1px 7px;font-size:8.5px;font-weight:800;letter-spacing:.12em;border:1px solid currentColor;background:rgba(0,0,0,.4);vertical-align:middle}
+/* Data Saver */
+body.p99saver .glass,body.p99saver .glass-strong,body.p99saver .mobile-topbar,body.p99saver .drawer,body.p99saver .chat-header{backdrop-filter:none!important}
+body.p99saver .hero-blob,body.p99saver .di-blob,body.p99saver .hglow,body.p99saver .hero-glow{display:none!important}
 </style>`);
 
-/* ---- 2: Stray bottom bar hatao (agar kahin bhi ban jaye) ---- */
-setInterval(function(){try{var b=document.querySelector('.vot-bbar');if(b)b.remove();}catch(e){}},1000);
-
-/* ---- 3: 🔇 SILENT corner toasts (vote/save/follow waghera pe koi text NAHI) ---- */
-var _q9_toast=toast;
+/* ==================================================================
+   🔇 FIX 1: CORNER SILENT — "Ek second ruko"/"Vote changed" waghera
+   corner me KUCH nahi dikhega (sirf rare error rehta hai)
+   ================================================================== */
+var _p99toast=toast;
 toast=function(msg,type){
   type=type||'info';
-  var s=String(msg);
-  if(/^(Already voted this option|Battle has ended|Battle still live|Already spun today)/.test(s))return;
-  if((type==='info'||type==='success')&&!/^(💬|📶|📴|👑|📢)/.test(s))return;
-  return _q9_toast(msg,type);
+  if(type!=='error')return;   /* <- agar errors bhi nahi chahiye to is line ko: if(1)return; kar do */
+  return _p99toast(msg,type);
 };
 
-/* ---- 4: 📊 READ-ONLY ended battles (na vote, na comment) ---- */
-var _q9_voteOrig=vote;
-vote=async function(bid,oi){var b=allBattles[bid];if(b&&Date.now()>(b.endsAt||0))return;return _q9_voteOrig(bid,oi);};
-var _q9_pcOrig=postComment;
-postComment=async function(){var b=allBattles[battleListenId];if(b&&Date.now()>(b.endsAt||0))return;return _q9_pcOrig();};
-var _q9_gfOrig=_GFnow;
-_GFnow=function(){_q9_gfOrig();try{_q9_roPatch();}catch(e){}};
-function _q9_roPatch(){
-  if(view!=='battle'||!viewParam)return;
-  var b=allBattles[viewParam];if(!b)return;
-  if(Date.now()<=(b.endsAt||0))return;
-  var inp=document.getElementById('cmt-inp');
-  if(inp&&inp.parentElement&&inp.parentElement.style.display!=='none'){
-    inp.parentElement.style.display='none';
-    if(!document.getElementById('q9ronote')){
-      var box=inp.parentElement.parentElement;
-      if(box){
-        var n=document.createElement('div');
-        n.id='q9ronote';n.className='glass p-3';
-        n.style.cssText='text-align:center;border-color:rgba(251,191,36,.35);font-size:12px;color:rgba(255,255,255,.6)';
-        n.innerHTML='🔒 <b style="color:#FCD34D">Ended Battle</b> — read-only · voting &amp; comments locked';
-        box.insertBefore(n,inp.parentElement);
+/* ==================================================================
+   📱 FIX 2: COMPACT DRAWER — neeche account+frame, upar SIRF 2 buttons
+   ================================================================== */
+drawerHTML=function(){
+  var fr=(MY.shop&&MY.shop.frames)?('shopframe-'+MY.shop.frames):'';
+  return '<div class="drawer-back" id="drawer-back" onclick="closeDrawer()"></div>'+
+  '<div class="drawer" id="drawer">'+
+  '<div class="flex items-center gap-3 px-1 pb-4 cursor-pointer" onclick="closeDrawer();navTo(\'home\')">'+
+  '<div class="w-10 h-10 gradient-brand flex items-center justify-center glow-brand"><i data-lucide="swords" class="w-5 h-5 text-white"></i></div>'+
+  '<div><div class="font-display font-extrabold text-[16px]">'+esc(SETTINGS.name)+'</div><div class="text-[9px] tracking-[.2em] text-white/35 font-bold">OPINION ARENA</div></div></div>'+
+  navItems().map(navLinkHTML).join('')+
+  '<div class="drawer-tools">'+drawerToolsHTML()+'</div>'+
+  '<div style="margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:6px">'+
+  '<button class="p99-mini" onclick="_p99mode()">'+(isDay?'<i data-lucide="sun" class="w-4 h-4"></i><span>☀️ Day Mode</span>':'<i data-lucide="moon" class="w-4 h-4"></i><span>🌙 Night Mode</span>')+'</button>'+
+  '<button class="p99-mini" id="p99sndbtn" onclick="_p99snd(this)"><i data-lucide="'+(soundOn?'volume-2':'volume-x')+'" class="w-4 h-4"></i><span>Sound '+(soundOn?'ON':'OFF')+'</span></button>'+
+  '<div class="p99-me" onclick="closeDrawer();navTo(\'profile\')">'+
+  '<img src="'+(MY.avatar||AVATAR_PRESETS[0])+'" class="'+fr+'">'+
+  '<div style="min-width:0;flex:1"><div class="n">'+esc(MY.name)+'</div><div class="c">'+userCode(MY.uid)+' · ⚡'+fmt(MY.xp||0)+' XP</div></div>'+
+  '<i data-lucide="chevron-right" class="w-4 h-4 text-white/25"></i></div>'+
+  '</div></div>';
+};
+function _p99mode(){toggleDayNight();setTimeout(function(){try{var d=document.getElementById('drawer'),b=document.getElementById('drawer-back');if(d){d.classList.add('open');if(b)b.classList.add('open');}}catch(e){}},260);}
+function _p99snd(btn){toggleSound();if(btn){btn.innerHTML='<i data-lucide="'+(soundOn?'volume-2':'volume-x')+'" class="w-4 h-4"></i><span>Sound '+(soundOn?'ON':'OFF')+'</span>';lucide.createIcons();}}
+
+/* ==================================================================
+   🕳 FIX 3: OWNER chat me HIDDEN (green bubble + tag + 👑 sab gayab)
+   ================================================================== */
+var _p99rcm=renderChatMsgs;
+renderChatMsgs=function(){
+  _p99rcm();
+  try{
+    var el=document.getElementById('chat-msgs');if(!el)return;
+    el.querySelectorAll('.msg-bubble.owner-b').forEach(function(b){b.classList.remove('owner-b');});
+    el.querySelectorAll('.owner-tag').forEach(function(t){t.remove();});
+    if(el.innerHTML.indexOf(' 👑<')>=0)el.innerHTML=el.innerHTML.split(' 👑<').join('<');
+    /* F5: seen-ticks (DM me blue ✓✓) */
+    if(chatMode==='dm'&&window._p99seen){
+      var rows=el.querySelectorAll('.msg-row');
+      var vis=chatMsgs.filter(function(m){return !bannedUsers.has(m.uid);});
+      for(var i=0;i<rows.length&&i<vis.length;i++){
+        if(!rows[i].classList.contains('mine'))continue;
+        var m=vis[i];
+        if(m.ts&&m.ts<=window._p99seen){var td=rows[i].querySelector('.text-white\\/25');if(td)td.style.color='#38BDF8';}
       }
     }
-  }
-}
+  }catch(e){}
+};
+var _p99ac=attachChat;
+attachChat=function(){
+  _p99ac();
+  try{
+    if(chatMode==='dm'&&dmTarget){
+      db.ref('reads/'+MY.uid+'/'+dmTarget.uid).set(Date.now());
+      if(window._p99seenRef){try{db.ref(window._p99seenRef).off('value',window._p99seenFn);}catch(e){}}
+      window._p99seenRef='reads/'+dmTarget.uid+'/'+MY.uid;
+      window._p99seenFn=db.ref(window._p99seenRef).on('value',function(s){window._p99seen=s.val()||0;try{renderChatMsgs();}catch(e){}},function(){});
+    }else{window._p99seen=0;}
+  }catch(e){}
+};
 
-/* ---- 5: ⚔️ Time khatam = result TURANT (sirf ended/admin-finished) ----
-   Ended battles DB me rehte hain taake result pe click karke poora view khule (read-only) */
+/* ==================================================================
+   📊 FIX 4: READ-ONLY results + instant archive (sirf ended/early)
+   ================================================================== */
+var _p99voteRO=vote;
+vote=async function(bid,oi){var b=allBattles[bid];if(b&&Date.now()>(b.endsAt||0))return;return _p99voteRO(bid,oi);};
+var _p99pcRO=postComment;
+postComment=async function(){var b=allBattles[battleListenId];if(b&&Date.now()>(b.endsAt||0))return;return _p99pcRO();};
 cleanupExpired=async function(){};
-async function _q9_archive(){
+async function _p99archive(){
   if(!MY||!dataReady||!dataReady.battles)return;
   var now=Date.now();
   for(var id in allBattles){
@@ -1801,14 +1843,13 @@ async function _q9_archive(){
     _finishLock.delete(id);
   }
 }
-setInterval(_q9_archive,15000);
-/* Admin Finish — battle DELETE nahi (read-only view ke liye rakha jata hai) */
+setInterval(_p99archive,15000);
 adminFinishNow=async function(id){
   if(!isAdmin)return toast('Admins only','error');
-  if(_finishLock.has(id))return toast('Already being finished…','warning');
+  if(_finishLock.has(id))return;
   var b=allBattles[id];if(!b)return;
-  if(archivedResults[id])return toast('Already finished!','warning');
-  if(Date.now()>(b.endsAt||0))return toast('Battle already ended','warning');
+  if(archivedResults[id])return;
+  if(Date.now()>(b.endsAt||0))return;
   if(!confirm('Finish this battle NOW?'))return;
   _finishLock.add(id);
   var counts=(b.options||[]).map(function(o){return Object.keys(o.votes||{}).length;});
@@ -1825,18 +1866,16 @@ adminFinishNow=async function(id){
   _finishLock.delete(id);
   lbView='results';navTo('leaderboard');
 };
-
-/* ---- 6: Results CLICKABLE → battle khule (read-only) ya detail modal ---- */
 resBox=function(id,r){
   var cat=catOf(r.category),creator=allUsers[r.creator];
-  return '<div class="glass card-hover res-box" onclick="_q9_openResult(\''+id+'\')">'+
+  return '<div class="glass card-hover res-box" onclick="_p99openResult(\''+id+'\')">'+
   '<div class="flex items-center gap-1 flex-wrap mb-1.5"><span class="badge" style="color:'+cat.color+';border-color:'+cat.color+'44"><i data-lucide="'+cat.icon+'" class="w-3 h-3"></i>'+cat.name+'</span>'+(r.endedEarly?'<span class="badge" style="color:#F59E0B">⚡ Early</span>':'')+'</div>'+
   '<div class="font-display font-bold text-[13px] clamp2 mb-2">'+esc(r.title)+'</div>'+
   '<div class="glass p-2 text-center mb-2" style="border-color:rgba(251,191,36,.35)"><div class="text-[8.5px] uppercase tracking-widest text-white/45 font-extrabold">🏆 Winner</div><div class="font-display font-extrabold text-[14px] q9-shine clamp2">'+esc(r.winner||'Tie')+'</div></div>'+
   '<div class="mt-auto"><div class="text-[11.5px] font-bold text-white/55">🗳 '+fmt(r.total)+' votes</div>'+
   '<div class="flex items-center gap-1.5 mt-1.5 min-w-0">'+(creator?'<img src="'+(creator.avatar||AVATAR_PRESETS[0])+'" class="w-6 h-6 object-cover cursor-pointer" onclick="event.stopPropagation();openUser(\''+r.creator+'\')"><b class="text-[10.5px] text-white/60 truncate cursor-pointer" onclick="event.stopPropagation();openUser(\''+r.creator+'\')">'+esc(r.creatorName||creator.name)+'</b>':(r.creatorName?'<span class="text-[10.5px] text-white/40 truncate">by '+esc(r.creatorName)+'</span>':''))+'</div></div></div>';
 };
-function _q9_openResult(id){
+function _p99openResult(id){
   if(allBattles[id]){openBattle(id);return;}
   var r=archivedResults[id];if(!r)return;
   var cat=catOf(r.category);
@@ -1851,7 +1890,9 @@ function _q9_openResult(id){
   lucide.createIcons();
 }
 
-/* ---- 7: 🛒 MEGA XP SHOP (5 categories × 15+, full screen page) ---- */
+/* ==================================================================
+   🛒 MEGA XP SHOP (5 categories × 15+)
+   ================================================================== */
 window._q9_shopTab=window._q9_shopTab||'colors';
 var _q9_shop={
 colors:[{id:'fire',c:'#F87171',n:'🔥 Fire Red',p:800},{id:'ice',c:'#60A5FA',n:'❄️ Ice Blue',p:800},{id:'golden',c:'#FCD34D',n:'⚡ Golden',p:1000},{id:'royal',c:'#A78BFA',n:'💜 Royal Purple',p:1000},{id:'emerald',c:'#6EE7B7',n:'💚 Emerald',p:1200},{id:'pink',c:'#F472B6',n:'🌸 Bubblegum',p:1200},{id:'sunset',c:'#FB923C',n:'🌅 Sunset Orange',p:1500},{id:'ocean',c:'#22D3EE',n:'🌊 Ocean Cyan',p:1500},{id:'crimson',c:'#EF4444',n:'🔴 Crimson',p:1800},{id:'silver',c:'#CBD5E1',n:'🥈 Silver',p:1800},{id:'mint',c:'#34D399',n:'🌿 Mint Green',p:2000},{id:'magenta',c:'#E879F9',n:'💜 Hot Magenta',p:2000},{id:'electric',c:'#FDE047',n:'⚡ Electric Yellow',p:2500},{id:'sky',c:'#7DD3FC',n:'☁️ Sky Blue',p:2500},{id:'violet',c:'#8B5CF6',n:'🔮 Violet',p:3000},{id:'rainbow',c:'',n:'🌈 Rainbow (animated)',p:6000},{id:'galaxy',c:'',n:'🌌 Galaxy (animated)',p:8000}],
@@ -1862,7 +1903,8 @@ bubbles:[{id:'pink',c:'#DB2777',n:'🌸 Pink Bubble',p:1500},{id:'purple',c:'#7C
 };
 var _q9_fx={glow:'a-glowText',neon:'a-neonFlick',wave:'q9-wave',vibrate:'a-vibrate',pulse:'a-pulseHard',blink:'a-blink',bob:'a-bob',wiggle:'a-wiggle',heart:'a-heartbeat',tada:'a-tada',jelly:'a-jelly',rainbow:'q9-shine',spin3d:'q9-spin3d',rgbflow:'q9-rgb',glitch:'q9-glitch'};
 var _q9_frames=['gold','diamond','fire','neon','ice','emerald','shadow','toxic','royal','sunset','love','thunder','frozen','venom','galaxy','crown','blood'];
-
+function _p99col(id){var a=(_q9_shop.colors||[]).filter(function(x){return x.id===id;});return a[0]?a[0].c:'';}
+function _p99bubc(id){var a=(_q9_shop.bubbles||[]).filter(function(x){return x.id===id;});return a[0]?a[0].c:'';}
 pageShop=function(){
   var shop=MY.shop||{},owned=shop.owned||{},bal=MY.xp||0;
   var cat=window._q9_shopTab||'colors';
@@ -1899,11 +1941,11 @@ pageShop=function(){
   '<div class="glass p-3 mt-6 text-center text-[11.5px] text-white/40">XP kamao: voting ⚡ battles ⚔ daily spin 🎡 gifts 🎁</div></div>';
 };
 buyShop=async function(cat,id){
-  var it=(_q9_shop[cat]||[]).find(function(x){return x.id===id;});
+  var it=(_q9_shop[cat]||[]).filter(function(x){return x.id===id;})[0];
   if(!it)return;
   var owned=((MY.shop||{}).owned)||{};
   if(owned[cat+'_'+id])return;
-  if((MY.xp||0)<it.p)return toast('XP kam hai! '+fmt(it.p)+' XP chahiye','warning');
+  if((MY.xp||0)<it.p)return;
   try{
     var u={xp:(MY.xp||0)-it.p};
     u['shop/owned/'+cat+'_'+id]=Date.now();
@@ -1913,18 +1955,17 @@ buyShop=async function(cat,id){
     MY.shop.owned=Object.assign({},(MY.shop.owned||{}));
     MY.shop.owned[cat+'_'+id]=Date.now();
     fireConfetti();beep();render();
-  }catch(e){toast('Purchase failed','error');}
+  }catch(e){}
 };
 shopStyleChat=function(){
   if(!MY)return;
-  var fxAll=Object.keys(_q9_fx).map(function(k){return _q9_fx[k];}).concat(['q9-galaxy']);
+  var fxAll=Object.keys(_q9_fx).map(function(k){return _q9_fx[k];}).concat(['q9-galaxy','q9-shine','rainbow-name']);
   var frAll=_q9_frames.map(function(f){return 'shopframe-'+f;});
   document.querySelectorAll('#chat-msgs .msg-row').forEach(function(row){
     var av=row.querySelector('.msg-av');
     var om=((av&&av.getAttribute('onclick'))||'').match(/openUserModal\('([^']+)'\)/);
     if(!om)return;
-    var uid=om[1];
-    var u=(uid===MY.uid)?MY:(allUsers[uid]||{});
+    var u=(om[1]===MY.uid)?MY:(allUsers[om[1]]||{});
     var sp=(u&&u.shop)||{};
     if(sp.frames&&av){av.classList.remove.apply(av.classList,frAll);av.classList.add('shopframe-'+sp.frames);}
     var nameEl=row.querySelector('.msg-body > .font-extrabold');
@@ -1933,7 +1974,7 @@ shopStyleChat=function(){
       nameEl.style.color='';
       if(sp.colors==='rainbow')nameEl.classList.add('q9-shine');
       else if(sp.colors==='galaxy')nameEl.classList.add('q9-galaxy');
-      else if(sp.colors)nameEl.style.color=sp.colors;
+      else if(sp.colors)nameEl.style.color=_p99col(sp.colors)||'';
       if(sp.effects&&_q9_fx[sp.effects])nameEl.classList.add(_q9_fx[sp.effects]);
       if(sp.titles&&!nameEl.querySelector('.shop-title')){
         var b=document.createElement('span');b.className='shop-title';b.textContent=sp.titles;
@@ -1941,50 +1982,411 @@ shopStyleChat=function(){
       }
     }
     row.querySelectorAll('.msg-bubble').forEach(function(bub){
-      if(sp.bubbles){bub.style.background=sp.bubbles;bub.style.color='#fff';}
+      if(sp.bubbles){bub.style.background=_p99bubc(sp.bubbles)||'';bub.style.color='#fff';}
       else bub.style.background='';
     });
   });
 };
 shopStyleComments=function(){
   if(!MY)return;
-  var fxAll=Object.keys(_q9_fx).map(function(k){return _q9_fx[k];}).concat(['q9-galaxy']);
+  var fxAll=Object.keys(_q9_fx).map(function(k){return _q9_fx[k];}).concat(['q9-galaxy','q9-shine','rainbow-name']);
   document.querySelectorAll('#cmt-list .fade-up').forEach(function(row){
     var img=row.querySelector('img');
     var m=((img&&img.getAttribute('onclick'))||'').match(/openUserModal\('([^']+)'\)/);
     if(!m)return;
-    var u=allUsers[m[1]]||{};
-    var sp=u.shop||{};
+    var sp=(allUsers[m[1]]||{}).shop||{};
     var b=row.querySelector('.glass b');
     if(!b)return;
     b.classList.remove.apply(b.classList,fxAll);
     b.style.color='';
     if(sp.colors==='rainbow')b.classList.add('q9-shine');
     else if(sp.colors==='galaxy')b.classList.add('q9-galaxy');
-    else if(sp.colors)b.style.color=sp.colors;
+    else if(sp.colors)b.style.color=_p99col(sp.colors)||'';
     if(sp.effects&&_q9_fx[sp.effects])b.classList.add(_q9_fx[sp.effects]);
     if(sp.titles&&!b.querySelector('.shop-title')){var t=document.createElement('span');t.className='shop-title';t.textContent=sp.titles;b.appendChild(t);}
   });
 };
-var _q9_oum=openUserModal;
-openUserModal=function(uid){
-  _q9_oum(uid);
+
+/* ==================================================================
+   🎁 32 NAYE FEATURES
+   ================================================================== */
+/* F1: Auto Day/Night by time (pehli dafa) */
+try{if(localStorage.getItem('basiler_daynight')===null){var _hr=new Date().getHours();isDay=(_hr>=6&&_hr<19);localStorage.setItem('basiler_daynight',isDay?'day':'night');applyDayNight();}}catch(e){}
+
+/* F2: Keyboard shortcuts */
+document.addEventListener('keydown',function(e){
+  if(!MY)return;
+  var t=e.target;
+  if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  var k=e.key.toLowerCase();
+  var m={h:'home',d:'discover',c:'chat',l:'leaderboard',b:'create',p:'profile'};
+  if(m[k]){e.preventDefault();navTo(m[k]);}
+  else if(k==='t'){e.preventDefault();navTo('tools','hub');}
+  else if(k==='s'){e.preventDefault();openGSearch();}
+});
+
+/* F3: Double-tap battle option = instant vote */
+document.addEventListener('dblclick',function(e){
+  if(view!=='battle'||!viewParam)return;
+  var tile=e.target.closest('.option-tile');
+  if(!tile||tile.classList.contains('ended'))return;
+  var cont=document.getElementById('battle-opts');if(!cont)return;
+  var idx=Array.prototype.indexOf.call(cont.children,tile);
+  if(idx>=0)vote(viewParam,idx);
+});
+
+/* F4: UID chip tap = copy */
+document.addEventListener('click',function(e){
+  var chip=e.target.closest('.uid-chip');if(!chip)return;
+  try{navigator.clipboard.writeText(chip.textContent.trim());}catch(x){}
+  if(navigator.vibrate)navigator.vibrate(40);
+});
+
+/* F7: Tap message bubble = quick ❤️ react */
+document.addEventListener('click',function(e){
+  if(view!=='chat')return;
+  var bub=e.target.closest('.msg-bubble');if(!bub)return;
+  if(e.target.closest('img,button,.mention'))return;
+  var row=bub.closest('.msg-row');
+  if(!row||row.classList.contains('mine'))return;
+  var list=document.getElementById('chat-msgs');if(!list)return;
+  var rows=Array.prototype.slice.call(list.querySelectorAll('.msg-row'));
+  var vis=chatMsgs.filter(function(m){return !bannedUsers.has(m.uid);});
+  var m=vis[rows.indexOf(row)];
+  if(m&&!m.pending)reactMsg(m.id,'❤️');
+});
+
+/* F9: Pull-to-refresh home */
+(function(){
+  var sy=0,pulling=false;
+  document.addEventListener('touchstart',function(e){if(view==='home'){sy=e.touches[0].clientY;pulling=(window.scrollY<=0);}},{passive:true});
+  document.addEventListener('touchend',function(e){
+    if(pulling&&view==='home'){
+      var dy=(e.changedTouches[0].clientY-sy);
+      if(dy>90){render();if(navigator.vibrate)navigator.vibrate(30);}
+    }
+    pulling=false;
+  },{passive:true});
+})();
+
+/* F12: 45-min rest reminder */
+(function _p99rest(){setTimeout(function(){if(MY){beep();flyXP('😴 45 min ho gaye — thora rest!');}_p99rest();},45*60000);})();
+
+/* F18: Long-press battle image = fullscreen zoom */
+(function(){
+  var t=null;
+  document.addEventListener('touchstart',function(e){
+    if(view!=='battle')return;
+    var img=e.target.closest('.option-tile img');if(!img)return;
+    t=setTimeout(function(){viewImg(img.src);t=null;},600);
+  },{passive:true});
+  ['touchend','touchmove','touchcancel'].forEach(function(ev){document.addEventListener(ev,function(){if(t){clearTimeout(t);t=null;}},{passive:true});});
+})();
+
+/* F5(part2),F6,F8,F20,F30: sendChat enhancements */
+var _p99sc=sendChat;
+sendChat=async function(){
   try{
-    var u=(MY&&uid===MY.uid)?MY:(allUsers[uid]||{});
-    var sp=(u&&u.shop)||{};
-    var card=document.querySelector('#modal-root .modal-card');
-    if(!card)return;
-    if(sp.frames){var img=card.querySelector('img');if(img){img.classList.remove.apply(img.classList,_q9_frames.map(function(f){return 'shopframe-'+f;}));img.classList.add('shopframe-'+sp.frames);}}
-    var h3=card.querySelector('h3');
-    if(h3){
-      h3.classList.remove.apply(h3.classList,Object.keys(_q9_fx).map(function(k){return _q9_fx[k];}).concat(['q9-galaxy','q9-shine','rainbow-name']));
-      if(sp.colors==='rainbow')h3.classList.add('q9-shine');
-      else if(sp.colors==='galaxy')h3.classList.add('q9-galaxy');
-      if(sp.effects&&_q9_fx[sp.effects])h3.classList.add(_q9_fx[sp.effects]);
+    var inp=document.getElementById('chat-inp');
+    var raw=inp?inp.value.trim():'';
+    var txt=raw.replace(/\/shrug\b/g,'¯\\_(ツ)_/¯').replace(/\/tableflip\b/g,'(╯°□°）╯︵ ┻━┻').replace(/\/wave\b/g,'👋').replace(/\/lol\b/g,'😂').replace(/\/heart\b/g,'❤️');
+    if(inp&&txt!==raw)inp.value=txt;
+    if(txt&&window._p99lt===txt&&Date.now()-(window._p99ltt||0)<10000)return;
+    if(txt){window._p99lt=txt;window._p99ltt=Date.now();}
+    if(navigator.vibrate)navigator.vibrate(25);
+    window._p99mn=(window._p99mn||0)+1;
+    if(window._p99mn%10===0)fireConfetti();
+  }catch(e){}
+  return _p99sc();
+};
+
+/* F10,F11,F14,F20: vote enhancements */
+var _p99vote2=vote;
+vote=async function(bid,oi){
+  var r=await _p99vote2(bid,oi);
+  try{
+    var b=allBattles[bid];
+    if(b&&Date.now()<=(b.endsAt||0)){
+      if(navigator.vibrate)navigator.vibrate(30);
+      window._p99vn=(window._p99vn||0)+1;
+      if(window._p99vn%5===0)fireConfetti();
+      if(window._p99boost&&Date.now()<window._p99boost){
+        try{await db.ref('users/'+MY.uid+'/xp').transaction(function(v){return (v||0)+10;});flyXP('💊 +10 Bonus XP');}catch(e){}
+      }
+    }
+  }catch(e){}
+  return r;
+};
+
+/* F19: vibrate on follow */
+var _p99tf=toggleFollow;
+toggleFollow=async function(uid){if(navigator.vibrate)navigator.vibrate(30);return _p99tf(uid);};
+
+/* F14: XP booster after spin */
+var _p99spin=doSpinPage;
+doSpinPage=async function(){window._p99boost=Date.now()+10*60000;return _p99spin();};
+
+/* F24: Level-up full-screen flash */
+checkLevelUp=function(o,n){
+  if(levelOf(n)>levelOf(o)){
+    var d=document.createElement('div');
+    d.style.cssText='position:fixed;inset:0;z-index:9998;background:rgba(4,5,10,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;animation:scaleIn .3s both;pointer-events:none';
+    d.innerHTML='<div class="text-6xl mb-3 q9-beatGlow">🎉</div><div class="font-display font-extrabold text-4xl q9-shine">LEVEL UP!</div><div class="font-display font-extrabold text-2xl mt-2" style="color:#FCD34D">Level '+levelOf(n)+'</div>';
+    document.body.appendChild(d);
+    setTimeout(function(){d.remove();},2200);
+    fireConfetti();beep();
+  }
+};
+
+/* F15: Draft auto-save */
+try{
+  var dr=JSON.parse(localStorage.getItem('p99draft')||'null');
+  if(dr){createTitle=dr.t||'';createTags=dr.g||'';if(dr.a!=null)createOpts[0].label=dr.a||'';if(dr.b!=null)createOpts[1].label=dr.b||'';}
+}catch(e){}
+setInterval(function(){try{if(view==='create'&&MY){localStorage.setItem('p99draft',JSON.stringify({t:createTitle,g:createTags,a:createOpts[0].label,b:createOpts[1].label}));}}catch(e){}},2000);
+
+/* F16: Surprise Me in Tools Hub */
+var _p99hub=pageToolHub;
+pageToolHub=function(){
+  var h=_p99hub();
+  var btn='<div class="glass p-4 mt-4 text-center cursor-pointer card-hover" style="border-color:rgba(236,72,153,.4)" onclick="_p99surprise()"><div class="text-3xl mb-1 q9-bounceShadow">🎲</div><div class="font-display font-bold text-[15px]">Surprise Me!</div><div class="text-[11px] text-white/45">Random theme + wallpaper combo</div></div>';
+  return h.replace('more coming soon ✨</div>','more coming soon ✨'+btn+'</div>');
+};
+function _p99surprise(){
+  localChatTheme=Math.floor(Math.random()*CHAT_THEMES.length);
+  chatWall=Math.floor(Math.random()*CHAT_WALLS.length);
+  localStorage.setItem('basiler_chattheme',localChatTheme);
+  localStorage.setItem('basiler_wall',chatWall);
+  fireConfetti();beep();render();
+}
+
+/* F17: Recent searches */
+var _p99gs=gsRunPage;
+gsRunPage=function(q){
+  if(q&&q.trim().length>2){
+    try{
+      var r=JSON.parse(localStorage.getItem('p99searches')||'[]');
+      r=r.filter(function(x){return x!==q;});
+      r.unshift(q);r=r.slice(0,6);
+      localStorage.setItem('p99searches',JSON.stringify(r));
+    }catch(e){}
+  }
+  return _p99gs(q);
+};
+
+/* F21/F24b: Tab title — countdown + unread count */
+setInterval(function(){
+  if(!MY){document.title='Votify — Opinion Arena';return;}
+  var pre='';
+  var dmN=notifs.filter(function(n){return n.ts>notifLastRead&&n.type==='dm';}).length;
+  if(dmN)pre='('+dmN+') ';
+  if(view==='battle'&&viewParam&&allBattles[viewParam]&&Date.now()<=(allBattles[viewParam].endsAt||0)){
+    document.title=pre+'⏱ '+timeLeft(allBattles[viewParam].endsAt)+' · Votify';
+    return;
+  }
+  document.title=pre+'Votify — Opinion Arena';
+},3000);
+
+/* F26: Data Saver (chat settings me toggle) */
+var _p99rcs=renderChatSettings;
+renderChatSettings=function(){
+  _p99rcs();
+  try{
+    var r=document.getElementById('chat-modal-root');
+    var card=r?r.querySelector('.center-card'):null;
+    if(card&&!document.getElementById('p99ds')){
+      var b=document.createElement('button');b.id='p99ds';b.className='s-set';
+      var on=localStorage.getItem('p99saver')==='1';
+      b.innerHTML='<i data-lucide="zap-off" class="w-[18px] h-[18px]"></i><span>🐢 Data Saver '+(on?'ON':'OFF')+'</span>';
+      b.onclick=function(){
+        var n=localStorage.getItem('p99saver')==='1'?'0':'1';
+        localStorage.setItem('p99saver',n);
+        document.body.classList.toggle('p99saver',n==='1');
+        renderChatSettings();
+      };
+      card.appendChild(b);lucide.createIcons();
     }
   }catch(e){}
 };
-/* ================== PART 9.9 END ================== *//* ==================== VOTIFY FRESH BUILD — Part 10/10 (FINAL) ==================== */
+try{document.body.classList.toggle('p99saver',localStorage.getItem('p99saver')==='1');}catch(e){}
+
+/* F31: Sound ping jab aapki battle pe vote aaye */
+var _p99sa=startApp;
+startApp=function(me){
+  _p99sa(me);
+  try{
+    if(!window._p99vp){
+      window._p99vp=true;
+      setInterval(function(){
+        try{
+          if(!MY)return;
+          var tot=0;
+          Object.values(allBattles).forEach(function(b){if(b&&b.creator===MY.uid)tot+=votesOf(b);});
+          if(window._p99vt!=null&&tot>window._p99vt)beep();
+          window._p99vt=tot;
+        }catch(e){}
+      },5000);
+    }
+  }catch(e){}
+};
+
+/* ===== MASTER POST-RENDER (F13,F22,F23,F27,F28,F29,F32 + RO note) ===== */
+var _p99gf=_GFnow;
+_GFnow=function(){_p99gf();try{_p99post();}catch(e){}};
+function _p99post(){
+  if(!MY)return;
+  var mc=document.querySelector('.main-content');if(!mc)return;
+
+  if(view==='home'){
+    /* F27: Greeting */
+    if(!document.getElementById('p99hi')){
+      var hr=new Date().getHours();
+      var em=hr<5?'🌙':hr<12?'🌅':hr<17?'☀️':hr<21?'🌆':'🌙';
+      var g=hr<5?'Good night':hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
+      var d=document.createElement('div');d.id='p99hi';d.className='glass p-3 mb-4 flex items-center gap-2.5';
+      d.innerHTML='<span class="text-2xl">'+em+'</span><div><b class="font-display text-[14px]">'+g+', '+esc(MY.name)+'!</b><div class="text-[10.5px] text-white/40">⚡ '+fmt(MY.xp||0)+' XP · 🔥 '+(MY.streakDays||0)+'-day streak</div></div>';
+      mc.insertBefore(d,mc.firstChild);
+    }
+    /* F29: Daily gift box */
+    if(!document.getElementById('p99gift')){
+      var tk=localKey(new Date());
+      if(localStorage.getItem('p99gift')!==tk){
+        var gd=document.createElement('div');gd.id='p99gift';
+        gd.className='glass-strong p-4 mb-5 flex items-center gap-3 cursor-pointer card-hover';
+        gd.style.cssText='border-color:rgba(236,72,153,.5)';
+        gd.innerHTML='<div class="text-3xl q9-bounceShadow">🎁</div><div class="flex-1"><b class="font-display text-[15px]">Daily Mystery Gift</b><div class="text-[11px] text-white/45">Ek baar kholo — 10 se 50 XP!</div></div><span class="btn-primary px-4 py-2 font-bold text-[12px]" style="background:linear-gradient(135deg,#EC4899,#F43F5E)">Open</span>';
+        gd.onclick=async function(){
+          var amt=10+Math.floor(Math.random()*41);
+          try{await db.ref('users/'+MY.uid+'/xp').transaction(function(v){return (v||0)+amt;});}catch(e){}
+          localStorage.setItem('p99gift',tk);
+          gd.remove();fireConfetti();beep();flyXP('🎁 +'+amt+' XP!');
+          MY.xp=(MY.xp||0)+amt;render();
+        };
+        var hi=document.getElementById('p99hi');
+        if(hi)hi.insertAdjacentElement('afterend',gd);
+      }
+    }
+    /* F23: People to follow */
+    if(!document.getElementById('p99sugg')){
+      var strip=mc.querySelector('.live-strip');
+      if(strip){
+        var cand=Object.entries(allUsers).filter(function(x){return x[0]!==MY.uid&&x[0]!=='system'&&!bannedUsers.has(x[0])&&!myFollowing.has(x[0]);}).sort(function(a,b){return (b[1].followersCount||0)-(a[1].followersCount||0);}).slice(0,6);
+        if(cand.length){
+          var sd=document.createElement('div');sd.id='p99sugg';sd.className='mb-5';
+          sd.innerHTML='<div class="flex items-center gap-2 mb-2.5"><i data-lucide="user-plus" class="w-4 h-4 text-pink-400"></i><b class="font-display text-[15px]">People to Follow</b></div><div class="flex gap-3 overflow-x-auto pb-2">'+cand.map(function(x){var u=x[1];return '<div class="glass p-3 text-center cursor-pointer card-hover" style="min-width:110px" onclick="openUser(\''+x[0]+'\')"><img src="'+(u.avatar||AVATAR_PRESETS[0])+'" class="w-12 h-12 object-cover mx-auto mb-1.5" style="border:2px solid '+colorFor(x[0])+'"><b class="text-[11.5px] block truncate">'+esc(u.name)+'</b><span class="text-[9.5px] text-white/40">👥 '+(u.followersCount||0)+'</span><div><button class="a-btn gift mt-1.5" style="font-size:10px;padding:3px 9px" onclick="event.stopPropagation();toggleFollow(\''+x[0]+'\')">➕ Follow</button></div></div>';}).join('')+'</div>';
+          strip.insertAdjacentElement('afterend',sd);
+          lucide.createIcons();
+        }
+      }
+    }
+    /* F32: HOT badge (10+ votes) */
+    document.querySelectorAll('#home-list .glass').forEach(function(card){
+      if(card.dataset.p99hot)return;card.dataset.p99hot='1';
+      var m=(card.getAttribute('onclick')||'').match(/openBattle\('([^']+)'\)/);if(!m)return;
+      var b=allBattles[m[1]];if(!b)return;
+      if(votesOf(b)>=10){
+        var t=card.querySelector('.clamp2');
+        if(t){var s=document.createElement('span');s.className='badge';s.style.cssText='color:#F97316;border-color:rgba(249,115,22,.5);margin-left:6px;vertical-align:middle;font-size:9px';s.textContent='🔥 HOT';t.appendChild(s);}
+      }
+    });
+  }
+
+  if(view==='battle'&&viewParam){
+    var b=allBattles[viewParam];
+    if(b){
+      /* F13: Momentum badge */
+      var h1=mc.querySelector('.glass-strong h1');
+      if(h1&&!document.getElementById('p99mom')){
+        var now=Date.now(),H=3600000,rec=0,old=0;
+        (b.options||[]).forEach(function(o){Object.values(o.votes||{}).forEach(function(ts){if(ts){if(now-ts<H)rec++;else if(now-ts<2*H)old++;}});});
+        var s=document.createElement('span');s.id='p99mom';s.className='badge';
+        if(rec>old){s.style.cssText='color:#10B981;border-color:rgba(16,185,129,.5)';s.textContent='📈 Rising ('+rec+'/h)';}
+        else if(rec===0&&old>0){s.style.cssText='color:#F43F5E';s.textContent='📉 Cooling';}
+        else{s.style.cssText='color:#FBBF24';s.textContent='➡ Steady';}
+        h1.parentElement.insertBefore(s,h1);
+      }
+      /* F22: Vote goal bar */
+      if(!document.getElementById('p99goal')){
+        var total=votesOf(b),goal=50,pct=Math.min(100,Math.round(total/goal*100));
+        var host=mc.querySelector('.cd-wrap')?mc.querySelector('.cd-wrap').parentElement:mc.querySelector('.glass-strong');
+        if(host){
+          var gb=document.createElement('div');gb.id='p99goal';gb.className='glass p-3 mt-3';
+          gb.innerHTML='<div class="flex justify-between text-[11px] font-bold mb-1.5"><span>🎯 Vote Goal</span><span style="color:'+(pct>=100?'#10B981':'#FCD34D')+'">'+total+'/'+goal+'</span></div><div style="height:7px;background:rgba(255,255,255,.1);overflow:hidden"><div style="width:'+pct+'%;height:100%;background:linear-gradient(90deg,#FBBF24,#F97316);transition:width .6s"></div></div>'+(pct>=100?'<div class="text-[10px] font-bold mt-1" style="color:#10B981">🏆 Goal achieved!</div>':'');
+          host.appendChild(gb);
+        }
+      }
+      /* RO note: ended battle pe comment input hide */
+      if(Date.now()>(b.endsAt||0)){
+        var inp=document.getElementById('cmt-inp');
+        if(inp&&inp.parentElement&&inp.parentElement.style.display!=='none'){
+          inp.parentElement.style.display='none';
+          if(!document.getElementById('p99ronote')&&inp.parentElement.parentElement){
+            var n=document.createElement('div');n.id='p99ronote';n.className='glass p-3';
+            n.style.cssText='text-align:center;border-color:rgba(251,191,36,.35);font-size:12px;color:rgba(255,255,255,.6)';
+            n.innerHTML='🔒 <b style="color:#FCD34D">Ended Battle</b> — read-only · voting &amp; comments locked';
+            inp.parentElement.parentElement.insertBefore(n,inp.parentElement);
+          }
+        }
+      }
+    }
+  }
+
+  if(view==='leaderboard'){
+    /* F13b: Champion shine */
+    var pf=mc.querySelector('.podium-card.first .font-bold');
+    if(pf&&!pf.dataset.p99c){pf.dataset.p99c='1';pf.classList.add('q9-shine');}
+  }
+
+  if(view==='profile'){
+    /* Logout yahan (drawer me nahi) */
+    if(!document.getElementById('p99logout')){
+      var lb=document.createElement('button');
+      lb.id='p99logout';lb.className='btn-ghost w-full py-3 font-bold mt-6';
+      lb.style.borderColor='rgba(244,63,94,.4)';lb.style.color='#FDA4AF';
+      lb.textContent='Log out';
+      lb.onclick=doLogout;
+      mc.appendChild(lb);
+    }
+    /* F25: Avatar frame preview */
+    var av=document.getElementById('pf-av-prev');
+    if(av&&MY.shop&&MY.shop.frames)av.classList.add('shopframe-'+MY.shop.frames);
+    /* F28: 7-day activity dots */
+    if(!document.getElementById('p99week')){
+      var h2=mc.querySelector('h2');
+      if(h2){
+        var days={},today=new Date();
+        for(var i=0;i<7;i++){var dd=new Date(today.getTime()-i*864e5);days[localKey(dd)]=0;}
+        allPosts.forEach(function(p){if(p.uid===MY.uid){var k=localKey(new Date(p.ts));if(k in days)days[k]++;}});
+        diaryEntries.forEach(function(e){if(e.date in days)days[e.date]++;});
+        var wd=document.createElement('div');wd.id='p99week';wd.className='glass p-3 mb-4';
+        var labels=['S','M','T','W','T','F','S'];
+        var keys=Object.keys(days).reverse();
+        wd.innerHTML='<div class="text-[10px] uppercase tracking-wider text-white/35 font-bold mb-2">🗓 This Week</div><div class="flex justify-between">'+keys.map(function(k,ix){var c=days[k];var dcol=c>0?'#6366F1':'rgba(255,255,255,.1)';return '<div class="text-center" style="flex:1"><div style="width:26px;height:26px;margin:0 auto;background:'+dcol+';color:'+(c>0?'#fff':'rgba(255,255,255,.3)')+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800">'+(c>0?c:labels[new Date(k).getDay()])+'</div><div class="text-[8px] text-white/30 mt-1">'+labels[new Date(k).getDay()]+'</div></div>';}).join('')+'</div>';
+        h2.insertAdjacentElement('afterend',wd);
+      }
+    }
+  }
+
+  if(view==='tools'&&viewParam==='search'){
+    /* F17b: Recent chips */
+    var host=document.getElementById('pg-sr');
+    if(host&&!document.getElementById('p99recent')){
+      try{
+        var rec=JSON.parse(localStorage.getItem('p99searches')||'[]');
+        if(rec.length){
+          var rd=document.createElement('div');rd.id='p99recent';
+          rd.innerHTML='<div class="text-[10.5px] uppercase tracking-wider font-bold text-white/35 mb-1.5">🕘 Recent</div><div class="flex gap-1.5 flex-wrap mb-2">'+rec.map(function(q){
+            var safe=String(q).replace(/['"\\]/g,'');
+            return '<button class="a-btn" style="font-size:11px" onclick="gsQ=\''+esc(safe)+'\';var e=document.getElementById(\'pg-sq\');if(e)e.value=\''+esc(safe)+'\';gsRunPage(\''+esc(safe)+'\')">'+esc(safe)+'</button>';
+          }).join('')+'</div>';
+          host.insertBefore(rd,host.firstChild);
+        }
+      }catch(e){}
+    }
+  }
+}
+/* ================== PART 9.9 v2 END ================== *//* ==================== VOTIFY FRESH BUILD — Part 10/10 (FINAL) ==================== */
 /* ===== 0: XP SHOP CSS ===== */
 document.head.insertAdjacentHTML('beforeend',`<style>
 .shopframe-gold{border:2px solid #FCD34D;box-shadow:0 0 10px rgba(251,191,36,.75)}
