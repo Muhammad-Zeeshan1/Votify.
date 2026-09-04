@@ -2862,42 +2862,50 @@ _p99post=function(){
 };
 /* ================== PART 9.10 END ================== */
 
-
+  
 /* ==================================================================
-   ★ PART 9.12 — ADMIN MINI GAMES SYSTEM
-   1. 🛡️ Admin Panel me "Mini Games" button
-   2. ➕ Admin me game add karo: NAME + CODE (HTML) paste karo
-   3. 🎮 Mini Games page me sab games ke buttons dikhte hain
-   4. ▶️ Click karo → game full screen iframe me chal jata hai
-   5. 💾 Games Firebase me save — sab users ko dikhte hain
-   6. 🗑️ Admin games delete kar sakta hai
-   7. ✨ Har game ka button — gradient + emoji icon
+   ★ PART 9.12 — ADMIN MINI GAMES SYSTEM (All English)
+   1. Admin Panel → Mini Games button
+   2. Add game: NAME + HTML CODE + ICON (pick or upload from PC)
+   3. Games shown in square icon boxes
+   4. Play → game opens full screen + AUTO FOCUS
+      (mouse + keyboard instantly active — signals always reach game)
+   5. Delete game from Admin
+   6. Saved in Firebase — all users see the games
    ================================================================== */
 
 /* ==================== A: CSS ==================== */
 document.head.insertAdjacentHTML('beforeend',`<style>
-.gm-card{position:relative;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.12);padding:16px;cursor:pointer;transition:transform .25s,border-color .25s,box-shadow .25s;overflow:hidden}
-.gm-card:hover{transform:translateY(-5px) scale(1.02);border-color:rgba(129,140,248,.6);box-shadow:0 18px 40px -12px rgba(99,102,241,.5)}
-.gm-icon{width:54px;height:54px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;border-radius:14px!important;margin-bottom:10px;flex-shrink:0}
-.gm-name{font-family:'Sora';font-weight:700;font-size:14px;color:#fff;margin-bottom:4px}
-.gm-playbtn{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%!important;background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.5);color:#6EE7B7;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s}
-.gm-playbtn:hover{background:rgba(16,185,129,.5);transform:scale(1.12)}
-.gm-addbox textarea{min-height:220px;font-family:monospace;font-size:11px;line-height:1.5}
-.gm-runscreen{position:fixed;inset:0;z-index:340;background:rgba(4,5,10,.97);display:flex;flex-direction:column;animation:scaleIn .3s both}
-.gm-runbar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(0,0,0,.5);border-bottom:1px solid rgba(255,255,255,.15);flex-shrink:0}
-.gm-runbar b{color:#fff;font-family:'Sora';font-size:14px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gm-frame{flex:1;border:none;background:#1d1a16;width:100%}
-.gm-empty{padding:50px 20px;text-align:center}
-.gm-empty .big{font-size:60px;margin-bottom:10px;animation:z-floatWave 2.8s ease-in-out infinite;display:inline-block}
-.gm-gradients{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-.gm-grad{width:32px;height:32px;border-radius:8px!important;cursor:pointer;border:2px solid transparent;transition:.2s}
+.gm-sq{position:relative;aspect-ratio:1/1;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.12);cursor:pointer;transition:transform .25s,border-color .25s,box-shadow .25s;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.gm-sq:hover{transform:translateY(-6px) scale(1.03);border-color:rgba(129,140,248,.7);box-shadow:0 18px 44px -12px rgba(99,102,241,.55)}
+.gm-sq .ic{width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:16px!important;font-size:28px;flex-shrink:0;overflow:hidden}
+.gm-sq .ic img{width:100%;height:100%;object-fit:cover}
+.gm-sq .nm{font-family:'Sora';font-weight:700;font-size:12px;color:#fff;text-align:center;padding:0 8px;line-height:1.3;max-height:32px;overflow:hidden}
+.gm-sq .pl{position:absolute;top:7px;right:7px;width:28px;height:28px;border-radius:50%!important;background:rgba(16,185,129,.25);border:1px solid rgba(16,185,129,.6);color:#6EE7B7;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.gm-addbox textarea{min-height:230px;font-family:monospace;font-size:11px;line-height:1.5}
+.gm-runscreen{position:fixed;inset:0;z-index:340;background:rgba(4,5,10,.98);display:flex;flex-direction:column;animation:scaleIn .3s both}
+.gm-runbar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(0,0,0,.55);border-bottom:1px solid rgba(255,255,255,.15);flex-shrink:0}
+.gm-runbar b{color:#fff;font-family:'Sora';font-size:13.5px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gm-frame{flex:1;border:none;background:#1d1a16;width:100%;outline:none}
+.gm-empty .big{font-size:58px;margin-bottom:10px;animation:z-floatWave 2.8s ease-in-out infinite;display:inline-block}
+.gm-gradients{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.gm-grad{width:34px;height:34px;border-radius:10px!important;cursor:pointer;border:2px solid transparent;transition:.2s}
 .gm-grad:hover{transform:scale(1.15)}
-.gm-grad.sel{border-color:#fff;transform:scale(1.1)}
+.gm-grad.sel{border-color:#fff;transform:scale(1.12)}
+.gm-icpick{display:flex;gap:6px;flex-wrap:wrap}
+.gm-icpick button{font-size:17px;padding:6px 9px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);color:#fff;cursor:pointer;transition:.2s}
+.gm-icpick button:hover{border-color:rgba(168,85,247,.6)}
+.gm-icpick button.sel{background:rgba(168,85,247,.25);border-color:rgba(168,85,247,.8)}
+.gm-upload{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255,.3);color:#C4B5FD;font-weight:700;font-size:12px;cursor:pointer;transition:.2s}
+.gm-upload:hover{border-color:rgba(168,85,247,.7);background:rgba(168,85,247,.1)}
+.gm-upprev{width:46px;height:46px;border-radius:12px!important;object-fit:cover;border:2px solid rgba(168,85,247,.6)}
 </style>`);
 
 /* ==================== B: STATE ==================== */
 let gmGames=[];
 window._gmSelGrad=window._gmSelGrad||0;
+window._gmSelIcon=window._gmSelIcon||null;
+window._gmUploadIcon=window._gmUploadIcon||null;
 const GM_GRADS=[
 'linear-gradient(135deg,#EC4899,#F43F5E)','linear-gradient(135deg,#6366F1,#8B5CF6)',
 'linear-gradient(135deg,#10B981,#06B6D4)','linear-gradient(135deg,#F59E0B,#EF4444)',
@@ -2920,27 +2928,25 @@ function gmInit(){
   }catch(e){}
 }
 
-/* ==================== D: GAMES PAGE (sab users dekh sakte hain) ==================== */
+/* ==================== D: GAMES PAGE (square boxes) ==================== */
 function pageGames(){
-  const grads=GM_GRADS,icons=gmIcons();
   if(!gmGames.length){
     return '<div class="max-w-2xl mx-auto fade-up">'+
     '<button class="btn-ghost px-4 py-2 text-sm font-bold mb-5" onclick="navBack()">← Back</button>'+
-    '<div class="glass-strong p-8 text-center">'+
+    '<div class="glass-strong gm-empty p-8 text-center">'+
     '<div class="big">🎮</div>'+
     '<h2 class="font-display font-extrabold text-2xl mb-2">Mini Games</h2>'+
-    '<div class="text-white/40 text-[13px]">Abhi koi game nahi hai.<br>'+(_isAdmin()?'Admin Panel se games add karo!':'Admin jaldi games add karega!')+'</div>'+
+    '<div class="text-white/40 text-[13px]">No games yet.<br>'+(isAdmin?'Add games from Admin Panel!':'Games coming soon!')+'</div>'+
     '</div></div>';
   }
   var cards='';
   gmGames.forEach(function(g,i){
-    var grad=g.grad||grads[i%grads.length];
-    var icon=g.icon||icons[i%icons.length];
-    cards+='<div class="gm-card" onclick="gmRun(\''+g.id+'\')">'+
-    '<div class="gm-playbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg></div>'+
-    '<div class="gm-icon" style="background:'+grad+'">'+icon+'</div>'+
-    '<div class="gm-name">'+esc(g.name)+'</div>'+
-    (g.desc?'<div class="text-[10.5px] text-white/40">'+esc(g.desc)+'</div>':'')+
+    var grad=g.grad||GM_GRADS[i%GM_GRADS.length];
+    var icon=(g.icon&&String(g.icon).indexOf('data:')===0)?'<img src="'+g.icon+'">':(g.icon||gmIcons()[i%gmIcons().length]);
+    cards+='<div class="gm-sq" onclick="gmRun(\''+g.id+'\')">'+
+    '<div class="pl"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg></div>'+
+    '<div class="ic" style="background:'+grad+'">'+icon+'</div>'+
+    '<div class="nm">'+esc(g.name)+'</div>'+
     '</div>';
   });
   return '<div class="max-w-2xl mx-auto fade-up">'+
@@ -2948,124 +2954,215 @@ function pageGames(){
   '<div class="glass-strong p-5 mb-5" style="border-color:rgba(168,85,247,.4)">'+
   '<div class="flex items-center gap-3 flex-wrap">'+
   '<div class="w-12 h-12 flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,#8B5CF6,#EC4899);color:#fff;border-radius:14px!important"><i data-lucide="gamepad-2" class="w-6 h-6"></i></div>'+
-  '<div class="flex-1" style="min-width:140px"><h2 class="font-display font-extrabold text-2xl">🎮 Mini Games</h2>'+
-  '<div class="text-[11px] text-white/45 font-bold uppercase tracking-wider">'+gmGames.length+' games available</div></div>'+
+  '<div class="flex-1" style="min-width:140px"><h2 class="font-display font-extrabold text-2xl">Mini Games</h2>'+
+  '<div class="text-[11px] text-white/45 font-bold uppercase tracking-wider">'+gmGames.length+' games</div></div>'+
   '</div></div>'+
-  '<div class="grid grid-cols-2 md:grid-cols-3 gap-3">'+cards+'</div>'+
+  '<div class="grid grid-cols-3 md:grid-cols-4 gap-3">'+cards+'</div>'+
   '</div>';
 }
-function _isAdmin(){return isAdmin;}
 
-/* ==================== E: RUN GAME (full screen iframe) ==================== */
+/* ==================== E: RUN GAME — AUTO FOCUS + KEYBOARD/MOUSE FORWARDING ==================== */
+var _gmActiveFrame=null;
 function gmRun(id){
   var g=gmGames.filter(function(x){return x.id===id;})[0];
   if(!g)return;
+  var old=document.getElementById('gm-runscreen');
+  if(old)old.remove();
   var el=document.createElement('div');
   el.className='gm-runscreen';
   el.id='gm-runscreen';
   el.innerHTML='<div class="gm-runbar">'+
-  '<button class="icobtn" onclick="gmClose()" title="Close"><i data-lucide="x"></i></button>'+
+  '<button class="icobtn" onclick="gmClose()" title="Close (Esc)"><i data-lucide="x"></i></button>'+
   '<b>'+esc(g.name)+'</b>'+
-  '<button class="icobtn" onclick="gmRefreshFrame()" title="Restart"><i data-lucide="rotate-ccw"></i></button>'+
-  '</div><iframe class="gm-frame" id="gm-frame"></iframe>';
+  '<button class="icobtn" onclick="gmRestart()" title="Restart"><i data-lucide="rotate-ccw"></i></button>'+
+  '</div><iframe class="gm-frame" id="gm-frame" allow="autoplay; fullscreen; gamepad; clipboard-write"></iframe>';
   document.body.appendChild(el);
   lucide.createIcons();
   var html=String(g.code||'');
-  /* wrap safety — full HTML hai to seedha, warna html+body bana do */
   if(html.indexOf('<html')<0){
-    html='<html><head><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><style>html,body{margin:0;padding:0;overflow:hidden;background:#1d1a16;height:100%}</style></head><body>'+html+'</body></html>';
+    html='<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><style>html,body{margin:0;padding:0;overflow:hidden;background:#1d1a16;height:100%}</style></head><body>'+html+'</body></html>';
   }
   var fr=document.getElementById('gm-frame');
-  if(fr)fr.srcdoc=html;
+  if(fr){
+    fr.srcdoc=html;
+    _gmActiveFrame=fr;
+    /* AUTO FOCUS — 3 baar focus attempts taake keyboard/mouse 100% active ho */
+    fr.addEventListener('load',function(){
+      setTimeout(function(){
+        try{fr.focus();}catch(e){}
+        try{fr.contentWindow.focus();}catch(e){}
+        try{
+          var win=fr.contentWindow;
+          if(win&&win.document&&win.document.body){
+            win.document.body.dispatchEvent(new MouseEvent('mousemove',{bubbles:true}));
+          }
+        }catch(e){}
+      },100);
+      setTimeout(function(){try{fr.contentWindow.focus();fr.focus();}catch(e){}},400);
+      setTimeout(function(){try{fr.contentWindow.focus();fr.focus();}catch(e){}},1000);
+    });
+    fr.addEventListener('mousedown',function(){try{fr.contentWindow.focus();}catch(e){}});
+  }
   try{beep();}catch(e){}
 }
+/* KEYBOARD FORWARDING — kahin bhi key press karo, game tak pahunche */
+var _gmKeyList=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','KeyA','KeyS','KeyD','KeyP','KeyM','KeyR','Enter','ShiftLeft','ShiftRight'];
+(function(){
+  if(window._gmFwdOn)return;
+  window._gmFwdOn=true;
+  document.addEventListener('keydown',function(e){
+    if(!document.getElementById('gm-runscreen'))return;
+    var fr=_gmActiveFrame||document.getElementById('gm-frame');
+    if(!fr)return;
+    if(e.key==='Escape'){gmClose();e.preventDefault();return;}
+    try{if(e.target&&e.target.tagName==='IFRAME')return;}catch(x){}
+    if(_gmKeyList.indexOf(e.code)<0&&_gmKeyList.indexOf(e.key)<0)return;
+    try{
+      var win=fr.contentWindow;
+      if(!win)return;
+      var ev=new KeyboardEvent('keydown',{key:e.key,code:e.code,keyCode:e.keyCode,which:e.keyCode,bubbles:true,cancelable:true});
+      win.document.dispatchEvent(ev);
+      win.dispatchEvent(ev);
+      e.preventDefault();
+      try{fr.focus();}catch(x){}
+    }catch(x){}
+  },true);
+  document.addEventListener('keyup',function(e){
+    if(!document.getElementById('gm-runscreen'))return;
+    var fr=_gmActiveFrame||document.getElementById('gm-frame');
+    if(!fr)return;
+    if(e.key==='Escape')return;
+    try{if(e.target&&e.target.tagName==='IFRAME')return;}catch(x){}
+    if(_gmKeyList.indexOf(e.code)<0&&_gmKeyList.indexOf(e.key)<0)return;
+    try{
+      var win=fr.contentWindow;
+      if(!win)return;
+      var ev=new KeyboardEvent('keyup',{key:e.key,code:e.code,keyCode:e.keyCode,which:e.keyCode,bubbles:true,cancelable:true});
+      win.document.dispatchEvent(ev);
+      win.dispatchEvent(ev);
+      e.preventDefault();
+    }catch(x){}
+  },true);
+  /* MOUSE FORWARDING — mousemove bhi game tak relay */
+  document.addEventListener('mousemove',function(e){
+    if(!document.getElementById('gm-runscreen'))return;
+    var fr=_gmActiveFrame;
+    if(!fr)return;
+    try{if(e.target&&e.target.tagName==='IFRAME')return;}catch(x){}
+    try{
+      var win=fr.contentWindow;
+      if(!win)return;
+      var r=fr.getBoundingClientRect();
+      if(r.width>0&&r.height>0){
+        var ev=new MouseEvent('mousemove',{clientX:e.clientX,clientY:e.clientY,bubbles:true,cancelable:true});
+        win.document.dispatchEvent(ev);
+      }
+    }catch(x){}
+  },true);
+})();
 function gmClose(){
   var el=document.getElementById('gm-runscreen');
   if(el)el.remove();
+  _gmActiveFrame=null;
 }
-function gmRefreshFrame(){
+function gmRestart(){
   var fr=document.getElementById('gm-frame');
-  var el=document.getElementById('gm-runscreen');
-  if(fr&&el){
-    var g=null;
-    /* restart: src dobara set */
+  if(fr){
     fr.srcdoc=fr.srcdoc;
-    try{beep();}catch(e){}
+    setTimeout(function(){try{fr.contentWindow.focus();fr.focus();}catch(e){}},250);
   }
 }
 
-/* ==================== F: ADMIN — GAMES PAGE ==================== */
+/* ==================== F: ADMIN — GAMES MANAGER ==================== */
 function pageAdminGames(){
   var grads=GM_GRADS,icons=gmIcons();
-  var cards='';
+  var rows='';
   gmGames.forEach(function(g,i){
-    var grad=g.grad||grads[i%grads.length];
-    var icon=g.icon||icons[i%icons.length];
-    cards+='<div class="a-row" style="border-color:rgba(168,85,247,.25)">'+
-    '<div style="width:44px;height:44px;border-radius:12px!important;background:'+(g.grad||grad)+';display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">'+(g.icon||icon)+'</div>'+
+    var isImg=g.icon&&String(g.icon).indexOf('data:')===0;
+    var iconHtml=isImg?'<img src="'+g.icon+'" style="width:100%;height:100%;object-fit:cover">':(g.icon||icons[i%icons.length]);
+    rows+='<div class="a-row" style="border-color:rgba(168,85,247,.25)">'+
+    '<div style="width:44px;height:44px;border-radius:12px!important;background:'+(g.grad||grads[i%grads.length])+';display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden">'+iconHtml+'</div>'+
     '<div class="flex-1" style="min-width:120px"><b class="text-[13px]">'+esc(g.name)+'</b>'+
-    '<div class="text-[10px] text-white/40">'+(g.code||'').length+' chars · '+(g.by||'admin')+'</div></div>'+
+    '<div class="text-[10px] text-white/40">'+String(g.code||'').length+' chars</div></div>'+
     '<button class="a-btn" onclick="gmRun(\''+g.id+'\')">▶ Test</button>'+
-    '<button class="a-btn danger" onclick="gmDel(\''+g.id+'\')">🗑</button>'+
+    '<button class="a-btn danger" onclick="gmDel(\''+g.id+'\')">🗑 Delete</button>'+
     '</div>';
   });
   return '<div class="max-w-2xl mx-auto fade-up">'+adminBackBtn+
-  '<h2 class="font-display font-extrabold text-2xl mb-1">🎮 Mini Games Manager</h2>'+
-  '<p class="text-white/45 text-sm mb-5">Naya game add karo — code paste karo, button khud ban jayega</p>'+
+  '<h2 class="font-display font-extrabold text-2xl mb-1">Mini Games Manager</h2>'+
+  '<p class="text-white/45 text-sm mb-5">Paste game code — button is created automatically</p>'+
   '<div class="glass-strong gm-addbox p-5 mb-5" style="border-color:rgba(168,85,247,.4)">'+
   '<label class="lbl">Game Name</label>'+
   '<input id="gm-name" class="input-field" maxlength="30" placeholder="e.g. Doodle Jump">'+
-  '<label class="lbl">Description (optional)</label>'+
-  '<input id="gm-desc" class="input-field" maxlength="60" placeholder="e.g. Jump karo aur score banao!">'+
-  '<label class="lbl">Game ka complete HTML code (poora file paste karo — DOCTYPE se </html> tak)</label>'+
-  '<textarea id="gm-code" class="input-field" placeholder="Yahan game ka poora HTML code paste karo..."></textarea>'+
-  '<label class="lbl">Icon chuno</label>'+
-  '<div style="display:flex;gap:6px;flex-wrap:wrap" id="gm-icons">'+icons.map(function(ic){return '<button class="a-btn" style="font-size:16px;padding:5px 9px" onclick="window._gmSelIcon=\''+ic+'\';gmMarkIcon(this)" data-ic="'+ic+'">'+ic+'</button>';}).join('')+'</div>'+
-  '<label class="lbl">Button color chuno</label>'+
+  '<label class="lbl">Icon</label>'+
+  '<div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
+  '<div style="flex:1;min-width:200px">'+
+  '<div class="gm-icpick" id="gm-icons">'+icons.map(function(ic){return '<button'+((window._gmSelIcon===ic&&!window._gmUploadIcon)?' class="sel"':'')+' onclick="gmPickIcon(this,\''+ic+'\')">'+ic+'</button>';}).join('')+'</div>'+
+  '<div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+
+  '<label class="gm-upload">📁 Upload icon from PC<input type="file" accept="image/*" hidden onchange="gmUploadIcon(this)"></label>'+
+  (window._gmUploadIcon?'<img id="gm-upprev" class="gm-upprev" src="'+window._gmUploadIcon+'">':'<img id="gm-upprev" class="gm-upprev" style="display:none">')+
+  (window._gmUploadIcon?'<button class="a-btn" style="font-size:10px;padding:3px 8px" onclick="window._gmUploadIcon=null;render()">✕ Remove</button>':'')+
+  '</div></div></div>'+
+  '<label class="lbl">Button Color</label>'+
   '<div class="gm-gradients" id="gm-grads">'+grads.map(function(gr,ix){return '<div class="gm-grad'+(ix===(window._gmSelGrad||0)?' sel':'')+'" style="background:'+gr+'" onclick="window._gmSelGrad='+ix+';gmMarkGrad(this)"></div>';}).join('')+'</div>'+
-  '<button class="btn-primary w-full py-3.5 font-bold mt-4" style="background:linear-gradient(135deg,#8B5CF6,#EC4899)" onclick="gmAdd()">➕ Add Game</button>'+
+  '<label class="lbl">Game HTML Code (full file)</label>'+
+  '<textarea id="gm-code" class="input-field" placeholder="Paste complete game HTML code here..."></textarea>'+
+  '<button class="btn-primary w-full py-3.5 font-bold mt-4" id="gm-addbtn" style="background:linear-gradient(135deg,#8B5CF6,#EC4899)" onclick="gmAdd()">➕ Add Game</button>'+
   '</div>'+
-  '<h3 class="font-display font-bold text-lg mb-3">📋 Added Games ('+gmGames.length+')</h3>'+
-  (cards||'<div class="glass p-6 text-center text-white/40">Abhi koi game nahi — upar se add karo!</div>')+
+  '<h3 class="font-display font-bold text-lg mb-3">Games ('+gmGames.length+')</h3>'+
+  (rows||'<div class="glass p-6 text-center text-white/40">No games yet — add above!</div>')+
   '</div>';
 }
-function gmMarkIcon(btn){
-  document.querySelectorAll('#gm-icons .a-btn').forEach(function(b){b.style.borderColor='';b.style.background='';});
-  if(btn){btn.style.borderColor='rgba(168,85,247,.7)';btn.style.background='rgba(168,85,247,.2)';}
+function gmPickIcon(btn,ic){
+  window._gmSelIcon=ic;
+  window._gmUploadIcon=null;
+  document.querySelectorAll('#gm-icons button').forEach(function(b){b.classList.remove('sel');});
+  if(btn)btn.classList.add('sel');
+  render();
 }
 function gmMarkGrad(div){
   document.querySelectorAll('#gm-grads .gm-grad').forEach(function(d){d.classList.remove('sel');});
   if(div)div.classList.add('sel');
 }
+async function gmUploadIcon(inp){
+  var f=inp.files[0];
+  if(!f)return;
+  if(f.size>2*1048576){try{toast('Icon too big (max 2MB)','warning');}catch(e){}return;}
+  try{
+    var d=await compressImage(f,120,.85);
+    window._gmUploadIcon=d;
+    window._gmSelIcon=null;
+    document.querySelectorAll('#gm-icons button').forEach(function(b){b.classList.remove('sel');});
+    render();
+  }catch(e){try{toast('Could not load icon','error');}catch(x){}}
+  inp.value='';
+}
 
 /* ==================== G: ADD / DELETE ==================== */
 async function gmAdd(){
   var name=document.getElementById('gm-name');
-  var desc=document.getElementById('gm-desc');
   var code=document.getElementById('gm-code');
   var nm=name?name.value.trim():'';
-  var ds=desc?desc.value.trim():'';
   var cd=code?code.value.trim():'';
-  if(!nm||nm.length<2){try{toast('Game name likho','warning');}catch(e){}return;}
-  if(!cd||cd.length<50){try{toast('Game code paste karo (poora HTML)','warning');}catch(e){}return;}
-  if(cd.length>200000){try{toast('Code bohat bara hai (max 200KB) — game ko chhota karo','warning');}catch(e){}return;}
-  var icons=gmIcons();
-  var icon=window._gmSelIcon||icons[Math.floor(Math.random()*icons.length)];
+  if(!nm||nm.length<2){try{toast('Enter game name','warning');}catch(e){}return;}
+  if(!cd||cd.length<50){try{toast('Paste game HTML code','warning');}catch(e){}return;}
+  if(cd.length>200000){try{toast('Code too large (max 200KB)','warning');}catch(e){}return;}
+  var icon=window._gmUploadIcon||(window._gmSelIcon||gmIcons()[0]);
   var grad=GM_GRADS[window._gmSelGrad||0];
   var ord=gmGames.length?Math.max.apply(null,gmGames.map(function(g){return g.ord||0;}))+1:1;
-  var btn=document.querySelector('.gm-addbox .btn-primary');
+  var btn=document.getElementById('gm-addbtn');
   if(btn){btn.disabled=true;btn.textContent='⏳ Adding...';}
   try{
-    await db.ref('minigames').push({name:nm,desc:ds,code:cd,icon:icon,grad:grad,ord:ord,by:MY.name,ts:Date.now()});
+    await db.ref('minigames').push({name:nm,code:cd,icon:icon,grad:grad,ord:ord,by:MY.name,ts:Date.now()});
     if(name)name.value='';
-    if(desc)desc.value='';
     if(code)code.value='';
     window._gmSelIcon=null;
+    window._gmUploadIcon=null;
     fireConfetti();try{beep();}catch(e){}
-    try{toast('🎮 Game added successfully!','success');}catch(e){}
+    try{toast('Game added successfully!','success');}catch(e){}
     render();
   }catch(e){
-    try{toast('Add failed — code bara ho sakta hai','error');}catch(x){}
+    try{toast('Add failed — code may be too large','error');}catch(x){}
   }
   if(btn){btn.disabled=false;btn.textContent='➕ Add Game';}
 }
@@ -3073,17 +3170,18 @@ async function gmDel(id){
   var g=gmGames.filter(function(x){return x.id===id;})[0];
   if(!g)return;
   if(!confirm('Delete "'+g.name+'"?'))return;
-  try{await db.ref('minigames/'+id).remove();try{toast('Game deleted','info');}catch(e){}}catch(e){}
+  try{
+    await db.ref('minigames/'+id).remove();
+    try{toast('Game deleted','info');}catch(e){}
+  }catch(e){}
 }
 
-/* ==================== H: ROUTER + NAV ==================== */
-/* router me 'games' add */
+/* ==================== H: ROUTERS + NAV ==================== */
 var _p12pg=pageHTML;
 pageHTML=function(){
   if(view==='games')return pageGames();
   return _p12pg();
 };
-/* tools me games entry (optional) + admin card */
 var _p12navAdmin=navAdmin;
 navAdmin=function(p){
   if(p==='games'){adminPage='games';render();return;}
@@ -3094,14 +3192,6 @@ pageAdmin=function(){
   if(adminPage==='games')return pageAdminGames();
   return _p12pageAdmin();
 };
-/* Admin panel me card add */
-var _p12cards='';
-(function(){
-  var orig=pageAdmin.toString();
-  /* runtime patch — cards array me entry inject */
-})();
-
-/* ==================== I: Hook — admin card inject + games listen ==================== */
 var _p12gf=_GFnow;
 _GFnow=function(){
   _p12gf();
@@ -3113,7 +3203,6 @@ function _p12adminCard(){
   var mc=document.querySelector('.main-content');
   if(!mc)return;
   if(document.getElementById('p12gmcard'))return;
-  /* existing cards grid dhundo (adm-card grid) */
   var grid=mc.querySelector('.grid.md\\:grid-cols-2');
   if(!grid)return;
   var card=document.createElement('div');
@@ -3122,13 +3211,11 @@ function _p12adminCard(){
   card.setAttribute('onclick','navAdmin(\'games\')');
   card.innerHTML='<div class="adm-ic" style="background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.4);color:#A855F7"><i data-lucide="gamepad-2" class="w-5 h-5"></i></div>'+
   '<div class="min-w-0"><div class="font-display font-bold text-[15.5px]">Mini Games'+(gmGames.length?' ('+gmGames.length+')':'')+'</div>'+
-  '<div class="text-[11.5px] text-white/45">Games add karo — code paste karke</div></div>'+
+  '<div class="text-[11.5px] text-white/45">Add & manage games</div></div>'+
   '<i data-lucide="chevron-right" class="w-4 h-4 text-white/20 ml-auto"></i>';
   grid.appendChild(card);
   lucide.createIcons();
 }
-
-/* ==================== J: Mini Games nav entry (drawer me) ==================== */
 var _p12nav=navItems;
 navItems=function(){
   var a=_p12nav();
@@ -3139,11 +3226,6 @@ navItems=function(){
   });
   return out;
 };
-
-/* ==================== K: Battle/Doodle Jump pe Esc bhi band kare ==================== */
-document.addEventListener('keydown',function(e){
-  if(e.key==='Escape'&&document.getElementById('gm-runscreen')){gmClose();e.stopPropagation();}
-},true);
 /* ================== PART 9.12 END ================== */
 
 
