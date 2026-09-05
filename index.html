@@ -4127,6 +4127,186 @@ window.addEventListener('appinstalled', function () {
 /* ================== PART 9.2 END ================== */
 
 
+/* ==================================================================
+   ★★ PART 9.3 — UNIVERSAL INSTALL (works on ALL Android brands) ★★
+   1. Detects WhatsApp / in-app browsers → one-tap "Open in Chrome"
+   2. In Chrome: big pulsing INSTALL NOW bar → native install popup
+   3. Non-PWA browsers: "Add to Home screen" guide (icon still shows)
+   ================================================================== */
+
+/* ---------- A: Browser detection ---------- */
+function v93Env(){
+  const ua=navigator.userAgent;
+  const inApp=/WhatsApp|FBAN|FBAV|Instagram|Snapchat|Line\/|Telegram|Twitter|TikTok|musical_ly|Snapchat|Viber|WeChat/i.test(ua);
+  const chrome=/Chrome\/[\d.]+/i.test(ua)&&!/OPR\/|Opera|Edg\/|SamsungBrowser|YaBrowser|MiuiBrowser|HeyTapBrowser/i.test(ua)&&!inApp;
+  const chromium=(/Chrome\/|Edg\/|SamsungBrowser|OPR\//i.test(ua))&&!inApp;
+  return{
+    isAndroid:/android/i.test(ua),
+    isIOS:/iphone|ipad|ipod/i.test(ua),
+    inApp:inApp,
+    chrome:chrome,
+    chromium:chromium,
+    brand:(/HeyTapBrowser/i.test(ua))?'Oppo Browser':(/MiuiBrowser/i.test(ua))?'Xiaomi Browser':(/SamsungBrowser/i.test(ua))?'Samsung Internet':''
+  };
+}
+
+/* ---------- B: One-tap "Open in Chrome" (Android intent) ---------- */
+function v93OpenChrome(){
+  const clean=location.href.split('#')[0].split('?')[0];
+  /* intent:// forces the link to open in the Chrome app */
+  const intent='intent://'+clean.replace(/^https?:\/\//,'')+
+    '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url='+encodeURIComponent(clean)+';end';
+  location.href=intent;
+}
+
+/* ---------- C: Floating INSTALL NOW bar (in Chrome only) ---------- */
+function v93FloatBar(){
+  try{
+    if(v91Installed())return;
+    const env=v93Env();
+    if(!env.isAndroid)return;               /* bar only on Android phones */
+    if(!env.chrome&&!env.chromium)return;    /* only in real Chrome-family */
+    if(document.getElementById('v93f'))return;
+    try{if(localStorage.getItem('v93fd')==='1')return;}catch(e){}
+    const b=document.createElement('div');
+    b.id='v93f';
+    b.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:9260;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#059669,#10B981);border:2px solid rgba(110,231,183,.8);padding:12px 18px;box-shadow:0 14px 44px rgba(16,185,129,.55);cursor:pointer;max-width:92vw;animation:v91In .45s cubic-bezier(.34,1.56,.64,1) both,corePulse 2s ease-in-out infinite';
+    b.innerHTML='<span style="font-size:24px">📲</span><div style="min-width:0;flex:1"><b class="font-display text-[14px]" style="color:#fff">INSTALL VOTIFY APP</b><div class="text-[10.5px]" style="color:rgba(255,255,255,.8)">One tap · icon on your home screen</div></div><span style="font-family:Sora;font-weight:800;font-size:12px;color:#fff;background:rgba(0,0,0,.3);padding:6px 14px">INSTALL</span>';
+    b.onclick=function(){
+      if(window._pwaPrompt){
+        try{
+          window._pwaPrompt.prompt();
+          window._pwaPrompt.userChoice.then(function(c){
+            if(c&&c.outcome==='accepted'){fireConfetti();banner('🎉 Installed! Check the V icon on your home screen','#10B981');b.remove();}
+            window._pwaPrompt=null;
+          }).catch(function(){window._pwaPrompt=null;});
+          return;
+        }catch(e){}
+      }
+      /* prompt not ready → wait for SW then retry once */
+      banner('Preparing install… please wait 2 seconds','#6366F1');
+      v93WaitAndPrompt(2,b);
+    };
+    document.body.appendChild(b);
+    /* auto-hide after 40 seconds (still available via Install App button) */
+    setTimeout(function(){if(b.parentElement){b.style.animation='v91Out .3s both';setTimeout(function(){b.remove();},320);}},40000);
+  }catch(e){}}
+function v93HideFloat(){try{localStorage.setItem('v93fd','1');}catch(e){}const b=document.getElementById('v93f');if(b)b.remove();}
+function closeV93(){const r=document.getElementById('admin-root');if(r)r.innerHTML='';}
+
+/* ---------- D: Wait for service worker → then prompt ---------- */
+async function v93WaitAndPrompt(sec,bar){
+  try{
+    if('serviceWorker' in navigator){
+      await navigator.serviceWorker.register('sw.js');
+      await navigator.serviceWorker.ready;
+    }
+  }catch(e){}
+  /* give Chrome a moment to fire beforeinstallprompt */
+  const end=Date.now()+(sec||2)*1000;
+  while(Date.now()<end){
+    if(window._pwaPrompt)break;
+    await new Promise(r=>setTimeout(r,300));
+  }
+  if(window._pwaPrompt){
+    try{
+      window._pwaPrompt.prompt();
+      window._pwaPrompt.userChoice.then(function(c){
+        if(c&&c.outcome==='accepted'){fireConfetti();banner('🎉 Installed! Check the V icon on your home screen','#10B981');if(bar)bar.remove();}
+        window._pwaPrompt=null;
+      }).catch(function(){window._pwaPrompt=null;});
+      return true;
+    }catch(e){}
+  }
+  return false;
+}
+
+/* ---------- E: Universal install flow (replaces old modal) ---------- */
+function pwaInstall(){
+  const env=v93Env();
+  if(v91Installed())return banner('✅ Votify is already installed — check the home screen!','#10B981');
+  /* Native prompt ready? → try DIRECT install first (one tap) */
+  if(window._pwaPrompt){
+    try{
+      window._pwaPrompt.prompt();
+      window._pwaPrompt.userChoice.then(function(c){
+        if(c&&c.outcome==='accepted'){fireConfetti();banner('🎉 Installed! V icon added to home screen','#10B981');}
+        window._pwaPrompt=null;
+      }).catch(function(){window._pwaPrompt=null;});
+      return;
+    }catch(e){}
+  }
+  v93Modal();
+}
+window.pwaInstall=pwaInstall;
+
+function v93Modal(){
+  const env=v93Env();
+  let html='<div class="modal-overlay" style="z-index:330" onclick="if(event.target===this)closeV93()"><div class="modal-card scale-in">';
+  html+='<div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2.5"><div style="width:40px;height:40px;background:linear-gradient(135deg,#6366F1,#A855F7);border-radius:10px!important;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:20px;font-family:Sora">V</div><b class="font-display text-[17px]">Install Votify App</b></div><button class="icobtn" style="width:34px;height:34px" onclick="closeV93()"><i data-lucide="x" class="w-4 h-4"></i></button></div>';
+
+  /* --- CASE 1: opened inside WhatsApp/Facebook browser (the #1 cause) --- */
+  if(env.inApp&&env.isAndroid){
+    html+='<div class="glass p-3 mb-2" style="border-color:rgba(251,191,36,.5)"><b class="text-[13px]" style="color:#FCD34D">⚠️ You are inside the WhatsApp browser</b><div class="text-[11.5px] text-white/55 mt-1">Install does not work here. Tap the green button below — it will open Votify in <b>Chrome</b>, where install works in one tap.</div></div>';
+    html+='<button class="btn-primary w-full py-4 font-extrabold text-[16px] mt-2" style="font-family:inherit;background:linear-gradient(135deg,#10B981,#06B6D4)" onclick="v93OpenChrome()">🌐 STEP 1: Open in Chrome</button>';
+    html+='<div class="glass p-3 mt-3 text-[12px] text-white/60">After Chrome opens, the <b>green INSTALL bar</b> will appear at the bottom → tap it → tap <b>Install</b>. The <b>purple V icon</b> will appear on your home screen. 🎉</div>';
+  }
+  /* --- CASE 2: iOS --- */
+  else if(env.isIOS){
+    html+=v93Steps(['Open this page in <b>Safari</b> (Chrome cannot install on iPhone)','Tap the <b>Share button</b> (⬆️) at the bottom','Scroll down and tap <b>"Add to Home Screen"</b>','Tap <b>Add</b> — the Votify icon appears 🎉']);
+    html+='<button class="btn-primary w-full py-3.5 font-bold mt-3" style="font-family:inherit" onclick="closeV93();navTo(\'home\')">Got it</button>';
+  }
+  /* --- CASE 3: Android + Chrome-family browser --- */
+  else if(env.isAndroid&&(env.chrome||env.chromium)){
+    html+='<div class="mb-2">'+v92SWBadge()+'</div>';
+    html+='<button class="btn-primary w-full py-4 font-extrabold text-[16px] mt-1" style="font-family:inherit" onclick="v93GoInstall()">⚡ INSTALL NOW (one tap)</button>';
+    html+='<div class="glass p-3 mt-3 text-[12px] text-white/60"><b>Still not installing?</b> Do this:<br>1. Reload this page once (sw.js needs one load)<br>2. Tap <b>⋮ menu</b> (3 dots, top right) → <b>"Install app"</b><br>3. If only <b>"Add to Home screen"</b> is visible — use it! The <b>V icon still appears</b> on your home screen. 🎉</div>';
+  }
+  /* --- CASE 4: other Android browsers (no PWA support) --- */
+  else if(env.isAndroid){
+    html+='<div class="glass p-3 mb-2 text-[12px]" style="border-color:rgba(251,191,36,.4)">⚠️ Your browser <b>'+(env.brand||'does not support app install')+'</b>. Two options:</div>';
+    html+='<button class="btn-primary w-full py-3.5 font-bold mt-2" style="font-family:inherit;background:linear-gradient(135deg,#10B981,#06B6D4)" onclick="v93OpenChrome()">🌐 Option 1: Open in Chrome (best)</button>';
+    html+=v93Steps(['Tap the <b>⋮ menu</b> in this browser','Tap <b>"Add to Home screen"</b>','The <b>Votify icon</b> appears on your home screen 🎉']);
+  }
+  /* --- CASE 5: desktop --- */
+  else{
+    html+=v93Steps(['Click the <b>install icon (⊕)</b> in the address bar','Or <b>⋮ menu → Install Votify</b>','The app installs with its own window + icon 🎉']);
+  }
+  html+='</div></div>';
+  $('#admin-root').innerHTML=html;
+  lucide.createIcons();}
+function v93Steps(arr){
+  return arr.map(function(st,i){
+    return '<div class="flex items-start gap-3" style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)"><div style="width:26px;height:26px;flex-shrink:0;background:linear-gradient(135deg,#6366F1,#A855F7);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border-radius:50%!important">'+(i+1)+'</div><div class="text-[13px] text-white/85" style="padding-top:3px">'+st+'</div></div>';
+  }).join('');}
+/* "INSTALL NOW" button in modal → wait for SW → prompt */
+async function v93GoInstall(){
+  banner('Preparing install… ⏳','#6366F1');
+  const ok=await v93WaitAndPrompt(3,null);
+  if(ok){closeV93();return;}
+  /* prompt didn't arrive → show honest guidance */
+  closeV93();
+  banner('Chrome needs one page reload first — reload once, then tap Install again','#FBBF24');
+}
+
+/* ---------- F: Auto show floating bar when prompt becomes ready ---------- */
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();
+  window._pwaPrompt=e;
+  try{v93FloatBar();}catch(x){}
+});
+/* also try to show it shortly after load (Chrome may have fired earlier) */
+setTimeout(function(){try{if(window._pwaPrompt)v93FloatBar();}catch(e){}},3000);
+/* after real install → clean up */
+window.addEventListener('appinstalled',function(){
+  window._pwaPrompt=null;
+  const b=document.getElementById('v93f');if(b)b.remove();
+  fireConfetti();banner('🎉 Votify installed! The V icon is on your home screen','#10B981');});
+/* ================== PART 9.3 END ================== */
+
+
+
+
   
 
 
