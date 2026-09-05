@@ -3656,6 +3656,388 @@ onRender(function(){
 
 
 /* ==================================================================
+   ★★ PART 9.1 v3 (FINAL) — INSTALL + WC ALERTS + NO-BLINK ★★
+   1. Install App: real home-screen icon on any Android phone
+   2. World Chatter alert: sound + card (red dot stays until SEEN)
+   3. Extra sounds: vote / follow / gift / reaction
+   4. Drawer: square Day & Sound buttons, Notifications button removed
+   5. Anti-blink render caching — the app never flickers
+   ================================================================== */
+
+/* ---------- A: CSS ---------- */
+document.head.insertAdjacentHTML('beforeend',`<style>
+/* --- WC alert cards (fixed position = no layout shift) --- */
+.v91c{position:fixed;top:68px;right:12px;z-index:9200;display:flex;flex-direction:column;gap:8px;pointer-events:none;max-width:330px}
+.v91-card{pointer-events:auto;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(15,17,30,.97),rgba(20,16,38,.97));border:1px solid rgba(16,185,129,.5);border-left:4px solid #10B981;padding:10px 12px;box-shadow:0 12px 34px rgba(0,0,0,.55);cursor:pointer;animation:v91In .4s cubic-bezier(.34,1.56,.64,1) both;backdrop-filter:blur(10px)}
+.v91-card img{width:40px;height:40px;object-fit:cover;border-radius:50%!important;border:2px solid rgba(110,231,183,.6);flex-shrink:0}
+.v91-card .t{font-weight:800;font-size:13px;color:#fff}
+.v91-card .p{font-size:11.5px;color:rgba(255,255,255,.65);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.v91-card .k{font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-top:2px;color:#10B981}
+@keyframes v91In{from{transform:translateX(110%);opacity:0}to{transform:none;opacity:1}}
+@keyframes v91Out{to{transform:translateX(110%);opacity:0}}
+.v91-card.out{animation:v91Out .3s both}
+/* --- red dot unread badge (World Chatter) --- */
+.v91wc{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;background:#F43F5E;color:#fff;font-size:10px;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 4px;border:2px solid #0A0B14}
+body.day .v91wc{border-color:#F1F3F8}
+/* --- install banner --- */
+.v91ib{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:9250;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#101725,#1a2436);border:1px solid rgba(110,231,183,.6);padding:10px 16px;box-shadow:0 14px 40px rgba(0,0,0,.6);cursor:pointer;animation:v91In .45s both;max-width:92vw}
+.v91ib .txt{min-width:0;flex:1}
+/* --- square drawer buttons --- */
+.v91sq-row{display:flex;gap:8px;margin-bottom:6px}
+.v91sq{flex:1;max-width:120px;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#F4F5FB;cursor:pointer;font-family:inherit;transition:background .2s,border-color .2s,transform .2s;position:relative;overflow:hidden}
+.v91sq:hover{background:rgba(99,102,241,.16);border-color:rgba(129,140,248,.5);transform:translateY(-2px)}
+.v91sq svg{width:20px;height:20px}
+.v91sq .sl{font-size:9.5px;font-weight:800;color:#C9CCE4}
+body.day .v91sq{background:rgba(25,28,70,.05);border-color:rgba(25,28,70,.14)}
+body.day .v91sq .sl{color:#3B3D5C}
+body.day .v91-card{background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(244,246,252,.96));border-color:rgba(16,185,129,.4)}
+body.day .v91-card .t{color:#1B1C2A}
+body.day .v91ib{background:linear-gradient(135deg,#fff,#eef0f8)}
+body.day .v91ib .txt b{color:#1B1C2A}
+/* --- anti-blink --- */
+img{-webkit-user-drag:none;user-select:none}
+</style>`);
+
+/* ---------- B: MANIFEST + ICONS (needed for install) ---------- */
+(function(){
+try{
+  if(document.querySelector('link[rel="manifest"]'))return;
+  /* Purple gradient square icon with a white V */
+  const mkIcon=s=>{const cv=document.createElement('canvas');cv.width=cv.height=s;
+    const x=cv.getContext('2d');
+    const g=x.createLinearGradient(0,0,s,s);g.addColorStop(0,'#6366F1');g.addColorStop(1,'#A855F7');
+    x.fillStyle=g;x.fillRect(0,0,s,s);
+    x.fillStyle='rgba(255,255,255,.12)';
+    x.beginPath();x.arc(s*.2,s*.15,s*.5,0,7);x.fill();
+    x.fillStyle='#fff';x.font='bold '+Math.round(s*.62)+'px Arial';
+    x.textAlign='center';x.textBaseline='middle';x.fillText('V',s/2,s*.55);
+    return cv.toDataURL('image/png');};
+  const man={name:'Votify — Opinion Arena',short_name:'Votify',
+    start_url:location.origin+location.pathname+'?source=pwa',
+    scope:location.origin+location.pathname,
+    display:'standalone',orientation:'portrait',
+    background_color:'#06070D',theme_color:'#6366F1',
+    description:'Every opinion starts a war — voting battles, chat, games',
+    icons:[
+      {src:mkIcon(192),sizes:'192x192',type:'image/png',purpose:'any'},
+      {src:mkIcon(512),sizes:'512x512',type:'image/png',purpose:'any'},
+      {src:mkIcon(192),sizes:'192x192',type:'image/png',purpose:'maskable'},
+      {src:mkIcon(512),sizes:'512x512',type:'image/png',purpose:'maskable'}]};
+  const l=document.createElement('link');l.rel='manifest';
+  l.href=URL.createObjectURL(new Blob([JSON.stringify(man)],{type:'application/manifest+json'}));
+  document.head.appendChild(l);
+  const ai=document.createElement('link');ai.rel='apple-touch-icon';ai.href=mkIcon(180);document.head.appendChild(ai);
+  const tm=document.createElement('meta');tm.name='theme-color';tm.content='#6366F1';document.head.appendChild(tm);
+}catch(e){}
+})();
+/* Remove duplicate manifests if Part 10 also created one */
+[600,2500].forEach(t=>setTimeout(()=>{try{
+  const ms=document.querySelectorAll('link[rel="manifest"]');
+  for(let i=1;i<ms.length;i++)ms[i].remove();
+  const as=document.querySelectorAll('link[rel="apple-touch-icon"]');
+  for(let i=1;i<as.length;i++)as[i].remove();
+}catch(e){}},t));
+
+/* ---------- C: SOUND ENGINE ---------- */
+function v91Tone(notes){ /* notes: [freq, delay, duration, volume] */
+  if(!soundOn)return;
+  var ctx=getACtx();if(!ctx)return;
+  try{
+    var t=ctx.currentTime;
+    notes.forEach(function(n){
+      var o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='sine';o.frequency.value=n[0];
+      var st=t+n[1],vol=n[3]||.12,dur=n[2]||.5;
+      g.gain.setValueAtTime(.0001,st);
+      g.gain.exponentialRampToValueAtTime(vol,st+.02);
+      g.gain.exponentialRampToValueAtTime(.0001,st+dur);
+      o.start(st);o.stop(st+dur+.05);
+    });
+  }catch(e){}}
+function v91Chime(){v91Tone([[1046.5,0,.5,.14],[1318.5,.1,.5,.14],[1568,.2,.6,.18]]);}      /* message */
+function v91SndVote(){v91Tone([[880,0,.25,.12],[1174.7,.12,.3,.12]]);}                     /* vote */
+function v91SndFollow(){v91Tone([[659.3,0,.3,.12],[880,.15,.35,.12],[1108.7,.3,.45,.14]]);}/* follow */
+function v91SndGift(){v91Tone([[1318.5,0,.3,.12],[1568,.09,.3,.12],[2093,.18,.4,.14],[2637,.27,.5,.1]]);} /* gift */
+
+/* ---------- D: WORLD CHATTER ALERT (sound + card) ---------- */
+function v91Preview(m){
+  if(m.text)return String(m.text).slice(0,70);
+  if(m.img)return '📷 Photo';
+  if(m.voice)return '🎤 Voice message';
+  if(m.reply&&m.reply.text)return '↩ '+String(m.reply.text).slice(0,50);
+  return 'New message';}
+function v91CardShow(name,preview,uid,avatar){
+  let host=document.getElementById('v91c');
+  if(!host){host=document.createElement('div');host.id='v91c';host.className='v91c';document.body.appendChild(host);}
+  while(host.children.length>=3)host.firstChild.remove();
+  const c=document.createElement('div');
+  c.className='v91-card';
+  c.innerHTML='<img src="'+(avatar||AVATAR_PRESETS[0])+'"><div style="min-width:0;flex:1"><div class="t">'+esc(name)+'</div><div class="p">'+esc(preview)+'</div><div class="k">🌍 World Chatter — tap to open</div></div>';
+  c.onclick=function(){v91OpenWC();c.remove();};
+  host.appendChild(c);
+  setTimeout(function(){if(c.parentElement){c.classList.add('out');setTimeout(()=>c.remove(),320);}},5500);}
+function v91OpenWC(){try{chatMode='global';dmTarget=null;}catch(e){}navTo('chat');}
+function v91WCNotify(m){
+  try{v91Chime();}catch(e){}
+  try{if(navigator.vibrate)navigator.vibrate([70,50,70]);}catch(e){}
+  if(!document.hidden){v91CardShow(m.name||'Someone',v91Preview(m),m.uid,m.avatar);return;}
+  /* app hidden → system notification (with OS sound) */
+  if('Notification' in window&&Notification.permission==='granted'){
+    try{
+      const opt={body:String(v91Preview(m)).slice(0,100),tag:'v91'+(m.ts||Date.now())};
+      if(m.avatar)opt.icon=m.avatar;
+      const n=new Notification('🌍 '+(m.name||'Votify'),opt);
+      n.onclick=function(){window.focus();n.close();v91OpenWC();};
+    }catch(e){}}}
+
+/* ---------- E: RED DOT UNREAD BADGE (stays until SEEN) ---------- */
+var v91wcCount=0,v91wcSeen=0,v91wcMsgs=[],_v91markT=0;
+function v91UpdateWC(n){
+  if(!n||n<0)n=0;
+  try{$$('.v91wc').forEach(function(b){b.textContent=n>9?'9+':n;b.style.display=n?'flex':'none';});}catch(e){}}
+function v91MarkRead(force){
+  if(!MY)return;
+  var now=Date.now();
+  if(!force&&now-_v91markT<5000)return; /* throttle writes */
+  _v91markT=now;
+  v91wcSeen=now;
+  try{localStorage.setItem('v91wcSeen',now);}catch(e){}
+  try{db.ref('reads/'+MY.uid+'/wc').set(now);}catch(e){}
+  v91wcCount=0;v91UpdateWC(0);}
+function v91Recount(){
+  var n=0;
+  for(var i=0;i<v91wcMsgs.length;i++){
+    var m=v91wcMsgs[i];
+    if(m.ts>v91wcSeen&&m.uid!==MY.uid&&!bannedUsers.has(m.uid))n++;}
+  v91wcCount=n;v91UpdateWC(n);}
+function v91InitWC(){
+  if(!MY||window._v91wcInit)return;window._v91wcInit=true;
+  v91wcSeen=+(localStorage.getItem('v91wcSeen')||0);
+  /* read-timestamp sync across devices */
+  try{db.ref('reads/'+MY.uid+'/wc').on('value',function(s){var v=s.val()||0;if(v>v91wcSeen){v91wcSeen=v;v91Recount();}},function(){});}catch(e){}
+  /* last 40 global messages → count unseen */
+  try{db.ref('chats/global').limitToLast(40).on('value',function(s){
+    v91wcMsgs=Object.values(s.val()||{}).filter(function(m){return m&&m.ts;});
+    /* user is watching World Chatter right now → mark as seen instantly */
+    if(!document.hidden&&view==='chat'&&chatMode==='global')v91MarkRead();
+    v91Recount();
+  },function(){});}catch(e){}
+  /* alert on new message (when NOT watching the chat) */
+  var gInit=false;const gAtt=Date.now();
+  try{db.ref('chats/global').limitToLast(1).on('child_added',function(s){
+    const m=s.val();
+    if(!gInit){gInit=true;return;} /* skip the initial snapshot */
+    if(!m||!m.ts||m.ts<gAtt)return;
+    if(m.uid===MY.uid)return;          /* own message — no alert */
+    if(bannedUsers.has(m.uid))return;
+    if(!document.hidden&&view==='chat'&&chatMode==='global')return; /* already watching */
+    v91WCNotify(m);
+  },function(){});}catch(e){}
+  /* safety refresh of badge */
+  setInterval(function(){try{v91UpdateWC(v91wcCount);}catch(e){}},10000);}
+
+/* ---------- F: EXTRA SOUNDS (vote / follow / gift / reaction) ---------- */
+function v91InitSounds(){
+  if(!MY||window._v91snd)return;window._v91snd=true;
+  var att=Date.now();
+  try{db.ref('notifs/'+MY.uid).limitToLast(1).on('child_added',function(s){
+    var n=s.val();
+    if(!n||!n.ts||n.ts<att)return;
+    if(n.type==='vote')v91SndVote();
+    else if(n.type==='follow')v91SndFollow();
+    else if(n.type==='gift')v91SndGift();
+    else if(n.type==='react')v91Chime();
+  },function(){});}catch(e){}}
+
+/* ---------- G: SMART INSTALL ---------- */
+function v91Installed(){
+  try{return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true;}catch(e){return false;}}
+function closeV91(){const r=document.getElementById('admin-root');if(r)r.innerHTML='';}
+function pwaInstall(){
+  if(v91Installed())return banner('✅ App is already installed — check the Votify icon on your home screen!','#10B981');
+  if(window._pwaPrompt){
+    try{
+      window._pwaPrompt.prompt();
+      window._pwaPrompt.userChoice.then(function(c){
+        if(c&&c.outcome==='accepted'){fireConfetti();banner('🎉 Votify installed! Icon added to home screen','#10B981');}
+        window._pwaPrompt=null;
+      }).catch(function(){window._pwaPrompt=null;});
+      return;
+    }catch(e){}}
+  v91InstallModal();}
+window.pwaInstall=pwaInstall;
+function v91InstallModal(){
+  const ua=navigator.userAgent;
+  const isIOS=/iphone|ipad|ipod/i.test(ua);
+  const isAndroid=/android/i.test(ua);
+  let steps;
+  if(isIOS)steps=['Open this page in <b>Safari</b> (Chrome cannot install on iPhone)','Tap the <b>Share button</b> (⬆️) at the bottom','Scroll and tap <b>"Add to Home Screen"</b>','Tap <b>Add</b> — Votify icon appears on home screen 🎉'];
+  else if(isAndroid)steps=['Tap the <b>⋮ menu</b> (3 dots, top right of Chrome)','Tap <b>"Install app"</b> or <b>"Add to Home screen"</b>','Tap <b>Install</b> — the <b>purple V icon</b> appears on your home screen 🎉<br><span class="text-[11px] text-white/45">The app opens full-screen, just like a real app</span>'];
+  else steps=['Click the <b>install icon (⊕)</b> in the address bar','Or <b>⋮ menu → Install Votify</b>','The app installs with its own window + icon 🎉'];
+  $('#admin-root').innerHTML='<div class="modal-overlay" style="z-index:320" onclick="if(event.target===this)closeV91()"><div class="modal-card scale-in">'+
+  '<div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2.5"><div style="width:40px;height:40px;background:linear-gradient(135deg,#6366F1,#A855F7);border-radius:10px!important;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:20px;font-family:Sora">V</div><b class="font-display text-[17px]">Install Votify App</b></div><button class="icobtn" style="width:34px;height:34px" onclick="closeV91()"><i data-lucide="x" class="w-4 h-4"></i></button></div>'+
+  '<div class="glass p-3 mb-2 flex items-center gap-3"><div style="width:52px;height:52px;background:linear-gradient(135deg,#6366F1,#A855F7);border-radius:12px!important;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:26px;font-family:Sora;flex-shrink:0">V</div><div><b class="text-[13px]">This icon will appear on your home screen</b><div class="text-[11px] text-white/45">Full-screen app · no browser bars · fast</div></div></div>'+
+  steps.map(function(st,i){return '<div class="flex items-start gap-3" style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)"><div style="width:26px;height:26px;flex-shrink:0;background:linear-gradient(135deg,#6366F1,#A855F7);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border-radius:50%!important">'+(i+1)+'</div><div class="text-[13px] text-white/85" style="padding-top:3px">'+st+'</div></div>';}).join('')+
+  (window._pwaPrompt?'<button class="btn-primary w-full py-3.5 font-bold mt-3" style="font-family:inherit" onclick="closeV91();pwaInstall()">⚡ One-Tap Auto Install</button>':'')+
+  '<div class="glass p-2.5 mt-2 text-[10.5px] text-white/45">💡 Install requires the app to be opened from an <b>https:// link</b> (Firebase Hosting / GitHub Pages — free)</div>'+
+  '</div></div>';
+  lucide.createIcons();}
+/* auto install banner */
+function v91ShowInstallBanner(){
+  if(v91Installed())return;
+  try{const last=+(localStorage.getItem('v91ib')||0);if(Date.now()-last<3*864e5)return;}catch(e){}
+  if(document.getElementById('v91ib'))return;
+  const b=document.createElement('div');
+  b.id='v91ib';b.className='v91ib';
+  b.innerHTML='<span style="font-size:22px">📲</span><div class="txt"><b class="font-display text-[13.5px]">Install Votify App</b><div class="text-[10.5px] text-white/50">Home screen icon · full screen · fast</div></div><span class="btn-primary px-4 py-2 font-bold text-[12px]" style="font-family:inherit">Install</span><button class="icobtn" style="width:28px;height:28px" onclick="event.stopPropagation();v91HideIB()">✕</button>';
+  b.onclick=function(){pwaInstall();};
+  document.body.appendChild(b);
+  setTimeout(function(){if(b.parentElement){b.style.animation='v91Out .3s both';setTimeout(function(){b.remove();},320);}},12000);}
+function v91HideIB(){try{localStorage.setItem('v91ib',Date.now());}catch(e){}const b=document.getElementById('v91ib');if(b)b.remove();}
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window._pwaPrompt=e;try{v91ShowInstallBanner();}catch(x){}});
+window.addEventListener('appinstalled',function(){
+  window._pwaPrompt=null;
+  const b=document.getElementById('v91ib');if(b)b.remove();
+  fireConfetti();banner('🎉 Votify installed! Icon added to home screen','#10B981');});
+/* permission ask (once) */
+function v91AutoAsk(){
+  try{
+    if(!MY)return;
+    if(!('Notification' in window))return;
+    if(Notification.permission!=='default')return;
+    if(localStorage.getItem('v2pushask')==='1')return;
+    localStorage.setItem('v2pushask','1');
+    $('#admin-root').innerHTML='<div class="modal-overlay" style="z-index:320" onclick="if(event.target===this)closeV91()"><div class="modal-card scale-in text-center"><div class="text-4xl mb-2" style="animation:coreHeartbeat 1.5s infinite;display:inline-block">🔔</div><h3 class="font-display font-extrabold text-xl mb-1">Turn on World Chatter alerts?</h3><p class="text-white/45 text-[12.5px] mb-4">Get a <b>sound + notification</b> when a new message arrives — even if the app is closed!</p><div class="flex gap-2"><button class="btn-primary flex-1 py-3 font-bold" style="font-family:inherit" onclick="v91AskNow()">🔔 Enable</button><button class="btn-ghost flex-1 py-3 font-bold" style="font-family:inherit" onclick="closeV91()">Later</button></div></div></div>';
+  }catch(e){}}
+async function v91AskNow(){
+  if(!('Notification' in window))return;
+  const p=await Notification.requestPermission();
+  closeV91();
+  banner(p==='granted'?'🔔 Alerts ON! Sound + notifications enabled':'Alerts off — in-app cards will still show',p==='granted'?'#10B981':'#FBBF24');}
+
+/* ---------- H: NO-BLINK SYSTEM ---------- */
+/* H1: badge baked into HTML (no post-render flicker) */
+(function(){
+  var oT=window.topbarHTML;
+  window.topbarHTML=function(){var h=oT();
+    /* add red-dot badge next to the chat button */
+    h=h.replace('<span class="dm-badge">0</span>','<span class="dm-badge">0</span><span class="v91wc"></span>');
+    return h;};
+  var oN=window.navLinkHTML;
+  window.navLinkHTML=function(it){var h=oN(it);
+    if(it.v==='chat')h=h.replace('<span class="dm-badge">0</span>','<span class="dm-badge">0</span><span class="v91wc"></span>');
+    return h;};
+})();
+/* H2: chat messages — skip identical re-renders (main flicker killer) */
+(function(){
+  if(!window.renderChatMsgs)return;
+  var orig=window.renderChatMsgs,sig='';
+  window.renderChatMsgs=function(){
+    try{
+      var rxTot=0;
+      for(var i=Math.max(0,chatMsgs.length-8);i<chatMsgs.length;i++)rxTot+=Object.keys(chatMsgs[i].rx||{}).length;
+      var last=chatMsgs[chatMsgs.length-1]||{};
+      var s=chatMsgs.length+'|'+(last.id||'')+'|'+(last.ts||'')+'|'+rxTot+'|'+chatFont+'|'+isDay+'|'+(window._p5seen||0);
+      var el=document.getElementById('chat-msgs');
+      if(s===sig&&el&&el.children.length){scrollChat();return;} /* nothing changed → skip */
+      sig=s;
+    }catch(e){}
+    orig();};
+})();
+/* H3: chat header — skip identical re-renders */
+(function(){
+  if(!window.renderMainChatHead)return;
+  var orig=window.renderMainChatHead,sig='';
+  window.renderMainChatHead=function(){
+    try{
+      var s=chatMode+'|'+((dmTarget||{}).uid||'')+'|'+onlineUsers.length+'|'+isDay+'|'+Object.keys(window.allStatus||{}).length+'|'+((dmTarget&&isOnline(dmTarget.uid))||false);
+      var el=document.getElementById('main-chat-head');
+      if(el&&el.children.length&&s===sig)return;
+      sig=s;
+    }catch(e){}
+    orig();};
+})();
+/* H4: profile avatar / link lists — skip identical re-renders */
+(function(){
+  if(window.renderPfAvatars){
+    var o=window.renderPfAvatars,s='';
+    window.renderPfAvatars=function(){
+      try{var ns=avTab+'|'+(MY.avatar||'');
+        var el=document.getElementById('pf-avatars');
+        if(el&&el.children.length&&s===ns)return;s=ns;}catch(e){}
+      o();};}
+  if(window.renderPfLinks){
+    var o2=window.renderPfLinks,s2='';
+    window.renderPfLinks=function(){
+      try{var ns2=profLinks.map(function(l){return l.t+l.u;}).join('|');
+        var el=document.getElementById('pf-links');
+        if(el&&el.children.length&&s2===ns2)return;s2=ns2;}catch(e){}
+      o2();};}
+})();
+/* H5: drawer stays open across background re-renders (no slam-shut blink) */
+(function(){
+  var orig=window.renderNow;
+  window.renderNow=function(){
+    var wasOpen=false;
+    try{var d=document.getElementById('drawer');if(d&&d.classList.contains('open'))wasOpen=true;}catch(e){}
+    orig();
+    /* re-open drawer if it was open and the user did not navigate away */
+    try{
+      if(wasOpen&&Date.now()-(window._v91dc||0)>400){
+        var d2=document.getElementById('drawer'),b=document.getElementById('drawer-back');
+        if(d2){d2.classList.add('open');if(b)b.classList.add('open');}
+      }
+    }catch(e){}
+    /* refresh red-dot badge + mark World Chatter as seen */
+    try{v91UpdateWC(v91wcCount);}catch(e){}
+    try{if(view==='chat'&&chatMode==='global')v91MarkRead();}catch(e){}
+  };
+  /* closeDrawer sets a flag so real navigation still closes it */
+  var oc=window.closeDrawer;
+  window.closeDrawer=function(){try{window._v91dc=Date.now();}catch(e){}oc();};
+})();
+
+/* ---------- I: DRAWER SURGERY (runs AFTER all parts loaded) ---------- */
+/* Removes the Notifications button, converts Day/Sound to square tiles */
+function v91DayBtn(){toggleDayNight();_reopenDrawer();}
+function v91SoundBtn(){toggleSound();_reopenDrawer();}
+setTimeout(function(){
+  var cur=window.drawerHTML;
+  window.drawerHTML=function(){
+    var h=cur();
+    try{
+      /* square tile row (baked into HTML = zero flicker) */
+      var sq='<div class="v91sq-row">'+
+        '<button class="v91sq" onclick="v91DayBtn()"><i data-lucide="'+(isDay?'sun':'moon')+'" class="w-5 h-5"></i><span class="sl">'+(isDay?'Day Mode':'Night Mode')+'</span></button>'+
+        '<button class="v91sq" onclick="v91SoundBtn()"><i data-lucide="'+(soundOn?'volume-2':'volume-x')+'" class="w-5 h-5"></i><span class="sl">Sound '+(soundOn?'On':'Off')+'</span></button>'+
+        '</div>';
+      /* replace the Day bar with the square row */
+      h=h.replace(/<button class="p99-mini" onclick="toggleDayNight\(\);_reopenDrawer\(\)">[\s\S]*?<\/button>/,sq);
+      /* remove the old Sound bar */
+      h=h.replace(/<button class="p99-mini" onclick="toggleSound\(\);render\(\);_reopenDrawer\(\)">[\s\S]*?<\/button>/,'');
+      /* REMOVE the Notifications button (below sound) */
+      h=h.replace(/<button class="p99-mini" onclick="togglePushNotifs\(\)">[\s\S]*?<\/button>/,'');
+      /* keep Install App button — add if missing */
+      if(h.indexOf('pwaInstall(')<0){
+        h=h.replace('<div class="p99-me"','<button class="p99-mini" onclick="pwaInstall()">📲 Install App</button><div class="p99-me"');
+      }
+    }catch(e){}
+    return h;};
+},0);
+
+/* ---------- J: BOOT HOOKS ---------- */
+onAppStart(function(){
+  v91InitWC();      /* red dot badge + WC alerts */
+  v91InitSounds();  /* vote / follow / gift sounds */
+  setTimeout(v91AutoAsk,14000);
+});
+/* ================== PART 9.1 v3 END ================== */
+
+
+
+
+/* ==================================================================
    ★★ VOTIFY 2.0 — PART 10/10 : ADMIN PANEL + PWA + PUSH + FINAL ★★
    ================================================================== */
 
