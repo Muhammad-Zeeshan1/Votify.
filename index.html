@@ -3312,7 +3312,200 @@ navItems=function(){
 /* ================== PART 9.12 END ================== */
 
 
+/* ==================================================================
+   ★ PART 9.14 v2 — 3 SUPER FIXES
+   1. 🖱️ Code box cursor fix (typing ke waqt focus jump KHATAM)
+   2. ☀️🌙 Light + Night mode — POORI app pe proper kaam kare
+   3. 🖼️ World Chatter: purane wallpapers GAYE + 30 NAYE aaye
+   PASTE: PART 9.13 END ke BAAD, Part 10 se PEHLE
+   ================================================================== */
 
+/* ================= FIX 1: CODE BOX CURSOR ================= */
+/* Wajah: topbar clock har second update hota hai jo purana
+   MutationObserver fire karta tha aur focus name-field pe le jata tha. */
+try{if(window._p12mo){window._p12mo.disconnect();window._p12mo=null;}}catch(e){}
+function _p12restoreDraft(){
+  /* sirf VALUES wapas lao — focus KABHI steal na karo */
+  try{
+    var nm=document.getElementById('gm-name');if(nm)nm.value=window._gmDraftName||'';
+    var cd=document.getElementById('gm-code');if(cd){cd.value=window._gmDraftCode||'';if(window._gmScroll)cd.scrollTop=window._gmScroll;}
+    var tn=document.getElementById('ta-name');if(tn)tn.value=(window._taD||{}).n||'';
+    var td=document.getElementById('ta-desc');if(td)td.value=(window._taD||{}).d||'';
+    var tc=document.getElementById('ta-code');if(tc){tc.value=(window._taD||{}).code||'';if(window._taScroll)tc.scrollTop=window._taScroll;}
+    var tu=document.getElementById('ta-url');if(tu)tu.value=(window._taD||{}).url||'';
+  }catch(e){}
+}
+/* Typing guard — jab admin ke code/name box me type ho raha ho
+   to auto-render (Firebase updates) ruk jata hai — cursor safe */
+var _p14draftIds={'gm-name':1,'gm-code':1,'ta-name':1,'ta-desc':1,'ta-code':1,'ta-url':1};
+function _p14typing(){
+  var ae=document.activeElement;
+  if(!ae)return false;
+  var tag=ae.tagName;
+  if(tag!=='TEXTAREA'&&tag!=='INPUT')return false;
+  return !!_p14draftIds[ae.id];
+}
+var _p14baseRender=render;
+render=function(){
+  if(_p14typing()){window._p14pend=true;return;}
+  return _p14baseRender();
+};
+/* typing khatam hone pe pending render flush */
+setInterval(function(){
+  if(window._p14pend&&!_p14typing()){window._p14pend=false;try{_p14baseRender();}catch(e){}}
+},700);
+
+/* ================= FIX 2: LIGHT + NIGHT MODE ================= */
+document.head.insertAdjacentHTML('beforeend',`<style>
+/* base fix: body background light hota hai */
+body.day{background:#F1F3F8;color:#1B1C2A}
+body.day::before{background:radial-gradient(800px 600px at 12% 8%,rgba(99,102,241,.13),transparent 60%),radial-gradient(900px 700px at 88% 20%,rgba(168,85,247,.09),transparent 60%),linear-gradient(180deg,#F7F8FC,#ECEEF4)}
+body.day.themed::before{display:block}
+body.day #theme-bg{display:none}
+body.day .hero-blob,body.day .di-blob{opacity:.22}
+body.day .hglow{opacity:.18}
+body.day .botd{background:linear-gradient(#FFFFFF,#F2F3F9) padding-box,linear-gradient(120deg,#FCD34D,#F97316,#EC4899,#8B5CF6,#06B6D4,#FCD34D) border-box}
+body.day .cd-seg{background:rgba(255,255,255,.85);border-color:rgba(25,28,70,.14)}
+body.day .cd-seg span{color:#5A5C78}
+body.day .podium-card{background:rgba(255,255,255,.82);border-color:rgba(25,28,70,.12)}
+body.day .podium-card.first{background:linear-gradient(180deg,rgba(251,191,36,.28),rgba(255,255,255,.85))}
+body.day .cal-cell{color:#1B1C2A}
+body.day .cal-dow{color:#8A8DA3}
+body.day .day-div{color:#5A5C78}
+body.day .day-div::before,body.day .day-div::after{background:rgba(25,28,70,.15)}
+body.day .res-date-head{color:#5A5C78}
+body.day .res-date-head::before,body.day .res-date-head::after{background:rgba(25,28,70,.15)}
+body.day .bg-white\/5{background:rgba(25,28,70,.05)}
+body.day .bg-white\/10{background:rgba(25,28,70,.12)}
+body.day .border-white\/10{border-color:rgba(25,28,70,.14)}
+body.day .text-white\/30{color:rgba(27,28,42,.45)}
+/* chat/comments ke naam-colors light pe readable */
+body.day [style*="color:#818CF8"]{color:#4338CA!important}
+body.day [style*="color:#F0ABFC"]{color:#BE185D!important}
+body.day [style*="color:#FCA5A5"]{color:#B91C1C!important}
+body.day [style*="color:#C4B5FD"]{color:#5B21B6!important}
+body.day .typing-bar{color:#047857}
+/* welcome + auth screens */
+body.day #welcome{background:linear-gradient(180deg,#F7F8FC,#EDF0F6)}
+body.day .w-sub{color:rgba(27,28,42,.5)}
+body.day .w-quote{color:#B45309}
+body.day .w-dots span{background:#6366F1}
+body.day .auth-screen{background:#EEF1F7}
+body.day .auth-card{background:rgba(255,255,255,.95);box-shadow:0 0 60px rgba(219,39,119,.1),inset 0 0 30px rgba(219,39,179,.03)}
+body.day .auth-head h3{color:#1B1C2A}
+body.day .auth-head p{color:#5A5C78}
+body.day .auth-tabs{background:rgba(25,28,70,.05);border-color:rgba(25,28,70,.1)}
+body.day .auth-tabs button{color:#5A5C78}
+body.day .auth-input{background:rgba(25,28,70,.05);border-color:rgba(25,28,70,.16);color:#1B1C2A}
+body.day .auth-input::placeholder{color:#9A9DB5}
+body.day .remember-check{color:#5A5C78}
+body.day .stat3{background:rgba(255,255,255,.85);border-color:rgba(25,28,70,.14)}
+body.day .stat3 span{color:#5A5C78}
+body.day .feat-card{background:rgba(255,255,255,.82);border-color:rgba(25,28,70,.1)}
+body.day .feat-card .font-bold{color:#1B1C2A}
+/* admin + games + tools */
+body.day .adm-hero{background:linear-gradient(120deg,rgba(99,102,241,.16),rgba(168,85,247,.11),rgba(236,72,153,.08));border-color:rgba(99,102,241,.3)}
+body.day .gm-sq{background:rgba(255,255,255,.82);border-color:rgba(25,28,70,.12)}
+body.day .gm-sq .nm{color:#1B1C2A}
+body.day .gm-plays{color:#5A5C78}
+body.day .gm-tpl button{background:rgba(99,102,241,.08);border-color:rgba(99,102,241,.3);color:#4338CA}
+body.day .gm-icpick button,body.day .tl-icp button{background:rgba(255,255,255,.75);border-color:rgba(25,28,70,.14)}
+body.day .pas-word{background:rgba(255,255,255,.75);border-color:rgba(25,28,70,.14);color:#1B1C2A}
+</style>`);
+
+/* Day mode ab POORI app pe — aur purana heavy DOM-walker dead */
+applyDayNight=function(){try{document.body.classList.toggle('day',isDay);}catch(e){}};
+function _dFix(){}
+function p14Banner(msg,color){
+  var d=document.createElement('div');
+  d.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-70px);z-index:9999;background:'+(color||'#10B981')+';color:#fff;font-weight:800;font-size:13px;padding:10px 22px;border-radius:12px!important;box-shadow:0 10px 34px rgba(0,0,0,.5);transition:transform .4s cubic-bezier(.34,1.56,.64,1);pointer-events:none;max-width:86vw;text-align:center';
+  d.textContent=msg;document.body.appendChild(d);
+  requestAnimationFrame(function(){d.style.transform='translateX(-50%) translateY(0)';});
+  setTimeout(function(){d.style.transform='translateX(-50%) translateY(-80px)';setTimeout(function(){d.remove();},450);},2200);
+}
+toggleDayNight=function(){
+  isDay=!isDay;
+  try{localStorage.setItem('basiler_daynight',isDay?'day':'night');}catch(e){}
+  applyDayNight();
+  try{
+    if(view==='chat'){renderChat();if(chatSettingsOpen)renderChatSettings();}
+    else render();
+  }catch(e){}
+  p14Banner(isDay?'☀️ Day Mode ON':'🌙 Night Mode ON',isDay?'#F59E0B':'#4F46E5');
+};
+try{applyDayNight();}catch(e){}
+
+/* Topbar me one-tap ☀️/🌙 button */
+(function(){
+  var o=topbarHTML;
+  topbarHTML=function(){
+    var h=o();
+    try{
+      var btn='<button class="icobtn" onclick="toggleDayNight()" title="Light / Dark mode">'+(isDay?'<i data-lucide="moon" class="w-[18px] h-[18px]"></i>':'<i data-lucide="sun" class="w-[18px] h-[18px]"></i>')+'</button>';
+      var mark='<button class="icobtn" onclick="openGSearch()" title="Search (Ctrl+K)">';
+      var i=h.indexOf(mark);
+      if(i>=0)h=h.slice(0,i)+btn+h.slice(i);
+    }catch(e){}
+    return h;
+  };
+})();
+
+/* 'N' keyboard shortcut */
+document.addEventListener('keydown',function(e){
+  if(!MY)return;
+  var t=e.target;
+  if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  if(e.key.toLowerCase()==='n'){e.preventDefault();toggleDayNight();}
+});
+
+/* ================= FIX 3: 30 NAYE WALLPAPERS ================= */
+/* Purane sab remove — naye 30 + Lava */
+CHAT_WALLS.length=0;
+[
+{n:'None',bg:''},
+{n:'✨ Starry Night',bg:'radial-gradient(rgba(255,255,255,.22) 1px,transparent 1.6px) 0 0/28px 28px,radial-gradient(rgba(186,230,253,.14) 1px,transparent 1.6px) 14px 14px/28px 28px'},
+{n:'🌊 Ocean Bubbles',bg:'radial-gradient(circle at 18% 28%,rgba(56,189,248,.17) 0 20px,transparent 21px),radial-gradient(circle at 72% 62%,rgba(34,211,238,.13) 0 28px,transparent 29px),radial-gradient(circle at 44% 88%,rgba(103,232,249,.1) 0 16px,transparent 17px),radial-gradient(circle at 88% 12%,rgba(56,189,248,.09) 0 12px,transparent 13px)'},
+{n:'🌹 Rose Petals',bg:'radial-gradient(rgba(244,114,182,.2) 4px,transparent 5px) 6px 6px/30px 30px,radial-gradient(rgba(251,113,133,.13) 3px,transparent 4px) 21px 21px/30px 30px'},
+{n:'💠 Neon Grid',bg:'linear-gradient(rgba(129,140,248,.15) 1px,transparent 1px),linear-gradient(90deg,rgba(129,140,248,.15) 1px,transparent 1px) 0 0/28px 28px'},
+{n:'🌌 Deep Space',bg:'radial-gradient(2px 2px at 12% 18%,rgba(255,255,255,.5),transparent 60%),radial-gradient(1.5px 1.5px at 68% 32%,rgba(199,210,254,.45),transparent 60%),radial-gradient(2px 2px at 38% 74%,rgba(255,255,255,.35),transparent 60%),radial-gradient(1.5px 1.5px at 84% 82%,rgba(165,180,252,.4),transparent 60%),radial-gradient(circle at 50% 40%,rgba(139,92,246,.13),transparent 55%)'},
+{n:'🔥 Magma Waves',bg:'repeating-radial-gradient(circle at 50% 120%,rgba(239,68,68,.14) 0 18px,rgba(249,115,22,.09) 18px 36px,transparent 36px 54px)'},
+{n:'🌿 Forest Mist',bg:'repeating-radial-gradient(circle at 0 100%,transparent 0 30px,rgba(16,185,129,.09) 30px 60px),repeating-radial-gradient(circle at 100% 100%,transparent 0 30px,rgba(5,150,105,.07) 30px 60px)'},
+{n:'💜 Purple Rain',bg:'repeating-linear-gradient(78deg,rgba(167,139,250,.11) 0 2px,transparent 2px 17px)'},
+{n:'🍬 Candy Stripes',bg:'repeating-linear-gradient(45deg,rgba(244,114,182,.11) 0 14px,rgba(251,207,232,.08) 14px 28px)'},
+{n:'🧊 Ice Crystals',bg:'linear-gradient(45deg,rgba(191,219,254,.13) 25%,transparent 25%,transparent 75%,rgba(191,219,254,.13) 75%) 0 0/24px 24px,linear-gradient(45deg,rgba(191,219,254,.13) 25%,transparent 25%,transparent 75%,rgba(191,219,254,.13) 75%) 12px 12px/24px 24px'},
+{n:'☕ Coffee Beans',bg:'radial-gradient(rgba(180,120,70,.24) 5px 3px,transparent 6px) 8px 10px/26px 26px,radial-gradient(rgba(120,80,45,.17) 4px 2.5px,transparent 5px) 21px 23px/26px 26px'},
+{n:'🌈 Aurora Mesh',bg:'radial-gradient(at 20% 20%,rgba(52,211,153,.15),transparent 55%),radial-gradient(at 80% 30%,rgba(56,189,248,.13),transparent 55%),radial-gradient(at 60% 80%,rgba(167,139,250,.13),transparent 55%)'},
+{n:'🌑 Carbon Fiber',bg:'repeating-linear-gradient(45deg,rgba(255,255,255,.04) 0 3px,transparent 3px 6px),repeating-linear-gradient(-45deg,rgba(255,255,255,.04) 0 3px,transparent 3px 6px)'},
+{n:'🌙 Moonlit Dots',bg:'radial-gradient(rgba(165,180,252,.19) 2.5px,transparent 3.5px) 0 0/24px 24px,radial-gradient(rgba(165,180,252,.11) 2px,transparent 3px) 12px 12px/24px 24px'},
+{n:'🌅 Sunset Fade',bg:'linear-gradient(180deg,rgba(251,146,60,.15),rgba(236,72,153,.11) 45%,rgba(139,92,246,.11))'},
+{n:'🎋 Zen Garden',bg:'radial-gradient(circle at 30% 30%,rgba(255,255,255,.05) 0 26px,transparent 27px),radial-gradient(circle at 75% 70%,rgba(255,255,255,.04) 0 34px,transparent 35px)'},
+{n:'⚡ Digital Rain',bg:'repeating-linear-gradient(90deg,rgba(16,185,129,.1) 0 1.5px,transparent 1.5px 14px),repeating-linear-gradient(90deg,rgba(16,185,129,.05) 0 1px,transparent 1px 7px)'},
+{n:'🌸 Cherry Blossom',bg:'radial-gradient(circle at 20% 22%,rgba(249,168,212,.17) 0 12px,transparent 13px),radial-gradient(circle at 65% 55%,rgba(244,114,182,.13) 0 16px,transparent 17px),radial-gradient(circle at 85% 15%,rgba(251,207,232,.11) 0 10px,transparent 11px),radial-gradient(circle at 40% 85%,rgba(249,168,212,.11) 0 14px,transparent 15px)'},
+{n:'🛡 Steel Plates',bg:'linear-gradient(180deg,rgba(148,163,184,.09) 0 30px,rgba(100,116,139,.05) 30px 60px) 0 0/100% 60px,linear-gradient(90deg,rgba(255,255,255,.045) 0 1px,transparent 1px)'},
+{n:'🌀 Vivid Vortex',bg:'conic-gradient(from 0deg at 50% 50%,rgba(99,102,241,.08),rgba(236,72,153,.08),rgba(244,114,182,.08),rgba(56,189,248,.08),rgba(99,102,241,.08))'},
+{n:'🏜 Sand Dunes',bg:'repeating-linear-gradient(76deg,rgba(251,191,36,.08) 0 40px,rgba(217,119,6,.06) 40px 80px)'},
+{n:'💎 Crystal Cave',bg:'linear-gradient(135deg,rgba(196,181,253,.11) 25%,transparent 25%,transparent 75%,rgba(196,181,253,.11) 75%) 0 0/30px 30px,linear-gradient(225deg,rgba(221,214,254,.09) 25%,transparent 25%,transparent 75%,rgba(221,214,254,.09) 75%) 15px 15px/30px 30px'},
+{n:'🕸 Spider Web',bg:'repeating-radial-gradient(circle at 0 0,transparent 0 22px,rgba(255,255,255,.05) 22px 23px),repeating-linear-gradient(45deg,transparent 0 31px,rgba(255,255,255,.04) 31px 32px),repeating-linear-gradient(-45deg,transparent 0 31px,rgba(255,255,255,.04) 31px 32px)'},
+{n:'🍭 Bubblegum Pop',bg:'radial-gradient(rgba(249,168,212,.16) 6px,transparent 7px) 10px 10px/34px 34px'},
+{n:'⛄ Frostfall',bg:'repeating-linear-gradient(60deg,rgba(224,242,254,.07) 0 10px,transparent 10px 24px),radial-gradient(rgba(191,219,254,.13) 2px,transparent 3px) 8px 8px/26px 26px'},
+{n:'🌃 City Lights',bg:'radial-gradient(2px 2px at 22% 30%,rgba(253,224,71,.55),transparent 60%),radial-gradient(2px 2px at 58% 18%,rgba(253,224,71,.4),transparent 60%),radial-gradient(1.5px 1.5px at 80% 44%,rgba(165,180,252,.5),transparent 60%),radial-gradient(2px 2px at 38% 60%,rgba(253,224,71,.35),transparent 60%),linear-gradient(0deg,rgba(99,102,241,.14),transparent 55%)'},
+{n:'🍀 Lucky Clovers',bg:'radial-gradient(rgba(52,211,153,.2) 4px 4px,transparent 5px) 0 0/28px 28px,radial-gradient(rgba(52,211,153,.12) 3px 3px,transparent 4px) 14px 14px/28px 28px'},
+{n:'🧨 Confetti Blast',bg:'radial-gradient(rgba(236,72,153,.16) 2.5px,transparent 3.5px) 4px 4px/22px 22px,radial-gradient(rgba(251,191,36,.15) 2px,transparent 3px) 15px 15px/26px 26px,radial-gradient(rgba(16,185,129,.13) 2.5px,transparent 3.5px) 9px 14px/30px 30px'},
+{n:'🖤 Midnight Velvet',bg:'radial-gradient(at 50% 0%,rgba(139,92,246,.14),transparent 60%),radial-gradient(at 50% 100%,rgba(59,7,100,.25),transparent 65%)'},
+{n:'🌋 Lava Flow',bg:'repeating-radial-gradient(circle at 50% 130%,rgba(239,68,68,.15) 0 16px,rgba(249,115,22,.1) 16px 34px,transparent 34px 52px)'}
+].forEach(function(w){CHAT_WALLS.push(w);});
+/* purana saved index range me hai? nahi to reset */
+if(chatWall>=CHAT_WALLS.length){chatWall=0;try{localStorage.setItem('basiler_wall','0');}catch(e){}}
+if(SETTINGS.chatWall!=null&&SETTINGS.chatWall>=CHAT_WALLS.length)SETTINGS.chatWall=0;
+
+/* 🌋 Lava global theme bhi (Admin → Settings → Global Themes) */
+try{
+  if(!THEMES.some(function(t){return t.n==='Lava Flow';})){
+    THEMES.push({n:'Lava Flow',bg:'radial-gradient(at 50% 100%,rgba(239,68,68,.5) 0,transparent 58%),radial-gradient(at 18% 12%,rgba(249,115,22,.38) 0,transparent 55%),radial-gradient(at 82% 35%,rgba(245,158,11,.22) 0,transparent 55%),linear-gradient(180deg,#0C0302,#1A0604)'});
+  }
+}catch(e){}
+/* ================== PART 9.14 v2 END ================== */
 
 
 
