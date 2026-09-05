@@ -4035,6 +4035,99 @@ onAppStart(function(){
 /* ================== PART 9.1 v3 END ================== */
 
 
+/* ==================================================================
+   ★★ PART 9.2 — REAL PWA INSTALL FIX (requires sw.js file) ★★
+   1. Registers the service worker (the missing install requirement)
+   2. Switches to the sw.js-served manifest (proper icons + start_url)
+   3. Install modal: WhatsApp warning + SW status + Try Again button
+   ================================================================== */
+
+/* ---------- A: Register the service worker ---------- */
+window._v92sw = 'loading';
+(function v92Init() {
+  if (!('serviceWorker' in navigator)) { window._v92sw = 'unsupported'; return; }
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js')
+      .then(function () {
+        window._v92sw = 'active';
+        return navigator.serviceWorker.ready;
+      })
+      .then(function () {
+        /* point the manifest link to the sw.js-served manifest */
+        v92RelinkManifest();
+        /* re-link again after a moment — forces Chrome to re-check installability */
+        setTimeout(v92RelinkManifest, 2000);
+      })
+      .catch(function () { window._v92sw = 'missing'; });
+  });
+})();
+function v92RelinkManifest() {
+  try {
+    var old = document.querySelector('link[rel="manifest"]');
+    if (old) old.remove();
+    var l = document.createElement('link');
+    l.rel = 'manifest';
+    l.href = 'manifest.json'; /* served by sw.js */
+    document.head.appendChild(l);
+  } catch (e) {}
+}
+
+/* ---------- B: Improved install modal ---------- */
+function v92SWBadge() {
+  var s = window._v92sw;
+  if (s === 'active') return '<span class="badge" style="color:#10B981;border-color:rgba(16,185,129,.5)">✅ Service Worker active — install ready</span>';
+  if (s === 'missing') return '<span class="badge" style="color:#F43F5E;border-color:rgba(244,63,94,.5)">❌ sw.js file missing on server</span>';
+  if (s === 'loading') return '<span class="badge" style="color:#FBBF24">⏳ Service Worker loading…</span>';
+  return '<span class="badge">⚠️ Service Worker not supported here</span>';
+}
+function closeV92(){var r=document.getElementById('admin-root');if(r)r.innerHTML='';}
+function v92TryAgain() {
+  closeV92();
+  if (window._pwaPrompt) { pwaInstall(); return; }
+  banner('Checking install status… wait 3 seconds','#6366F1');
+  setTimeout(function () {
+    if (window._pwaPrompt) { pwaInstall(); }
+    else { pwaInstall(); } /* re-opens modal with fresh SW status */
+  }, 3000);
+}
+function v92InstallModal() {
+  var ua = navigator.userAgent;
+  var isIOS = /iphone|ipad|ipod/i.test(ua);
+  var isAndroid = /android/i.test(ua);
+  var steps;
+  if (isIOS) {
+    steps = ['Open this page in <b>Safari</b> (Chrome cannot install on iPhone)', 'Tap the <b>Share button</b> (⬆️) at the bottom', 'Scroll down and tap <b>"Add to Home Screen"</b>', 'Tap <b>Add</b> — the Votify icon appears on the home screen 🎉'];
+  } else if (isAndroid) {
+    steps = ['⚠️ <b>If this page opened from WhatsApp:</b> first tap <b>⋮ → "Open in Chrome"</b> (install does not work inside WhatsApp)',
+             'In <b>Chrome browser</b>, tap the <b>⋮ menu</b> (3 dots, top right)',
+             'Tap <b>"Install app"</b> (if you only see "Add to Home screen", the service worker is still loading — reload the page once)',
+             'Tap <b>Install</b> — the <b>purple V icon</b> appears on the home screen 🎉<br><span class="text-[11px] text-white/45">The app then opens full-screen, like a real app</span>'];
+  } else {
+    steps = ['Click the <b>install icon (⊕)</b> on the right side of the address bar', 'Or <b>⋮ menu → Install Votify</b>', 'The app installs with its own window + icon 🎉'];
+  }
+  $('#admin-root').innerHTML = '<div class="modal-overlay" style="z-index:330" onclick="if(event.target===this)closeV92()"><div class="modal-card scale-in">' +
+    '<div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2.5"><div style="width:40px;height:40px;background:linear-gradient(135deg,#6366F1,#A855F7);border-radius:10px!important;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:20px;font-family:Sora">V</div><b class="font-display text-[17px]">Install Votify App</b></div><button class="icobtn" style="width:34px;height:34px" onclick="closeV92()"><i data-lucide="x" class="w-4 h-4"></i></button></div>' +
+    '<div class="mb-3">' + v92SWBadge() + '</div>' +
+    (window._v92sw === 'missing' ? '<div class="glass p-3 mb-3 text-[12px]" style="border-color:rgba(244,63,94,.4)">⚠️ The <b>sw.js</b> file was not found on the server. Upload <b>sw.js</b> to the same folder as index.html on GitHub, then reload this page.</div>' : '') +
+    steps.map(function (st, i) {
+      return '<div class="flex items-start gap-3" style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)"><div style="width:26px;height:26px;flex-shrink:0;background:linear-gradient(135deg,#6366F1,#A855F7);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border-radius:50%!important">' + (i + 1) + '</div><div class="text-[13px] text-white/85" style="padding-top:3px">' + st + '</div></div>';
+    }).join('') +
+    (window._pwaPrompt ? '<button class="btn-primary w-full py-3.5 font-bold mt-3" style="font-family:inherit" onclick="closeV92();pwaInstall()">⚡ One-Tap Auto Install</button>' : '<button class="btn-ghost w-full py-3.5 font-bold mt-3" style="font-family:inherit" onclick="v92TryAgain()">🔄 Try Again (re-check)</button>') +
+    '</div></div>';
+  lucide.createIcons();
+}
+/* upgrade: use the new modal everywhere */
+setTimeout(function () { window.v91InstallModal = v92InstallModal; }, 0);
+
+/* ---------- C: after install, jump straight into the app ---------- */
+window.addEventListener('appinstalled', function () {
+  fireConfetti();
+  banner('🎉 Votify installed! Check the purple V icon on your home screen', '#10B981');
+});
+/* ================== PART 9.2 END ================== */
+
+
+  
 
 
 /* ==================================================================
