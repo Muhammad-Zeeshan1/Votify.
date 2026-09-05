@@ -2862,16 +2862,16 @@ _p99post=function(){
 };
 /* ================== PART 9.10 END ================== */
 
+
+
   
 /* ==================================================================
-   ★ PART 9.12 — ADMIN MINI GAMES SYSTEM (All English)
-   1. Admin Panel → Mini Games button
-   2. Add game: NAME + HTML CODE + ICON (pick or upload from PC)
-   3. Games shown in square icon boxes
-   4. Play → game opens full screen + AUTO FOCUS
-      (mouse + keyboard instantly active — signals always reach game)
-   5. Delete game from Admin
-   6. Saved in Firebase — all users see the games
+   ★ PART 9.12 — ADMIN MINI GAMES SYSTEM (v2 Upgraded)
+   1. Admin → Mini Games: add game (name + code + icon upload/pick)
+   2. NAME + CODE never auto-remove, never blink (preserved on render)
+   3. Game box: 5 clicks in 3 seconds → full CODE VIEW page opens
+   4. Square boxes · delete from admin · auto-focus on play
+   5. Saved in Firebase — all users see games
    ================================================================== */
 
 /* ==================== A: CSS ==================== */
@@ -2899,6 +2899,9 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .gm-upload{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255,.3);color:#C4B5FD;font-weight:700;font-size:12px;cursor:pointer;transition:.2s}
 .gm-upload:hover{border-color:rgba(168,85,247,.7);background:rgba(168,85,247,.1)}
 .gm-upprev{width:46px;height:46px;border-radius:12px!important;object-fit:cover;border:2px solid rgba(168,85,247,.6)}
+/* CODE VIEW page */
+.gm-codepage{background:rgba(10,12,22,.97)}
+.gm-codeview{width:100%;min-height:300px;background:rgba(0,0,0,.5);border:1px solid rgba(99,102,241,.4);color:#A5B4FC;font-family:monospace;font-size:11px;line-height:1.6;padding:14px;white-space:pre-wrap;word-break:break-all;max-height:65vh;overflow-y:auto}
 </style>`);
 
 /* ==================== B: STATE ==================== */
@@ -2906,6 +2909,9 @@ let gmGames=[];
 window._gmSelGrad=window._gmSelGrad||0;
 window._gmSelIcon=window._gmSelIcon||null;
 window._gmUploadIcon=window._gmUploadIcon||null;
+/* PERSIST: name + code kabhi delete nahi hote (render me bhi save) */
+window._gmDraftName=window._gmDraftName||'';
+window._gmDraftCode=window._gmDraftCode||'';
 const GM_GRADS=[
 'linear-gradient(135deg,#EC4899,#F43F5E)','linear-gradient(135deg,#6366F1,#8B5CF6)',
 'linear-gradient(135deg,#10B981,#06B6D4)','linear-gradient(135deg,#F59E0B,#EF4444)',
@@ -2943,7 +2949,7 @@ function pageGames(){
   gmGames.forEach(function(g,i){
     var grad=g.grad||GM_GRADS[i%GM_GRADS.length];
     var icon=(g.icon&&String(g.icon).indexOf('data:')===0)?'<img src="'+g.icon+'">':(g.icon||gmIcons()[i%gmIcons().length]);
-    cards+='<div class="gm-sq" onclick="gmRun(\''+g.id+'\')">'+
+    cards+='<div class="gm-sq" id="gmsq-'+g.id+'" onclick="gmSqClick(\''+g.id+'\')">'+
     '<div class="pl"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg></div>'+
     '<div class="ic" style="background:'+grad+'">'+icon+'</div>'+
     '<div class="nm">'+esc(g.name)+'</div>'+
@@ -2961,7 +2967,46 @@ function pageGames(){
   '</div>';
 }
 
-/* ==================== E: RUN GAME — AUTO FOCUS + KEYBOARD/MOUSE FORWARDING ==================== */
+/* ==================== E: SQ CLICK — 1 click = PLAY · 5 clicks/3s = CODE VIEW ==================== */
+var _gmTap={};
+function gmSqClick(id){
+  var now=Date.now();
+  if(!_gmTap[id])_gmTap[id]=[];
+  _gmTap[id]=_gmTap[id].filter(function(t){return now-t<3000;});
+  _gmTap[id].push(now);
+  if(_gmTap[id].length>=5){
+    _gmTap[id]=[];
+    gmOpenCode(id);
+    return;
+  }
+  gmRun(id);
+}
+function gmOpenCode(id){
+  var g=gmGames.filter(function(x){return x.id===id;})[0];
+  if(!g)return;
+  var old=document.getElementById('gm-runscreen');
+  if(old)old.remove();
+  var el=document.createElement('div');
+  el.className='gm-runscreen gm-codepage';
+  el.id='gm-runscreen';
+  el.innerHTML='<div class="gm-runbar">'+
+  '<button class="icobtn" onclick="gmClose()" title="Close (Esc)"><i data-lucide="x"></i></button>'+
+  '<b>📄 '+esc(g.name)+' — Source Code</b>'+
+  '<button class="icobtn" onclick="gmCopyCode(\''+id+'\')" title="Copy code"><i data-lucide="copy"></i></button>'+
+  '</div>'+
+  '<div style="flex:1;overflow-y:auto;padding:14px">'+
+  '<div class="gm-codeview" id="gm-codeview">'+esc(String(g.code||''))+'</div>'+
+  '</div>';
+  document.body.appendChild(el);
+  lucide.createIcons();
+}
+function gmCopyCode(id){
+  var g=gmGames.filter(function(x){return x.id===id;})[0];
+  if(!g)return;
+  try{navigator.clipboard.writeText(String(g.code||''));flyXP('📋 Code copied!');}catch(e){}
+}
+
+/* ==================== F: RUN GAME — AUTO FOCUS ==================== */
 var _gmActiveFrame=null;
 function gmRun(id){
   var g=gmGames.filter(function(x){return x.id===id;})[0];
@@ -2986,7 +3031,6 @@ function gmRun(id){
   if(fr){
     fr.srcdoc=html;
     _gmActiveFrame=fr;
-    /* AUTO FOCUS — 3 baar focus attempts taake keyboard/mouse 100% active ho */
     fr.addEventListener('load',function(){
       setTimeout(function(){
         try{fr.focus();}catch(e){}
@@ -3005,7 +3049,6 @@ function gmRun(id){
   }
   try{beep();}catch(e){}
 }
-/* KEYBOARD FORWARDING — kahin bhi key press karo, game tak pahunche */
 var _gmKeyList=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','KeyA','KeyS','KeyD','KeyP','KeyM','KeyR','Enter','ShiftLeft','ShiftRight'];
 (function(){
   if(window._gmFwdOn)return;
@@ -3043,7 +3086,6 @@ var _gmKeyList=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','K
       e.preventDefault();
     }catch(x){}
   },true);
-  /* MOUSE FORWARDING — mousemove bhi game tak relay */
   document.addEventListener('mousemove',function(e){
     if(!document.getElementById('gm-runscreen'))return;
     var fr=_gmActiveFrame;
@@ -3073,7 +3115,7 @@ function gmRestart(){
   }
 }
 
-/* ==================== F: ADMIN — GAMES MANAGER ==================== */
+/* ==================== G: ADMIN MANAGER — name/code PRESERVE ==================== */
 function pageAdminGames(){
   var grads=GM_GRADS,icons=gmIcons();
   var rows='';
@@ -3085,6 +3127,7 @@ function pageAdminGames(){
     '<div class="flex-1" style="min-width:120px"><b class="text-[13px]">'+esc(g.name)+'</b>'+
     '<div class="text-[10px] text-white/40">'+String(g.code||'').length+' chars</div></div>'+
     '<button class="a-btn" onclick="gmRun(\''+g.id+'\')">▶ Test</button>'+
+    '<button class="a-btn" onclick="gmOpenCode(\''+g.id+'\')">📄 Code</button>'+
     '<button class="a-btn danger" onclick="gmDel(\''+g.id+'\')">🗑 Delete</button>'+
     '</div>';
   });
@@ -3093,7 +3136,7 @@ function pageAdminGames(){
   '<p class="text-white/45 text-sm mb-5">Paste game code — button is created automatically</p>'+
   '<div class="glass-strong gm-addbox p-5 mb-5" style="border-color:rgba(168,85,247,.4)">'+
   '<label class="lbl">Game Name</label>'+
-  '<input id="gm-name" class="input-field" maxlength="30" placeholder="e.g. Doodle Jump">'+
+  '<input id="gm-name" class="input-field" maxlength="30" placeholder="e.g. Doodle Jump" value="'+esc(window._gmDraftName)+'" oninput="window._gmDraftName=this.value">'+
   '<label class="lbl">Icon</label>'+
   '<div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
   '<div style="flex:1;min-width:200px">'+
@@ -3106,23 +3149,45 @@ function pageAdminGames(){
   '<label class="lbl">Button Color</label>'+
   '<div class="gm-gradients" id="gm-grads">'+grads.map(function(gr,ix){return '<div class="gm-grad'+(ix===(window._gmSelGrad||0)?' sel':'')+'" style="background:'+gr+'" onclick="window._gmSelGrad='+ix+';gmMarkGrad(this)"></div>';}).join('')+'</div>'+
   '<label class="lbl">Game HTML Code (full file)</label>'+
-  '<textarea id="gm-code" class="input-field" placeholder="Paste complete game HTML code here..."></textarea>'+
+  '<textarea id="gm-code" class="input-field" placeholder="Paste complete game HTML code here..." oninput="window._gmDraftCode=this.value" onscroll="window._gmScroll=this.scrollTop">'+esc(window._gmDraftCode)+'</textarea>'+
   '<button class="btn-primary w-full py-3.5 font-bold mt-4" id="gm-addbtn" style="background:linear-gradient(135deg,#8B5CF6,#EC4899)" onclick="gmAdd()">➕ Add Game</button>'+
   '</div>'+
   '<h3 class="font-display font-bold text-lg mb-3">Games ('+gmGames.length+')</h3>'+
   (rows||'<div class="glass p-6 text-center text-white/40">No games yet — add above!</div>')+
   '</div>';
 }
+/* render ke BAAD saved values + scroll wapas restore (no blink) */
+var _p12agf=_GFnow;
+var _p12oldHook=null;
+function _p12restoreDraft(){
+  try{
+    var nm=document.getElementById('gm-name');
+    var cd=document.getElementById('gm-code');
+    if(nm){nm.value=window._gmDraftName||'';try{nm.focus();}catch(e){}}
+    if(cd){cd.value=window._gmDraftCode||'';if(window._gmScroll)cd.scrollTop=window._gmScroll;}
+  }catch(e){}
+}
+var _p12mo=null;
+try{
+  var appEl=document.getElementById('app');
+  if(appEl&&window.MutationObserver){
+    _p12mo=new MutationObserver(function(){
+      if(view==='admin'&&adminPage==='games')setTimeout(_p12restoreDraft,30);
+    });
+    _p12mo.observe(appEl,{childList:true,subtree:true});
+  }
+}catch(e){}
 function gmPickIcon(btn,ic){
   window._gmSelIcon=ic;
   window._gmUploadIcon=null;
   document.querySelectorAll('#gm-icons button').forEach(function(b){b.classList.remove('sel');});
   if(btn)btn.classList.add('sel');
-  render();
+  _p12restoreDraft();
 }
 function gmMarkGrad(div){
   document.querySelectorAll('#gm-grads .gm-grad').forEach(function(d){d.classList.remove('sel');});
   if(div)div.classList.add('sel');
+  _p12restoreDraft();
 }
 async function gmUploadIcon(inp){
   var f=inp.files[0];
@@ -3133,17 +3198,20 @@ async function gmUploadIcon(inp){
     window._gmUploadIcon=d;
     window._gmSelIcon=null;
     document.querySelectorAll('#gm-icons button').forEach(function(b){b.classList.remove('sel');});
-    render();
+    _p12restoreDraft();
+    var pv=document.getElementById('gm-upprev');
+    if(pv){pv.src=d;pv.style.display='block';}
+    var rm=document.getElementById('gm-rmup');
   }catch(e){try{toast('Could not load icon','error');}catch(x){}}
   inp.value='';
 }
 
-/* ==================== G: ADD / DELETE ==================== */
+/* ==================== H: ADD / DELETE ==================== */
 async function gmAdd(){
   var name=document.getElementById('gm-name');
   var code=document.getElementById('gm-code');
-  var nm=name?name.value.trim():'';
-  var cd=code?code.value.trim():'';
+  var nm=(name?name.value:window._gmDraftName||'').trim();
+  var cd=(code?code.value:window._gmDraftCode||'').trim();
   if(!nm||nm.length<2){try{toast('Enter game name','warning');}catch(e){}return;}
   if(!cd||cd.length<50){try{toast('Paste game HTML code','warning');}catch(e){}return;}
   if(cd.length>200000){try{toast('Code too large (max 200KB)','warning');}catch(e){}return;}
@@ -3154,8 +3222,9 @@ async function gmAdd(){
   if(btn){btn.disabled=true;btn.textContent='⏳ Adding...';}
   try{
     await db.ref('minigames').push({name:nm,code:cd,icon:icon,grad:grad,ord:ord,by:MY.name,ts:Date.now()});
-    if(name)name.value='';
-    if(code)code.value='';
+    /* success ke baad hi clear — warna draft preserved */
+    window._gmDraftName='';
+    window._gmDraftCode='';
     window._gmSelIcon=null;
     window._gmUploadIcon=null;
     fireConfetti();try{beep();}catch(e){}
@@ -3176,7 +3245,7 @@ async function gmDel(id){
   }catch(e){}
 }
 
-/* ==================== H: ROUTERS + NAV ==================== */
+/* ==================== I: ROUTERS + NAV ==================== */
 var _p12pg=pageHTML;
 pageHTML=function(){
   if(view==='games')return pageGames();
@@ -3192,12 +3261,17 @@ pageAdmin=function(){
   if(adminPage==='games')return pageAdminGames();
   return _p12pageAdmin();
 };
-var _p12gf=_GFnow;
-_GFnow=function(){
-  _p12gf();
-  try{_p12adminCard();}catch(e){}
-  try{gmInit();}catch(e){}
-};
+var _p12gfHook=_GFnow;
+var _p12hooked=false;
+var _p12origGF=null;
+(function(){
+  /* _GFnow ko wrap karo taake admin-games render ke baad draft restore ho */
+  var orig=_GFnow;
+  _GFnow=function(){
+    orig();
+    if(view==='admin'&&adminPage==='games')setTimeout(_p12restoreDraft,50);
+  };
+})();
 function _p12adminCard(){
   if(view!=='admin'||adminPage!=='main')return;
   var mc=document.querySelector('.main-content');
@@ -3216,6 +3290,15 @@ function _p12adminCard(){
   grid.appendChild(card);
   lucide.createIcons();
 }
+/* combined hook — admin card + gmInit + draft restore */
+(function(){
+  var origGF=_GFnow;
+  _GFnow=function(){
+    origGF();
+    try{_p12adminCard();}catch(e){}
+    try{gmInit();}catch(e){}
+  };
+})();
 var _p12nav=navItems;
 navItems=function(){
   var a=_p12nav();
@@ -3227,6 +3310,10 @@ navItems=function(){
   return out;
 };
 /* ================== PART 9.12 END ================== */
+
+
+
+
 
 
 /* ==================== VOTIFY FRESH BUILD — Part 10/10 (FINAL) ==================== */
