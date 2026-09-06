@@ -4306,8 +4306,157 @@ window.addEventListener('appinstalled',function(){
 
 
 
+/* ==================================================================
+   ★★ PART 9.6 — DEVICE AUTO-FIT v2 (topbar ONLY, no tools resize) ★★
+   1. Auto-detects device width → dev-xs/sm/md/tab/lg class
+   2. Topbar + chat header buttons: small on phones, normal on PC
+   3. Home pills: perfect equal 3+3 grid
+   4. Tools grid untouched (original sizes — PC bade dikhna FIX)
+   ================================================================== */
 
-  
+/* ---------- A: CSS ---------- */
+document.head.insertAdjacentHTML('beforeend',`<style>
+/* ===== TAB (481–768px) ===== */
+.dev-tab .mobile-topbar .icobtn{width:33px!important;height:33px!important}
+.dev-tab .mobile-topbar .icobtn svg{width:16px!important;height:16px!important}
+.dev-tab .chat-header .icobtn{width:33px!important;height:33px!important}
+.dev-tab .chat-header .icobtn svg{width:16px!important;height:16px!important}
+
+/* ===== MD: BIG PHONES (≤480px) ===== */
+.dev-md .mobile-topbar{height:50px!important;padding:0 7px!important;gap:4px!important}
+.dev-md .mobile-topbar .icobtn{width:31px!important;height:31px!important}
+.dev-md .mobile-topbar .icobtn svg{width:15px!important;height:15px!important}
+.dev-md .mobile-topbar b.font-display{font-size:13px!important}
+.dev-md .top-clock-box{padding:3px 6px!important;margin-right:4px!important}
+.dev-md #tc-time{font-size:10px!important}
+.dev-md #tc-date{font-size:7px!important}
+.dev-md .chat-header{min-height:48px!important;height:48px!important;padding:4px 5px!important;gap:4px!important}
+.dev-md .chat-header .icobtn{width:31px!important;height:31px!important}
+.dev-md .chat-header .icobtn svg{width:15px!important;height:15px!important}
+.dev-md .chat-logo-badge{width:33px!important;height:33px!important}
+.dev-md .chat-logo-badge svg{width:15px!important;height:15px!important}
+.dev-md .chat-header img{width:33px!important;height:33px!important}
+.dev-md #main-chat-head .cbtn{height:31px!important;padding:0 8px!important}
+
+/* ===== SM: NORMAL PHONES (≤400px) ===== */
+.dev-sm .mobile-topbar{height:47px!important;padding:0 6px!important;gap:3px!important}
+.dev-sm .mobile-topbar .icobtn{width:29px!important;height:29px!important}
+.dev-sm .mobile-topbar .icobtn svg{width:14px!important;height:14px!important}
+.dev-sm .mobile-topbar b.font-display{font-size:12px!important}
+.dev-sm .mobile-topbar .w-8{width:24px!important;height:24px!important}
+.dev-sm .mobile-topbar .w-8 svg{width:12px!important;height:12px!important}
+.dev-sm .top-clock-box{padding:2px 5px!important;margin-right:3px!important}
+.dev-sm #tc-time{font-size:9px!important}
+.dev-sm #tc-date{font-size:6.5px!important}
+.dev-sm .chat-header{min-height:45px!important;height:45px!important;padding:3px 4px!important;gap:3px!important}
+.dev-sm .chat-header .icobtn{width:29px!important;height:29px!important}
+.dev-sm .chat-header .icobtn svg{width:14px!important;height:14px!important}
+.dev-sm .chat-logo-badge{width:31px!important;height:31px!important}
+.dev-sm .chat-logo-badge svg{width:14px!important;height:14px!important}
+.dev-sm .chat-header img{width:31px!important;height:31px!important}
+.dev-sm #main-chat-head .font-display{font-size:12px!important}
+.dev-sm #main-chat-head .cbtn{height:29px!important;padding:0 7px!important;gap:0!important;font-size:0!important} /* icon-only */
+.dev-sm #main-chat-head .cbtn svg{width:14px!important;height:14px!important}
+.dev-sm .chat-live{display:none!important}
+.dev-sm .chat-msgs{padding:12px 8px!important}
+.dev-sm .msg-av{width:28px!important;height:28px!important}
+.dev-sm .msg-body{max-width:89%!important}
+.dev-sm .chat-input-area{padding:7px 8px 10px!important}
+.dev-sm .main-content{padding:59px 12px 60px!important}
+.dev-sm .home-hero{padding:18px 14px!important}
+.dev-sm .home-hero h1{font-size:23px!important;line-height:1.15!important}
+.dev-sm .home-hero .golden-quote{font-size:12px!important}
+.dev-sm .btn-primary{padding-top:10px!important;padding-bottom:10px!important;font-size:12.5px!important}
+
+/* ===== XS: SMALL PHONES (≤360px) ===== */
+.dev-xs .mobile-topbar{height:44px!important;padding:0 5px!important;gap:2px!important}
+.dev-xs .mobile-topbar .icobtn{width:27px!important;height:27px!important}
+.dev-xs .mobile-topbar .icobtn svg{width:13px!important;height:13px!important}
+.dev-xs .mobile-topbar b.font-display{display:none!important}
+.dev-xs .mobile-topbar .w-8{width:23px!important;height:23px!important}
+.dev-xs .mobile-topbar .w-8 svg{width:11px!important;height:11px!important}
+.dev-xs .top-clock-box{padding:2px 4px!important;margin-right:2px!important}
+.dev-xs #tc-time{font-size:8.5px!important}
+.dev-xs #tc-date{display:none!important}
+.dev-xs .chat-header{min-height:43px!important;height:43px!important;padding:3px 3px!important;gap:2px!important}
+.dev-xs .chat-header .icobtn{width:27px!important;height:27px!important}
+.dev-xs .chat-header .icobtn svg{width:13px!important;height:13px!important}
+.dev-xs .chat-logo-badge{width:29px!important;height:29px!important}
+.dev-xs .chat-logo-badge svg{width:13px!important;height:13px!important}
+.dev-xs .chat-header img{width:29px!important;height:29px!important}
+.dev-xs #main-chat-head .font-display{font-size:11.5px!important}
+.dev-xs #main-chat-head .cbtn{height:27px!important;padding:0 6px!important;gap:0!important;font-size:0!important}
+.dev-xs #main-chat-head .cbtn svg{width:13px!important;height:13px!important}
+.dev-xs .chat-live{display:none!important}
+.dev-xs .msg-body{max-width:92%!important}
+.dev-xs .main-content{padding:56px 10px 56px!important}
+.dev-xs .home-hero{padding:15px 12px!important}
+.dev-xs .home-hero h1{font-size:21px!important;line-height:1.12!important}
+.dev-xs .home-hero .golden-quote{font-size:11px!important}
+.dev-xs .btn-primary{padding-top:9px!important;padding-bottom:9px!important;font-size:11.5px!important}
+.dev-xs .pill-btn{padding:6px 3px!important;font-size:10px!important}
+
+/* ===== PERFECT PILL GRID (3+3 both rows EXACTLY equal) ===== */
+.v96grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+.v96grid .pill-btn{min-width:0!important;width:100%!important;justify-content:center!important;padding:8px 4px!important;font-size:11px!important;gap:5px!important;white-space:nowrap!important;overflow:hidden!important}
+.v96grid .pill-btn svg,.v96grid .pill-btn i{width:13px!important;height:13px!important;flex-shrink:0}
+.v96grid .pill-btn span{overflow:hidden;text-overflow:ellipsis}
+
+/* ===== PC FIX: tools grid original compact size wapas ===== */
+/* (Part 9.4/9.5 ka mobile-only aspect-ratio PC pe leak ho raha tha) */
+@media(min-width:769px){
+  .home-tools{grid-template-columns:repeat(6,1fr)!important}
+  .home-tool{aspect-ratio:auto!important;padding:10px 6px!important}
+  .home-tool .ti{width:34px!important;height:34px!important}
+  .home-tool .ti svg{width:18px!important;height:18px!important}
+  .home-tool .tn{font-size:10px!important}
+}
+/* mobile pe tools grid Part 9.4 jaisa hi (6-col original) — untouched design */
+@media(max-width:768px){
+  .home-tools{grid-template-columns:repeat(3,1fr)!important;gap:8px!important}
+  .home-tool{aspect-ratio:auto!important;padding:9px 4px!important}
+}
+
+/* ===== native touch feedback ===== */
+.a-btn,.pill-btn,.icobtn,.cbtn{touch-action:manipulation}
+.a-btn:active,.pill-btn:active,.icobtn:active{transform:scale(.94);opacity:.85}
+</style>`);
+
+/* ---------- B: DEVICE DETECTOR ---------- */
+var v96RzT=null;
+function v96Detect(){
+  try{
+    var w=Math.min(window.innerWidth||360,document.documentElement.clientWidth||window.innerWidth||360);
+    var cls;
+    if(w<=360)cls='dev-xs';
+    else if(w<=400)cls='dev-sm';
+    else if(w<=480)cls='dev-md';
+    else if(w<=768)cls='dev-tab';
+    else cls='dev-lg';
+    document.body.classList.remove('dev-xs','dev-sm','dev-md','dev-tab','dev-lg');
+    document.body.classList.add(cls);
+  }catch(e){}
+}
+window.addEventListener('resize',function(){clearTimeout(v96RzT);v96RzT=setTimeout(v96Detect,150);});
+window.addEventListener('orientationchange',function(){setTimeout(v96Detect,200);});
+v96Detect();
+
+/* ---------- C: PILL GRID TAGGING (tools grid ko HAATH NAHI LAGAYA) ---------- */
+function v96Tag(){
+  try{
+    document.querySelectorAll('.pill-btn').forEach(function(p){
+      var par=p.parentElement;
+      if(par&&!par.classList.contains('v96grid')&&par.querySelectorAll('.pill-btn').length>=3)par.classList.add('v96grid');
+    });
+  }catch(e){}
+}
+v96Tag();
+setTimeout(v96Tag,800);
+onRender(function(){v96Tag();});
+/* ================== PART 9.6 END ================== */
+
+
+
 
 
 /* ==================================================================
