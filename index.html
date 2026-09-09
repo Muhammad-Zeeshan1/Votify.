@@ -505,9 +505,317 @@ body.day .sp-ver{color:#4F46E5;background:rgba(99,102,241,.08);border-color:rgba
 .sp-ver-dot{width:6px;height:6px;border-radius:50%!important;background:#10B981;box-shadow:0 0 8px rgba(16,185,129,.9);animation:a50-blink 1.7s infinite}
 
 /* ==================================================================
-   ★ 50 NEW ANIMATIONS — VOTIFY V3.7 MOTION PACK ★
-   [1-13] Entrances  [14-25] Attention  [26-38] Ambient  [39-50] Micro/UI
+   ★ 10 SPLASH SCREEN DESIGNS — admin-selectable (.splash-d1 .. .splash-d10)
+   d1 = default Aurora (existing). d2..d10 override backgrounds + accents.
    ================================================================== */
+#splash.splash-d2{background:linear-gradient(135deg,#0F0C29 0%,#302B63 50%,#24243E 100%)!important}
+#splash.splash-d2 .sp-aurora.a{background:radial-gradient(circle,rgba(0,229,255,.85),transparent 70%)}
+#splash.splash-d2 .sp-aurora.b{background:radial-gradient(circle,rgba(255,0,229,.85),transparent 70%)}
+#splash.splash-d2 .sp-aurora.c{background:radial-gradient(circle,rgba(255,255,0,.7),transparent 70%)}
+#splash.splash-d2 .sp-title{background:linear-gradient(135deg,#00E5FF,#FF00E6 60%,#FFD400);-webkit-background-clip:text;background-clip:text;color:transparent!important}
+#splash.splash-d2 .sp-logo{background:linear-gradient(135deg,#00E5FF,#FF00E6)!important;box-shadow:0 0 60px rgba(0,229,255,.65),0 0 130px rgba(255,0,230,.35)!important}
+
+#splash.splash-d3{background:radial-gradient(circle at 50% 50%,#1A1A2E 0%,#16213E 50%,#0F3460 100%)!important}
+#splash.splash-d3 .sp-aurora.a{background:radial-gradient(circle,rgba(233,69,96,.7),transparent 70%)}
+#splash.splash-d3 .sp-aurora.b{background:radial-gradient(circle,rgba(255,206,84,.65),transparent 70%)}
+#splash.splash-d3 .sp-aurora.c{display:none}
+#splash.splash-d3 .sp-title{background:linear-gradient(135deg,#E94560,#FFCE54 70%,#F5F5F5);-webkit-background-clip:text;background-clip:text;color:transparent!important}
+#splash.splash-d3 .sp-logo{background:linear-gradient(135deg,#E94560,#FFCE54)!important;box-shadow:0 0 60px rgba(233,69,96,.65),0 0 130px rgba(255,206,84,.35)!important}
+
+#splash.splash-d4{background:linear-gradient(180deg,#000 0%,#1A0033 50%,#000 100%)!important}
+#splash.splash-d4 .sp-aurora.a{background:radial-gradient(circle,rgba(138,43,226,.9),transparent 70%)}
+#splash.splash-d4 .sp-aurora.b{background:radial-gradient(circle,rgba(75,0,130,.8),transparent 70%)}
+#splash.splash-d4 .sp-aurora.c{background:radial-gradient(circle,rgba(255,20,147,.7),transparent 70%)}
+#splash.splash-d4 .sp-title{background:linear-gradient(135deg,#9D4EDD,#FF1493 60%,#FFD700);-webkit-background-clip:text;background-clip:text;color:transparent!important;animation:v52-shimmer-text 3s linear infinite}
+#splash.splash-d4 .sp-logo{background:linear-gradient(135deg,#9D4EDD,#FF1493)!important;box-shadow:0 0 80px rgba(157,78,221,.85),0 0 160px rgba(255,20,147,.45)!important}
+
+#splash.splash-d5{background:linear-gradient(135deg,#06D6A0 0%,#118AB2 50%,#073B4C 100%)!important}
+#splash.splash-d5 .sp-aurora.a{background:radial-gradient(circle,rgba(6,214,160,.7),transparent 70%)}
+#splash.splash-d5 .sp-aurora.b{background:radial-gradient(circle,rgba(17,138,178,.7),transparent 70%)}
+#splash.splash-d5 .sp-aurora.c{background:radial-gradient(circle,rgba(255,209,102,.7),transparent 70%)}
+#splash.splash-d5 .sp-title{background:linear-gradient(135deg,#06D6A0,#FFD166 60%,#FFFFFF);-webkit-background-clip:text;background-clip:text;color:transparent!important}
+#splash.splash-d5 .sp-logo{background:linear-gradient(135deg,#06D6A0,#118AB2)!important;box-shadow:0 0 60px rgba(6,214,160,.65),0 0 130px rgba(17,138,178,.35)!important}
+
+#splash.splash-d6{background:linear-gradient(135deg,#FF6B6B 0%,#EE5A6F 50%,#F06292 100%)!important}
+#splash.splash-d6 .sp-aurora.a{background:radial-gradient(circle,rgba(255,196,113,.7),transparent 70%)}
+#splash.splash-d6 .sp-aurora.b{background:radial-gradient(circle,rgba(255,138,128,.7),transparent 70%)}
+#splash.splash-d6 .sp-aurora.c{background:radial-gradient(circle,rgba(255,255,255,.5),transparent 70%)}
+#splash.splash-d6 .sp-title{background:linear-gradient(135deg,#FFFFFF,#FFE66D 60%,#FF6B6B);-webkit-background-clip:text;background-clip:text;color:transparent!important;filter:drop-shadow(0 4px 18px rgba(255,107,107,.5))}
+#splash.splash-d6 .sp-logo{background:linear-gradient(135deg,#FF6B6B,#FFD166)!important;box-shadow:0 0 60px rgba(255,107,107,.65),0 0 130px rgba(255,209,102,.35)!important}
+
+#splash.splash-d7{background:#000!important}
+#splash.splash-d7 .sp-aurora.a{background:radial-gradient(circle,rgba(0,255,0,.6),transparent 70%)}
+#splash.splash-d7 .sp-aurora.b{background:radial-gradient(circle,rgba(0,255,0,.4),transparent 70%)}
+#splash.splash-d7 .sp-aurora.c{display:none}
+#splash.splash-d7 .sp-grid{background-image:linear-gradient(rgba(0,255,0,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,0,.18) 1px,transparent 1px);animation:a50-gradient-pan 4s linear infinite}
+#splash.splash-d7 .sp-title{background:linear-gradient(135deg,#00FF00,#00FF00 50%,#00FF00);-webkit-background-clip:text;background-clip:text;color:transparent!important;animation:v52-glow-pulse 1.8s ease-in-out infinite;text-shadow:0 0 18px rgba(0,255,0,.85)}
+#splash.splash-d7 .sp-logo{background:#000!important;border:2px solid #00FF00!important;box-shadow:0 0 50px rgba(0,255,0,.7),inset 0 0 30px rgba(0,255,0,.2)!important}
+#splash.splash-d7 .sp-logo svg{stroke:#00FF00!important}
+#splash.splash-d7 .sp-sub,#splash.splash-d7 .sp-quote{color:rgba(0,255,0,.7)!important}
+
+#splash.splash-d8{background:linear-gradient(135deg,#FCE38A 0%,#F38181 50%,#FCBAD3 100%)!important}
+#splash.splash-d8 .sp-aurora.a{background:radial-gradient(circle,rgba(255,255,255,.7),transparent 70%)}
+#splash.splash-d8 .sp-aurora.b{background:radial-gradient(circle,rgba(243,129,129,.5),transparent 70%)}
+#splash.splash-d8 .sp-aurora.c{display:none}
+#splash.splash-d8 .sp-title{background:linear-gradient(135deg,#D93535,#8B2D2D 60%,#5A1A1A);-webkit-background-clip:text;background-clip:text;color:transparent!important;filter:drop-shadow(0 4px 14px rgba(140,40,40,.35))}
+#splash.splash-d8 .sp-logo{background:linear-gradient(135deg,#D93535,#F38181)!important;box-shadow:0 0 60px rgba(217,53,53,.5),0 0 130px rgba(243,129,129,.3)!important}
+#splash.splash-d8 .sp-sub{color:#5A1A1A!important}
+#splash.splash-d8 .sp-quote{color:#8B2D2D!important}
+#splash.splash-d8 .sp-credit{color:#5A1A1A!important}
+#splash.splash-d8 .sp-pct{color:#8B2D2D!important}
+
+#splash.splash-d9{background:#0D1117!important;overflow:hidden}
+#splash.splash-d9 .sp-aurora.a{background:radial-gradient(circle,rgba(88,166,255,.6),transparent 70%)}
+#splash.splash-d9 .sp-aurora.b{background:radial-gradient(circle,rgba(99,102,241,.5),transparent 70%)}
+#splash.splash-d9 .sp-aurora.c{background:radial-gradient(circle,rgba(168,85,247,.5),transparent 70%)}
+#splash.splash-d9 .sp-title{background:linear-gradient(135deg,#58A6FF,#A371F7 60%,#F778BA);-webkit-background-clip:text;background-clip:text;color:transparent!important;font-family:'Courier New',monospace!important;letter-spacing:.05em}
+#splash.splash-d9 .sp-logo{background:linear-gradient(135deg,#58A6FF,#A371F7)!important;box-shadow:0 0 60px rgba(88,166,255,.6),0 0 130px rgba(163,113,247,.3)!important}
+#splash.splash-d9 .sp-sub{font-family:'Courier New',monospace!important;color:#58A6FF!important}
+
+#splash.splash-d10{background:linear-gradient(135deg,#1B1B3A 0%,#693668 50%,#A74482 100%)!important}
+#splash.splash-d10 .sp-aurora.a{background:radial-gradient(circle,rgba(247,37,133,.7),transparent 70%)}
+#splash.splash-d10 .sp-aurora.b{background:radial-gradient(circle,rgba(181,23,158,.6),transparent 70%)}
+#splash.splash-d10 .sp-aurora.c{background:radial-gradient(circle,rgba(114,9,183,.6),transparent 70%)}
+#splash.splash-d10 .sp-title{background:linear-gradient(135deg,#F72585,#7209B7 60%,#3A0CA3);-webkit-background-clip:text;background-clip:text;color:transparent!important;animation:v52-shimmer-text 4s linear infinite}
+#splash.splash-d10 .sp-logo{background:linear-gradient(135deg,#F72585,#7209B7)!important;box-shadow:0 0 60px rgba(247,37,133,.65),0 0 130px rgba(114,9,183,.35)!important}
+#splash.splash-d10 .sp-sub{color:#F72585!important}
+
+/* small label on each splash preview in admin */
+.sp-prev-card{cursor:pointer;padding:14px 10px;border:2px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);transition:.2s;text-align:center;position:relative;overflow:hidden}
+.sp-prev-card.sel{border-color:#A855F7!important;box-shadow:0 0 16px rgba(168,85,247,.55)}
+.sp-prev-card:hover{transform:translateY(-2px);border-color:rgba(168,85,247,.5)}
+.sp-prev-card .sp-prev-bg{width:100%;height:60px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-family:Sora;font-weight:800;font-size:14px;color:#fff;border-radius:4px}
+.sp-prev-card .sp-prev-n{font-size:10.5px;font-weight:700;color:#C9CCE4}
+
+/* ==================================================================
+   ★ 200 NEW ANIMATIONS — VOTIFY V3.7 MOTION PACK ★
+   [001-040] Entrances  [041-080] Attention  [081-120] Ambient
+   [121-160] Micro/UI   [161-200] Text & Background effects
+   ================================================================== */
+@keyframes v52-fade-in{from{opacity:0}to{opacity:1}}
+@keyframes v52-fade-in-up{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+@keyframes v52-fade-in-down{from{opacity:0;transform:translateY(-28px)}to{opacity:1;transform:none}}
+@keyframes v52-fade-in-left{from{opacity:0;transform:translateX(-32px)}to{opacity:1;transform:none}}
+@keyframes v52-fade-in-right{from{opacity:0;transform:translateX(32px)}to{opacity:1;transform:none}}
+@keyframes v52-scale-in{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+@keyframes v52-scale-in-up{from{opacity:0;transform:scale(.85) translateY(20px)}to{opacity:1;transform:none}}
+@keyframes v52-pop-in{0%{opacity:0;transform:scale(.4)}70%{transform:scale(1.08)}100%{opacity:1;transform:scale(1)}}
+@keyframes v52-bounce-in{0%{opacity:0;transform:scale(.3)}50%{opacity:1;transform:scale(1.05)}70%{transform:scale(.95)}100%{transform:scale(1)}}
+@keyframes v52-elastic-in{0%{opacity:0;transform:scale(0)}55%{opacity:1;transform:scale(1.15)}75%{transform:scale(.92)}90%{transform:scale(1.04)}100%{transform:scale(1)}}
+@keyframes v52-flip-in-x{from{opacity:0;transform:perspective(800px) rotateX(-90deg)}to{opacity:1;transform:none}}
+@keyframes v52-flip-in-y{from{opacity:0;transform:perspective(800px) rotateY(-90deg)}to{opacity:1;transform:none}}
+@keyframes v52-rotate-in{from{opacity:0;transform:rotate(-200deg) scale(.4)}to{opacity:1;transform:none}}
+@keyframes v52-slide-in-bl{from{opacity:0;transform:translate(-40px,40px)}to{opacity:1;transform:none}}
+@keyframes v52-slide-in-br{from{opacity:0;transform:translate(40px,40px)}to{opacity:1;transform:none}}
+@keyframes v52-slide-in-tl{from{opacity:0;transform:translate(-40px,-40px)}to{opacity:1;transform:none}}
+@keyframes v52-slide-in-tr{from{opacity:0;transform:translate(40px,-40px)}to{opacity:1;transform:none}}
+@keyframes v52-roll-in{from{opacity:0;transform:translateX(-100%) rotate(-120deg)}to{opacity:1;transform:none}}
+@keyframes v52-zoom-in{from{opacity:0;transform:scale(1.4)}to{opacity:1;transform:scale(1)}}
+@keyframes v52-zoom-out{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
+@keyframes v52-swipe-in-right{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes v52-swipe-in-left{from{clip-path:inset(0 0 0 100%)}to{clip-path:inset(0 0 0 0)}}
+@keyframes v52-swipe-in-top{from{clip-path:inset(0 0 100% 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes v52-swipe-in-bottom{from{clip-path:inset(100% 0 0 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes v52-fade-blur-in{from{opacity:0;filter:blur(14px)}to{opacity:1;filter:blur(0)}}
+@keyframes v52-fade-grayscale-in{from{opacity:0;filter:grayscale(100%)}to{opacity:1;filter:grayscale(0)}}
+@keyframes v52-skew-in-x{from{opacity:0;transform:skewX(30deg) translateX(-20px)}to{opacity:1;transform:none}}
+@keyframes v52-skew-in-y{from{opacity:0;transform:skewY(30deg) translateY(-20px)}to{opacity:1;transform:none}}
+@keyframes v52-tilt-in{from{opacity:0;transform:rotate(-10deg) scale(.8) translateY(20px)}to{opacity:1;transform:none}}
+@keyframes v52-drop-in{0%{opacity:0;transform:translateY(-60px) rotate(-8deg)}60%{opacity:1;transform:translateY(8px) rotate(2deg)}100%{transform:none}}
+@keyframes v52-fly-in-tl{0%{opacity:0;transform:translate(-100vw,-100vh) rotate(-180deg)}100%{opacity:1;transform:none}}
+@keyframes v52-fly-in-br{0%{opacity:0;transform:translate(100vw,100vh) rotate(180deg)}100%{opacity:1;transform:none}}
+@keyframes v52-press-in{0%{opacity:0;transform:scale(1.6)}100%{opacity:1;transform:scale(1)}}
+@keyframes v52-soft-in{0%{opacity:0;transform:translateY(8px) scale(.98)}100%{opacity:1;transform:none}}
+@keyframes v52-cube-in{from{opacity:0;transform:perspective(800px) rotateY(45deg) translateZ(-80px)}to{opacity:1;transform:none}}
+@keyframes v52-card-flip{from{opacity:0;transform:perspective(800px) rotateY(180deg)}to{opacity:1;transform:none}}
+@keyframes v52-door-open{from{opacity:0;transform:perspective(800px) rotateY(-90deg);transform-origin:left}to{opacity:1;transform:none}}
+@keyframes v52-blinds-up{from{clip-path:inset(100% 0 0 0);opacity:0}to{clip-path:inset(0 0 0 0);opacity:1}}
+@keyframes v52-curtain-up{from{clip-path:inset(100% 0 0 0);transform:scaleY(0);transform-origin:bottom}to{clip-path:inset(0 0 0 0);transform:none}}
+@keyframes v52-fade-blur-up{from{opacity:0;filter:blur(20px);transform:translateY(30px)}to{opacity:1;filter:blur(0);transform:none}}
+@keyframes v52-pulse-soft{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes v52-pulse-hard{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+@keyframes v52-shake-x{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+@keyframes v52-shake-y{0%,100%{transform:translateY(0)}20%{transform:translateY(-10px)}40%{transform:translateY(10px)}60%{transform:translateY(-8px)}80%{transform:translateY(8px)}}
+@keyframes v52-shake-rotate{0%,100%{transform:rotate(0)}25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+@keyframes v52-wobble{0%{transform:none}15%{transform:translateX(-25%) rotate(-5deg)}30%{transform:translateX(20%) rotate(3deg)}45%{transform:translateX(-15%) rotate(-3deg)}60%{transform:translateX(10%) rotate(2deg)}75%{transform:translateX(-5%) rotate(-1deg)}100%{transform:none}}
+@keyframes v52-swing{20%{transform:rotate(15deg)}40%{transform:rotate(-10deg)}60%{transform:rotate(5deg)}80%{transform:rotate(-5deg)}100%{transform:rotate(0)}}
+@keyframes v52-tada{0%{transform:scale(1) rotate(0)}10%,20%{transform:scale(.9) rotate(-3deg)}30%,50%,70%,90%{transform:scale(1.1) rotate(3deg)}40%,60%,80%{transform:scale(1.1) rotate(-3deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes v52-jello{0%,11.1%,100%{transform:none}22.2%{transform:skewX(-12.5deg) skewY(-12.5deg)}33.3%{transform:skewX(6.25deg) skewY(6.25deg)}44.4%{transform:skewX(-3.125deg) skewY(-3.125deg)}55.5%{transform:skewX(1.5deg) skewY(1.5deg)}}
+@keyframes v52-heartbeat{0%,100%{transform:scale(1)}14%{transform:scale(1.15)}28%{transform:scale(1)}42%{transform:scale(1.15)}70%{transform:scale(1)}}
+@keyframes v52-blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes v52-blink-fast{0%,100%{opacity:1}25%,75%{opacity:0}}
+@keyframes v52-flicker{0%,100%{opacity:1}41%{opacity:1}42%{opacity:.4}43%{opacity:1}45%{opacity:.5}46%{opacity:1}77%{opacity:.3}78%{opacity:1}}
+@keyframes v52-rubber{0%,100%{transform:scale(1)}30%{transform:scaleX(1.25) scaleY(.75)}40%{transform:scaleX(.75) scaleY(1.25)}50%{transform:scaleX(1.15) scaleY(.85)}65%{transform:scaleX(.95) scaleY(1.05)}75%{transform:scale(1)}}
+@keyframes v52-flash{0%,100%{opacity:1;filter:brightness(1)}50%{opacity:.3;filter:brightness(2)}}
+@keyframes v52-bounce-soft{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes v52-bounce-hard{0%,100%{transform:translateY(0)}50%{transform:translateY(-30px)}}
+@keyframes v52-float-y{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes v52-float-x{0%,100%{transform:translateX(0)}50%{transform:translateX(8px)}}
+@keyframes v52-spin-slow{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes v52-spin-fast{from{transform:rotate(0)}to{transform:rotate(720deg)}}
+@keyframes v52-spin-rev{from{transform:rotate(360deg)}to{transform:rotate(0)}}
+@keyframes v52-spin-3d{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
+@keyframes v52-ping{0%{transform:scale(1);opacity:1}100%{transform:scale(2.2);opacity:0}}
+@keyframes v52-ping-out{0%{transform:scale(.5);opacity:0}50%{opacity:1}100%{transform:scale(2);opacity:0}}
+@keyframes v52-glow-pulse{0%,100%{filter:drop-shadow(0 0 8px currentColor)}50%{filter:drop-shadow(0 0 24px currentColor)}}
+@keyframes v52-shadow-pulse{0%,100%{box-shadow:0 0 0 0 rgba(168,85,247,.7)}50%{box-shadow:0 0 0 12px rgba(168,85,247,0)}}
+@keyframes v52-color-cycle{0%{filter:hue-rotate(0)}100%{filter:hue-rotate(360deg)}}
+@keyframes v52-shake-bottom{0%,100%{transform:translateY(0)}10%,30%,50%,70%,90%{transform:translateY(-3px)}20%,40%,60%,80%{transform:translateY(3px)}}
+@keyframes v52-vibrate{0%{transform:translate(0,0)}10%{transform:translate(-1px,-1px)}20%{transform:translate(1px,1px)}30%{transform:translate(-1px,1px)}40%{transform:translate(1px,-1px)}50%{transform:translate(-1px,0)}60%{transform:translate(1px,0)}70%{transform:translate(0,-1px)}80%{transform:translate(0,1px)}90%{transform:translate(-1px,-1px)}100%{transform:translate(0,0)}}
+@keyframes v52-wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(8deg)}75%{transform:rotate(-8deg)}}
+@keyframes v52-bob{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-6px) rotate(-2deg)}75%{transform:translateY(6px) rotate(2deg)}}
+@keyframes v52-buzz{0%,100%{transform:translateX(0)}50%{transform:translateX(2px)}}
+@keyframes v52-tick{0%,100%{transform:rotate(0)}50%{transform:rotate(8deg)}}
+@keyframes v52-ring{0%{transform:rotate(0)}10%{transform:rotate(-15deg)}20%{transform:rotate(15deg)}30%{transform:rotate(-12deg)}40%{transform:rotate(12deg)}50%{transform:rotate(-8deg)}60%{transform:rotate(8deg)}70%{transform:rotate(-4deg)}80%{transform:rotate(4deg)}100%{transform:rotate(0)}}
+@keyframes v52-throb{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:.85}}
+@keyframes v52-flip-coin{0%{transform:rotateY(0)}100%{transform:rotateY(360deg)}}
+@keyframes v52-wobble-y{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-6px) rotate(-3deg)}75%{transform:translateY(6px) rotate(3deg)}}
+@keyframes v52-jolt{0%,100%{transform:translateY(0)}15%{transform:translateY(-25px)}30%{transform:translateY(0)}45%{transform:translateY(-15px)}60%{transform:translateY(0)}}
+@keyframes v52-shrink-pulse{0%,100%{transform:scale(1)}50%{transform:scale(.85)}}
+@keyframes v52-bg-pan-lr{0%{background-position:0 0}100%{background-position:100% 0}}
+@keyframes v52-bg-pan-tb{0%{background-position:0 0}100%{background-position:0 100%}}
+@keyframes v52-bg-pan-diag{0%{background-position:0 0}100%{background-position:100% 100%}}
+@keyframes v52-bg-pan-rev{0%{background-position:100% 0}100%{background-position:0 0}}
+@keyframes v52-bg-zoom{0%,100%{background-size:100% 100%}50%{background-size:140% 140%}}
+@keyframes v52-bg-shrink{0%,100%{background-size:140% 140%}50%{background-size:100% 100%}}
+@keyframes v52-bg-rotate{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+@keyframes v52-bg-hue{0%{filter:hue-rotate(0)}100%{filter:hue-rotate(360deg)}}
+@keyframes v52-bg-saturate{0%,100%{filter:saturate(1)}50%{filter:saturate(2)}}
+@keyframes v52-bg-blur{0%,100%{filter:blur(0)}50%{filter:blur(2px)}}
+@keyframes v52-bg-bright{0%,100%{filter:brightness(1)}50%{filter:brightness(1.4)}}
+@keyframes v52-bg-fade{0%,100%{opacity:1}50%{opacity:.7}}
+@keyframes v52-bg-gradient-shift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes v52-bg-pan-360{from{background-position:0 0}to{background-position:200% 0}}
+@keyframes v52-bg-sway{0%,100%{transform:translateX(0)}50%{transform:translateX(15px)}}
+@keyframes v52-bg-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes v52-bg-orbit{from{transform:rotate(0) translateX(20px) rotate(0)}to{transform:rotate(360deg) translateX(20px) rotate(-360deg)}}
+@keyframes v52-bg-drift{0%{transform:translate(0,0)}25%{transform:translate(15px,-10px)}50%{transform:translate(-5px,12px)}75%{transform:translate(-12px,-8px)}100%{transform:translate(0,0)}}
+@keyframes v52-bg-wave{0%,100%{transform:translateY(0) skewY(0)}50%{transform:translateY(-10px) skewY(2deg)}}
+@keyframes v52-bg-ripple{0%{transform:scale(1);opacity:.6}100%{transform:scale(3);opacity:0}}
+@keyframes v52-bg-pulse-soft{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.1);opacity:.8}}
+@keyframes v52-bg-shift-x{0%,100%{background-position:0% 0%}50%{background-position:80% 0%}}
+@keyframes v52-bg-shift-y{0%,100%{background-position:0% 0%}50%{background-position:0% 80%}}
+@keyframes v52-bg-glow{0%,100%{box-shadow:inset 0 0 60px rgba(168,85,247,.3)}50%{box-shadow:inset 0 0 100px rgba(168,85,247,.6)}}
+@keyframes v52-bg-morph{0%{border-radius:30% 70% 70% 30%/30% 30% 70% 70%}25%{border-radius:58% 42% 75% 25%/76% 46% 54% 24%}50%{border-radius:50% 50% 33% 67%/55% 27% 73% 45%}75%{border-radius:33% 67% 58% 42%/63% 68% 32% 37%}100%{border-radius:30% 70% 70% 30%/30% 30% 70% 70%}}
+@keyframes v52-bg-aurora{0%,100%{background-position:0 0;filter:hue-rotate(0)}50%{background-position:50% 50%;filter:hue-rotate(60deg)}}
+@keyframes v52-bg-stripe{0%{background-position:0 0}100%{background-position:60px 0}}
+@keyframes v52-bg-grid{0%{background-position:0 0}100%{background-position:46px 46px}}
+@keyframes v52-bg-confetti{0%{transform:translate(0,0) rotate(0)}100%{transform:translate(0,100vh) rotate(720deg)}}
+@keyframes v52-bg-snowfall{0%{transform:translateY(-20px) translateX(0)}100%{transform:translateY(100vh) translateX(20px)}}
+@keyframes v52-bg-rain{0%{transform:translateY(-20px)}100%{transform:translateY(100vh)}}
+@keyframes v52-bg-firefly{0%,100%{opacity:0;transform:translate(0,0)}25%{opacity:1}50%{transform:translate(20px,-20px)}75%{opacity:1}}
+@keyframes v52-bg-fog{0%,100%{opacity:.3;transform:translateX(0)}50%{opacity:.6;transform:translateX(30px)}}
+@keyframes v52-bg-cloud{0%{transform:translateX(-20%)}100%{transform:translateX(120%)}}
+@keyframes v52-bg-lightning{0%,95%,100%{opacity:0}97%,99%{opacity:1}}
+@keyframes v52-bg-twinkle{0%,100%{opacity:.3}50%{opacity:1}}
+@keyframes v52-bg-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes v52-bg-pan-circle{0%{background-position:0% 0%}25%{background-position:100% 0%}50%{background-position:100% 100%}75%{background-position:0% 100%}100%{background-position:0% 0%}}
+@keyframes v52-bg-pulse-bg{0%,100%{background-color:rgba(99,102,241,.2)}50%{background-color:rgba(168,85,247,.4)}}
+@keyframes v52-bg-warm-glow{0%,100%{box-shadow:0 0 60px rgba(251,191,36,.3)}50%{box-shadow:0 0 100px rgba(251,191,36,.6)}}
+@keyframes v52-btn-pop{0%{transform:scale(1)}50%{transform:scale(.92)}100%{transform:scale(1)}}
+@keyframes v52-btn-grow{0%{transform:scale(1)}100%{transform:scale(1.05)}}
+@keyframes v52-btn-shrink{0%{transform:scale(1)}100%{transform:scale(.95)}}
+@keyframes v52-icon-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes v52-icon-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes v52-icon-wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(10deg)}75%{transform:rotate(-10deg)}}
+@keyframes v52-icon-tada{0%{transform:rotate(0)}20%{transform:rotate(-15deg)}40%{transform:rotate(15deg)}60%{transform:rotate(-10deg)}80%{transform:rotate(10deg)}100%{transform:rotate(0)}}
+@keyframes v52-icon-pop{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+@keyframes v52-bar-fill{from{width:0}to{width:100%}}
+@keyframes v52-bar-empty{from{width:100%}to{width:0}}
+@keyframes v52-bar-stripes{0%{background-position:0 0}100%{background-position:34px 0}}
+@keyframes v52-bar-glow{0%,100%{box-shadow:0 0 8px rgba(168,85,247,.5)}50%{box-shadow:0 0 20px rgba(168,85,247,.9)}}
+@keyframes v52-dot-pulse{0%{box-shadow:0 0 0 0 currentColor}70%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
+@keyframes v52-dot-blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes v52-dot-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes v52-check-pop{0%{transform:scale(0);opacity:0}60%{transform:scale(1.3)}100%{transform:scale(1);opacity:1}}
+@keyframes v52-x-pop{0%{transform:scale(0) rotate(-90deg);opacity:0}60%{transform:scale(1.3) rotate(10deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes v52-arrow-bounce{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
+@keyframes v52-arrow-bounce-y{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
+@keyframes v52-modal-pop{0%{opacity:0;transform:scale(.85)}100%{opacity:1;transform:scale(1)}}
+@keyframes v52-modal-drop{0%{opacity:0;transform:translateY(-30px) scale(.95)}100%{opacity:1;transform:none}}
+@keyframes v52-modal-rise{0%{opacity:0;transform:translateY(30px) scale(.95)}100%{opacity:1;transform:none}}
+@keyframes v52-tooltip-in{0%{opacity:0;transform:translateY(4px) scale(.9)}100%{opacity:1;transform:none}}
+@keyframes v52-toast-in{0%{opacity:0;transform:translateX(120%)}100%{opacity:1;transform:translateX(0)}}
+@keyframes v52-toast-out{0%{opacity:1;transform:translateX(0)}100%{opacity:0;transform:translateX(120%)}}
+@keyframes v52-dropdown-in{0%{opacity:0;transform:translateY(-8px) scaleY(.9);transform-origin:top}100%{opacity:1;transform:none}}
+@keyframes v52-dropdown-out{0%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-8px) scaleY(.9);transform-origin:top}}
+@keyframes v52-sidebar-slide{0%{transform:translateX(-100%)}100%{transform:translateX(0)}}
+@keyframes v52-sidebar-slide-r{0%{transform:translateX(100%)}100%{transform:translateX(0)}}
+@keyframes v52-tab-underline{0%{width:0}100%{width:100%}}
+@keyframes v52-tab-pop{0%{transform:scale(.95)}100%{transform:scale(1)}}
+@keyframes v52-input-focus{0%{box-shadow:0 0 0 0 rgba(99,102,241,.4)}100%{box-shadow:0 0 0 4px rgba(99,102,241,.2)}}
+@keyframes v52-input-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes v52-card-flip-y{0%{transform:rotateY(0)}100%{transform:rotateY(180deg)}}
+@keyframes v52-card-lift{0%{transform:translateY(0);box-shadow:0 0 0 rgba(0,0,0,0)}100%{transform:translateY(-6px);box-shadow:0 12px 30px rgba(0,0,0,.3)}}
+@keyframes v52-card-press{0%{transform:scale(1)}100%{transform:scale(.97)}}
+@keyframes v52-fab-pop{0%{transform:scale(0) rotate(-90deg)}60%{transform:scale(1.1) rotate(5deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes v52-fab-shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-12deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(8deg)}}
+@keyframes v52-loader-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes v52-loader-dots{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+@keyframes v52-loader-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes v52-shimmer-text{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes v52-typing-caret{0%,100%{border-color:transparent}50%{border-color:#fff}}
+@keyframes v52-text-glow{0%,100%{text-shadow:0 0 4px currentColor}50%{text-shadow:0 0 16px currentColor}}
+@keyframes v52-text-pop{0%{transform:scale(.8);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+@keyframes v52-text-fade-up{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:none}}
+@keyframes v52-text-slide-in{0%{opacity:0;transform:translateX(-20px)}100%{opacity:1;transform:none}}
+@keyframes v52-text-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes v52-text-jitter{0%,100%{transform:translate(0,0)}25%{transform:translate(-1px,1px)}50%{transform:translate(1px,-1px)}75%{transform:translate(-1px,-1px)}}
+@keyframes v52-text-shadow-dance{0%{text-shadow:0 0 0 #fff}25%{text-shadow:2px 2px 0 #EC4899}50%{text-shadow:-2px -2px 0 #06B6D4}75%{text-shadow:2px -2px 0 #FCD34D}100%{text-shadow:0 0 0 #fff}}
+@keyframes v52-text-rainbow{0%{color:#F87171}16%{color:#FCD34D}33%{color:#6EE7B7}50%{color:#67E8F9}66%{color:#A78BFA}83%{color:#F472B6}100%{color:#F87171}}
+@keyframes v52-text-gradient-shift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes v52-text-stretch{0%,100%{transform:scaleX(1)}50%{transform:scaleX(1.2)}}
+@keyframes v52-text-flip{0%{transform:rotateX(0)}100%{transform:rotateX(360deg)}}
+@keyframes v52-text-typing{from{width:0}to{width:100%}}
+@keyframes v52-text-blur-in{0%{filter:blur(10px);opacity:0}100%{filter:blur(0);opacity:1}}
+@keyframes v52-text-3d-pop{0%{transform:translateZ(-100px) rotateY(90deg);opacity:0}100%{transform:none;opacity:1}}
+@keyframes v52-text-glitch{0%,100%{transform:translate(0)}20%{transform:translate(-3px,3px)}40%{transform:translate(3px,-3px)}60%{transform:translate(-3px,-3px)}80%{transform:translate(3px,3px)}}
+@keyframes v52-text-wave{0%,100%{transform:translateY(0)}25%{transform:translateY(-4px)}75%{transform:translateY(4px)}}
+@keyframes v52-text-fade-cycle{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes v52-text-emboss{0%,100%{text-shadow:1px 1px 0 #000,-1px -1px 0 #fff}50%{text-shadow:-1px -1px 0 #000,1px 1px 0 #fff}}
+@keyframes v52-text-neon{0%,100%{text-shadow:0 0 4px currentColor,0 0 8px currentColor,0 0 12px currentColor}50%{text-shadow:0 0 8px currentColor,0 0 16px currentColor,0 0 24px currentColor}}
+@keyframes v52-text-fire{0%,100%{text-shadow:0 0 4px #F97316,0 0 8px #EF4444}50%{text-shadow:0 0 8px #FCD34D,0 0 16px #F97316,0 0 24px #EF4444}}
+@keyframes v52-text-ice{0%,100%{text-shadow:0 0 4px #67E8F9,0 0 8px #93C5FD}50%{text-shadow:0 0 8px #A5F3FC,0 0 16px #67E8F9,0 0 24px #93C5FD}}
+@keyframes v52-text-gold{0%,100%{text-shadow:0 0 4px #FCD34D,0 0 8px #F59E0B}50%{text-shadow:0 0 8px #FBBF24,0 0 16px #FCD34D,0 0 24px #F59E0B}}
+@keyframes v52-text-shadow-flicker{0%,100%{text-shadow:0 0 0 transparent}50%{text-shadow:2px 2px 0 rgba(0,0,0,.5)}}
+@keyframes v52-bg-aurora-flow{0%{background-position:0% 0%;filter:hue-rotate(0)}33%{background-position:50% 50%;filter:hue-rotate(120deg)}66%{background-position:100% 100%;filter:hue-rotate(240deg)}100%{background-position:0% 0%;filter:hue-rotate(360deg)}}
+@keyframes v52-bg-neon-shift{0%{background:linear-gradient(45deg,#EC4899,#8B5CF6)}25%{background:linear-gradient(45deg,#06B6D4,#3B82F6)}50%{background:linear-gradient(45deg,#10B981,#06B6D4)}75%{background:linear-gradient(45deg,#F59E0B,#EF4444)}100%{background:linear-gradient(45deg,#EC4899,#8B5CF6)}}
+@keyframes v52-bg-galaxy-spin{0%{transform:rotate(0deg) scale(1)}50%{transform:rotate(180deg) scale(1.1)}100%{transform:rotate(360deg) scale(1)}}
+@keyframes v52-bg-ocean-wave{0%,100%{background-position:0% 0%}50%{background-position:100% 100%}}
+@keyframes v52-bg-fire-dance{0%,100%{filter:hue-rotate(0) brightness(1)}50%{filter:hue-rotate(-30deg) brightness(1.3)}}
+@keyframes v52-bg-grid-flow{0%{background-position:0 0}100%{background-position:60px 60px}}
+@keyframes v52-bg-particles{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(-100vh) rotate(360deg)}}
+@keyframes v52-bg-stars-twinkle{0%,100%{opacity:.3}50%{opacity:1}}
+@keyframes v52-bg-stars-spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+@keyframes v52-bg-aurora-band{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes v52-bg-mesh-shift{0%,100%{background-position:0% 0%}50%{background-position:30% 30%}}
+@keyframes v52-bg-soft-glow{0%,100%{box-shadow:inset 0 0 60px rgba(255,255,255,.05)}50%{box-shadow:inset 0 0 120px rgba(255,255,255,.15)}}
+@keyframes v52-bg-color-pulse{0%,100%{background-color:#0F172A}50%{background-color:#1E293B}}
+@keyframes v52-bg-vignette-pulse{0%,100%{box-shadow:inset 0 0 200px rgba(0,0,0,.5)}50%{box-shadow:inset 0 0 300px rgba(0,0,0,.8)}}
+@keyframes v52-bg-spotlight{0%{background-position:0% 0%}100%{background-position:100% 100%}}
+
+/* ===== animation utility classes (sample) ===== */
+.v52-fade-up{animation:v52-fade-in-up .5s ease both}
+.v52-pop{animation:v52-pop-in .4s cubic-bezier(.34,1.56,.64,1) both}
+.v52-bounce{animation:v52-bounce-in .6s ease both}
+.v52-elastic{animation:v52-elastic-in .8s cubic-bezier(.34,1.56,.64,1) both}
+.v52-flip-x{animation:v52-flip-in-x .6s ease both}
+.v52-flip-y{animation:v52-flip-in-y .6s ease both}
+.v52-rotate-in{animation:v52-rotate-in .7s ease both}
+.v52-zoom-in{animation:v52-zoom-in .4s ease both}
+.v52-slide-l{animation:v52-slide-in-left .5s ease both}
+.v52-slide-r{animation:v52-slide-in-right .5s ease both}
+.v52-slide-t{animation:v52-slide-in-tl .5s ease both}
+.v52-slide-b{animation:v52-slide-in-br .5s ease both}
+.v52-shimmer{animation:v52-shimmer-text 3s linear infinite}
+.v52-glow{animation:v52-text-glow 2s ease-in-out infinite}
+.v52-pulse{animation:v52-pulse-soft 1.6s ease-in-out infinite}
+.v52-float{animation:v52-float-y 3s ease-in-out infinite}
+.v52-spin-slow{animation:v52-spin-slow 8s linear infinite}
+.v52-heartbeat{animation:v52-heartbeat 1.4s ease-in-out infinite}
+.v52-shake{animation:v52-shake-x .5s ease}
+.v52-wobble{animation:v52-wobble 1s ease}
+.v52-tada{animation:v52-tada 1.4s ease}
 
 /* --- [1] --- */
 @keyframes a50-fade-up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
@@ -749,17 +1057,55 @@ body.day .btn-primary::after{opacity:.5}
       <div class="sp-orbit o1"><i></i></div><div class="sp-orbit o2"><i></i></div><div class="sp-orbit o3"><i></i></div>
       <div class="sp-logo"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" y1="14" x2="9" y2="18"/><line x1="7" y1="17" x2="4" y2="20"/><line x1="3" y1="19" x2="5" y2="21"/></svg></div>
     </div>
-    <div class="sp-title"><span style="--i:0">V</span><span style="--i:1">O</span><span style="--i:2">T</span><span style="--i:3">I</span><span style="--i:4">F</span><span style="--i:5">Y</span></div>
-    <div class="sp-sub">OPINION ARENA</div>
-    <div class="sp-quote">"There your opinion is another life"</div>
+    <div class="sp-title" id="spTitle">VOTIFY</div>
+    <div class="sp-sub" id="spSub">OPINION ARENA</div>
+    <div class="sp-quote" id="spQuote">"There your opinion is another life"</div>
     <div class="sp-load">
       <div class="sp-bar"><i id="spBarFill"></i></div>
       <div class="sp-pct"><span id="spPct">0</span>%</div>
     </div>
-    <div class="sp-credit">This Website is Made by <b>Muhammad Zeeshan</b></div>
+    <div class="sp-credit" id="spCredit">This Website is Made by <b>Muhammad Zeeshan</b></div>
     
   </div>
 </div>
+<script>
+/* ===== SPLASH BOOTSTRAP: apply admin-selected design + custom text ===== */
+(function(){
+  try {
+    var cfg = {d:1, t:'VOTIFY', s:'OPINION ARENA', q:'"There your opinion is another life"', c:'This Website is Made by <b>Muhammad Zeeshan</b>'};
+    try {
+      var saved = localStorage.getItem('basiler_splash');
+      if (saved) {
+        var parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          if (parsed.d) cfg.d = parsed.d;
+          if (parsed.t) cfg.t = parsed.t;
+          if (parsed.s) cfg.s = parsed.s;
+          if (parsed.q) cfg.q = parsed.q;
+          if (parsed.c) cfg.c = parsed.c;
+        }
+      }
+    } catch (e) {}
+    var s = document.getElementById('splash');
+    if (s) s.classList.add('splash-d' + cfg.d);
+    var t = document.getElementById('spTitle');
+    if (t) {
+      t.textContent = cfg.t;
+      /* re-create letter spans so the per-letter entrance animation works */
+      var spans = '';
+      for (var i = 0; i < cfg.t.length; i++) {
+        var ch = cfg.t.charAt(i);
+        if (ch === ' ') ch = '&nbsp;';
+        spans += '<span style="--i:' + i + '">' + ch + '</span>';
+      }
+      t.innerHTML = spans;
+    }
+    var sub = document.getElementById('spSub'); if (sub) sub.textContent = cfg.s;
+    var q   = document.getElementById('spQuote'); if (q) q.textContent = cfg.q;
+    var cr  = document.getElementById('spCredit'); if (cr) cr.innerHTML = cfg.c;
+  } catch (e) {}
+})();
+</script>
 <script>try{if(localStorage.getItem("basiler_daynight")==="day")document.body.classList.add("day");}catch(e){}</script>
 <div id="theme-bg"></div>
 <div id="app"></div>
@@ -1166,16 +1512,90 @@ function updateWCDot(n){
   try{$$('.v91wc').forEach(function(b){if(b.parentElement)b.parentElement.classList.toggle('wc-unread',n>0);});}catch(e){}
 }
 
-/* ---------- PWA ---------- */
+/* ---------- PWA (SINGLE-FILE: embedded manifest + blob service worker) ---------- */
 window._v3sw='loading';
 (function(){
+  /* 1. embed the manifest as a data URL so install works without an external manifest.json */
+  try{
+    var manifest={
+      name:'Votify — Opinion Arena',
+      short_name:'Votify',
+      description:'Every opinion starts a war',
+      start_url:'./',
+      scope:'./',
+      display:'standalone',
+      orientation:'portrait',
+      background_color:'#06070D',
+      theme_color:'#06070D',
+      categories:['social','entertainment','communication'],
+      icons:[
+        {src:"data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#6366F1"/><text x="256" y="350" font-family="Arial" font-size="300" font-weight="bold" fill="white" text-anchor="middle">V</text></svg>'),sizes:"512x512",type:"image/svg+xml",purpose:"any maskable"},
+        {src:"data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" fill="#6366F1"/><text x="96" y="130" font-family="Arial" font-size="110" font-weight="bold" fill="white" text-anchor="middle">V</text></svg>'),sizes:"192x192",type:"image/svg+xml",purpose:"any maskable"}
+      ]
+    };
+    var oldM=document.querySelector('link[rel="manifest"]');
+    if(oldM)oldM.remove();
+    var mL=document.createElement('link');
+    mL.rel='manifest';
+    mL.href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify(manifest));
+    document.head.appendChild(mL);
+    /* also add the iOS apple-touch-icon for Add to Home Screen */
+    var oldA=document.querySelector('link[rel="apple-touch-icon"]');
+    if(oldA)oldA.remove();
+    var aL=document.createElement('link');
+    aL.rel='apple-touch-icon';
+    aL.href="data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180"><rect width="180" height="180" fill="#6366F1"/><text x="90" y="125" font-family="Arial" font-size="100" font-weight="bold" fill="white" text-anchor="middle">V</text></svg>');
+    document.head.appendChild(aL);
+  }catch(e){}
+
+  /* 2. register an inline service worker via blob URL — no external sw.js file needed.
+        The SW uses an in-page cache strategy: precache the current page on install, then
+        serve from cache when offline. This makes "Install App" actually install a working PWA. */
   if('serviceWorker' in navigator){
     window.addEventListener('load',function(){
-      navigator.serviceWorker.register('sw.js').then(function(){
-        window._v3sw='active';
-        try{var old=document.querySelector('link[rel="manifest"]');if(old)old.remove();
-          var l=document.createElement('link');l.rel='manifest';l.href='manifest.json';document.head.appendChild(l);}catch(e){}
-      }).catch(function(){window._v3sw='missing';});
+      try{
+        var swCode=[
+          "var CACHE='votify-v1';",
+          "var START_URL=self.registration?self.registration.scope:'./';",
+          "self.addEventListener('install',function(e){",
+          "  self.skipWaiting();",
+          "  e.waitUntil(caches.open(CACHE).then(function(c){return c.add(START_URL).catch(function(){});}));",
+          "});",
+          "self.addEventListener('activate',function(e){",
+          "  e.waitUntil(caches.keys().then(function(keys){return Promise.all(keys.map(function(k){if(k!==CACHE)return caches.delete(k);}));}));",
+          "  return self.clients.claim();",
+          "});",
+          "self.addEventListener('fetch',function(e){",
+          "  var req=e.request;",
+          "  if(req.method!=='GET')return;",
+          "  var url=new URL(req.url);",
+          "  /* never cache firebase / webrtc / external APIs — always go to network */",
+          "  if(url.origin!==self.location.origin)return;",
+          "  if(url.pathname.indexOf('/api/')===0)return;",
+          "  e.respondWith(",
+          "    caches.match(req).then(function(cached){",
+          "      var fetcher=fetch(req).then(function(resp){",
+          "        if(resp&&resp.status===200&&resp.type==='basic'){",
+          "          var copy=resp.clone();",
+          "          caches.open(CACHE).then(function(c){c.put(req,copy);}).catch(function(){});",
+          "        }",
+          "        return resp;",
+          "      }).catch(function(){return cached;});",
+          "      return cached||fetcher;",
+          "    })",
+          "  );",
+          "});"
+        ].join('\n');
+        var blob=new Blob([swCode],{type:'application/javascript'});
+        var swUrl=URL.createObjectURL(blob);
+        navigator.serviceWorker.register(swUrl).then(function(){
+          window._v3sw='active';
+        }).catch(function(err){
+          /* blob SW may be blocked on some browsers (only same-origin allowed for SW);
+             fall back to a no-op SW that just claims clients so PWA install still works */
+          window._v3sw='blob-blocked';
+        });
+      }catch(e){window._v3sw='missing';}
     });
   }else{window._v3sw='unsupported';}
 })();
@@ -1210,7 +1630,7 @@ function v3InstallModal(){
   }else{
     steps=['Click the <b>install icon (⊕)</b> in the address bar','Or <b>⋮ menu → Install Votify</b>','The app installs with its own window + icon 🎉'];
   }
-  var swB=window._v3sw==='active'?'<span class="badge" style="color:#10B981;border-color:rgba(16,185,129,.5)">✅ Service Worker active — install ready</span>':(window._v3sw==='missing'?'<span class="badge" style="color:#F43F5E;border-color:rgba(244,63,94,.5)">❌ sw.js missing on server</span>':'<span class="badge" style="color:#FBBF24">⏳ Service Worker loading…</span>');
+  var swB=window._v3sw==='active'?'<span class="badge" style="color:#10B981;border-color:rgba(16,185,129,.5)">✅ Service Worker active — install ready</span>':(window._v3sw==='blob-blocked'?'<span class="badge" style="color:#FBBF24;border-color:rgba(251,191,36,.5)">⚠️ Browser blocked inline SW — open via Chrome ⋮ menu → Install app</span>':(window._v3sw==='missing'?'<span class="badge" style="color:#F43F5E;border-color:rgba(244,63,94,.5)">❌ Service Worker failed</span>':(window._v3sw==='unsupported'?'<span class="badge" style="color:#F43F5E;border-color:rgba(244,63,94,.5)">❌ Service Worker unsupported in this browser</span>':'<span class="badge" style="color:#FBBF24">⏳ Service Worker loading…</span>')));
   $('#admin-root').innerHTML='<div class="modal-overlay" style="z-index:320" onclick="if(event.target===this)closeV3()"><div class="modal-card scale-in">'+
   '<div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2.5"><div style="width:40px;height:40px;background:linear-gradient(135deg,#6366F1,#A855F7);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:20px;font-family:Sora">V</div><b class="font-display text-[17px]">Install Votify App</b></div><button class="icobtn" style="width:34px;height:34px" onclick="closeV3()"><i data-lucide="x" class="w-4 h-4"></i></button></div>'+
   '<div class="mb-3">'+swB+'</div>'+
@@ -2184,9 +2604,10 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .u-act-btn.del:hover{background:rgba(244,63,94,.2)}
 .dm-new-dot{position:absolute;top:-3px;left:-3px;width:12px;height:12px;background:#F43F5E;border:2px solid #06170F;border-radius:50%!important;animation:cPulse 1.5s infinite}
 .dm-tab-badge{background:#EC4899;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;min-width:16px;text-align:center;border-radius:8px!important;display:none}
-.chat-live{margin:0;padding:5px 8px;border:none;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.28);flex-shrink:0}
+.chat-live{margin:0;padding:5px 8px;border:none;border-bottom:none;background:rgba(0,0,0,.28);flex-shrink:0}
 .chat-live .lv-av img{width:31px;height:31px}
-.typing-bar{min-height:18px;padding:0 16px;font-size:11.5px;color:#6EE7B7;font-style:italic;flex-shrink:0}
+.typing-bar{min-height:0;padding:0 16px;font-size:11.5px;color:#6EE7B7;font-style:italic;flex-shrink:0;display:none}
+.typing-bar.has-typing{display:block;min-height:18px}
 .pin-bar{display:none;align-items:center;gap:8px;padding:7px 14px;background:rgba(251,191,36,.1);border-bottom:1px solid rgba(251,191,36,.3);flex-shrink:0}
 .chat-msgs{flex:1;overflow-y:auto;padding:20px 16px}
 .chat-msgs.fs-s{font-size:13px}.chat-msgs.fs-m{font-size:14.5px}.chat-msgs.fs-l{font-size:16.5px}
@@ -2500,7 +2921,8 @@ function scrollChat(force){const el=$('#chat-msgs');if(!el)return;
 function renderTyping(){const el=$('#typing-bar');if(!el)return;
   const now=Date.now();
   const names=typingRaw.filter(([uid,v])=>uid!==MY.uid&&v&&now-(v.ts||0)<5000).map(([,v])=>v.name||'Someone');
-  el.innerHTML=names.length?esc(names.slice(0,3).join(', ')+(names.length===1?' is typing…':' are typing…'))+'<span class="caret"></span>':'';}
+  el.innerHTML=names.length?esc(names.slice(0,3).join(', ')+(names.length===1?' is typing…':' are typing…'))+'<span class="caret"></span>':'';
+  el.classList.toggle('has-typing',names.length>0);}
 function chatTyping(){if(typingTimeout)clearTimeout(typingTimeout);
   if(typingPath){db.ref(typingPath+'/'+MY.uid).set({name:MY.name,ts:Date.now()});
     typingTimeout=setTimeout(()=>{try{db.ref(typingPath+'/'+MY.uid).remove();}catch(e){}},3000);}}
@@ -4756,7 +5178,8 @@ window.ADMIN_PAGES.settings=function(){
   return`<div class="max-w-2xl mx-auto fade-up">${adminBackBtn}<h2 class="font-display font-extrabold text-2xl mb-1">⚙ Global Settings</h2><p class="text-white/45 text-sm mb-2">Applies to ALL users instantly</p>
   <div class="glass-strong p-6"><label class="lbl">Website Name (all users)</label><div class="flex gap-2 mb-3"><input id="ad-name" class="input-field" maxlength="20" value="${esc(SETTINGS.name)}"><button class="a-btn" style="font-family:inherit" onclick="adminSaveName()">Save</button></div>
   <label class="lbl">Chatter App Name (all users)</label><div class="flex gap-2 mb-3"><input id="ad-cname" class="input-field" maxlength="20" value="${esc(SETTINGS.chatName)}"><button class="a-btn" style="font-family:inherit" onclick="adminSaveChatName()">Save</button></div>
-  <button class="btn-primary w-full py-3 font-bold mb-5" style="font-family:inherit;background:linear-gradient(135deg,#EC4899,#8B5CF6)" onclick="navAdmin('studio')">🎨 Theme Studio (Global)</button>
+  <button class="btn-primary w-full py-3 font-bold mb-3" style="font-family:inherit;background:linear-gradient(135deg,#EC4899,#8B5CF6)" onclick="navAdmin('studio')">🎨 Theme Studio (Global)</button>
+  <button class="btn-primary w-full py-3 font-bold mb-5" style="font-family:inherit;background:linear-gradient(135deg,#06B6D4,#3B82F6)" onclick="navAdmin('splash')">✨ Splash Studio (10 designs + custom text)</button>
   <label class="lbl">🖼 Chat Wallpaper for ALL users (${CHAT_WALLS.length} wallpapers)</label><div class="flex gap-2 flex-wrap mb-2">${CHAT_WALLS.map((w,i)=>`<div class="st-mixbox" style="background:${isDay?(w.dayBg||w.bg||'rgba(255,255,255,.05)'):(w.bg||'rgba(255,255,255,.05)')};width:38px;height:38px;${SETTINGS.chatWall===i?'border-color:#fff;box-shadow:0 0 14px rgba(255,255,255,.35)':''}" title="${w.n}" onclick="adminSetWall(${i})"></div>`).join('')}</div>
   <div class="glass p-2.5 mb-5 text-[11px] text-white/45">Note: if a user picked their own wallpaper, their choice applies; otherwise the admin one shows for everyone.</div>
   <label class="lbl">Global Themes (${THEMES.length})</label><div class="grid grid-cols-3 md:grid-cols-5 gap-2 mb-5" style="max-height:300px;overflow-y:auto">${THEMES.map((t,i)=>`<div class="theme-sw ${SETTINGS.theme===i?'sel':''}" style="background:${t.bg||'radial-gradient(circle at 30% 30%,#312e81,#06070D)'}" onclick="adminSetTheme(${i})"><span>${t.n}</span></div>`).join('')}</div>
@@ -4773,6 +5196,101 @@ async function adminToggle(k){const v=!SETTINGS[k];try{await db.ref('meta/settin
 async function clearChatNow(){if(!isAdmin)return;
   if(!confirm('Clear ALL chats for everyone?'))return;
   try{await db.ref('chats').remove();await db.ref('typing').remove();}catch(e){}}
+
+/* ---------- K1: SPLASH STUDIO (👑 10 designs + custom text) ---------- */
+window.ADMIN_PAGES.splash=function(){
+  var cfg={d:1,t:'VOTIFY',s:'OPINION ARENA',q:'"There your opinion is another life"',c:'This Website is Made by <b>Muhammad Zeeshan</b>'};
+  try{
+    var saved=localStorage.getItem('basiler_splash');
+    if(saved){var p=JSON.parse(saved);if(p){cfg=Object.assign(cfg,p);}}
+  }catch(e){}
+  if(window._splashCfg)cfg=Object.assign(cfg,window._splashCfg);
+  window._splashCfg=cfg;
+  var designs=[
+    {n:'Aurora Royale',bg:'radial-gradient(900px 700px at 20% 15%,rgba(99,102,241,.30),transparent 60%),linear-gradient(180deg,#03040A,#070811)'},
+    {n:'Cyber Neon',bg:'linear-gradient(135deg,#0F0C29 0%,#302B63 50%,#24243E 100%)'},
+    {n:'Royal Crimson',bg:'radial-gradient(circle at 50% 50%,#1A1A2E 0%,#16213E 50%,#0F3460 100%)'},
+    {n:'Purple Galaxy',bg:'linear-gradient(180deg,#000 0%,#1A0033 50%,#000 100%)'},
+    {n:'Emerald Ocean',bg:'linear-gradient(135deg,#06D6A0 0%,#118AB2 50%,#073B4C 100%)'},
+    {n:'Sunset Rose',bg:'linear-gradient(135deg,#FF6B6B 0%,#EE5A6F 50%,#F06292 100%)'},
+    {n:'Matrix Green',bg:'#000'},
+    {n:'Peach Pastel',bg:'linear-gradient(135deg,#FCE38A 0%,#F38181 50%,#FCBAD3 100%)'},
+    {n:'GitHub Dark',bg:'#0D1117'},
+    {n:'Magenta Storm',bg:'linear-gradient(135deg,#1B1B3A 0%,#693668 50%,#A74482 100%)'}
+  ];
+  return '<div class="max-w-2xl mx-auto fade-up">'+adminBackBtn+
+    '<h2 class="font-display font-extrabold text-2xl mb-1">✨ Splash Studio</h2>'+
+    '<p class="text-white/45 text-sm mb-5">Pick 1 of 10 splash designs + edit the text — applies to ALL users instantly on next open.</p>'+
+    '<div class="glass-strong p-5 mb-4">'+
+      '<label class="lbl">🎨 Pick a Splash Design (10 total)</label>'+
+      '<div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-2">'+
+        designs.map(function(d,i){
+          var idx=i+1;
+          return '<div class="sp-prev-card '+(cfg.d===idx?'sel':'')+'" onclick="adminPickSplash('+idx+')" style="padding:8px">'+
+            '<div class="sp-prev-bg" style="background:'+d.bg+'">d'+idx+'</div>'+
+            '<div class="sp-prev-n">'+d.n+'</div>'+
+          '</div>';
+        }).join('')+
+      '</div>'+
+      '<div class="glass p-2.5 text-[11px] text-white/45 mb-3">Selected: <b style="color:#A5B4FC">Design '+cfg.d+' — '+designs[cfg.d-1].n+'</b></div>'+
+    '</div>'+
+    '<div class="glass-strong p-5 mb-4">'+
+      '<label class="lbl">Splash Title (the big logo text)</label>'+
+      '<input id="sp-t" class="input-field mb-3" maxlength="20" value="'+esc(cfg.t||'')+'" placeholder="VOTIFY">'+
+      '<label class="lbl">Subtitle (small caps under title)</label>'+
+      '<input id="sp-s" class="input-field mb-3" maxlength="40" value="'+esc(cfg.s||'')+'" placeholder="OPINION ARENA">'+
+      '<label class="lbl">Quote (italic line under subtitle)</label>'+
+      '<input id="sp-q" class="input-field mb-3" maxlength="80" value="'+esc(cfg.q||'')+'" placeholder="There your opinion is another life">'+
+      '<label class="lbl">Credit line (HTML allowed, e.g. &lt;b&gt;Name&lt;/b&gt;)</label>'+
+      '<input id="sp-c" class="input-field mb-4" maxlength="100" value="'+esc(cfg.c||'').replace(/"/g,'&quot;')+'" placeholder="This Website is Made by <b>Muhammad Zeeshan</b>">'+
+      '<button class="btn-primary w-full py-3 font-bold" style="font-family:inherit;background:linear-gradient(135deg,#06B6D4,#3B82F6)" onclick="adminSaveSplash()">💾 Save Splash Config (applies to ALL users)</button>'+
+      '<button class="btn-ghost w-full py-3 font-bold mt-2" style="font-family:inherit" onclick="adminPreviewSplash()">👁 Preview Splash Now</button>'+
+      '<button class="btn-ghost w-full py-2 font-bold mt-2" style="font-family:inherit;color:#FDA4AF;border-color:rgba(244,63,94,.4)" onclick="adminResetSplash()">↺ Reset to Defaults</button>'+
+    '</div>'+
+    '<div class="glass p-3 text-[11px] text-white/45">💡 Changes save to Firebase <code>meta/splash</code> and apply to every user the moment they next open the app. Already-open users see the update live.</div>'+
+  '</div>';
+};
+function adminPickSplash(d){
+  if(!window._splashCfg)window._splashCfg={d:1,t:'VOTIFY',s:'OPINION ARENA',q:'"There your opinion is another life"',c:'This Website is Made by <b>Muhammad Zeeshan</b>'};
+  window._splashCfg.d=d;
+  /* update UI without re-rendering whole page (so input values are preserved) */
+  document.querySelectorAll('.sp-prev-card').forEach(function(el,i){
+    el.classList.toggle('sel',(i+1)===d);
+  });
+}
+async function adminSaveSplash(){
+  if(!isAdmin)return toast('Admin only','error');
+  var cfg=window._splashCfg||{};
+  var tEl=document.getElementById('sp-t');if(tEl)cfg.t=tEl.value;
+  var sEl=document.getElementById('sp-s');if(sEl)cfg.s=sEl.value;
+  var qEl=document.getElementById('sp-q');if(qEl)cfg.q=qEl.value;
+  var cEl=document.getElementById('sp-c');if(cEl)cfg.c=cEl.value;
+  if(!cfg.d)cfg.d=1;
+  try{
+    await db.ref('meta/splash').set({d:cfg.d,t:cfg.t,s:cfg.s,q:cfg.q,c:cfg.c});
+    try{localStorage.setItem('basiler_splash',JSON.stringify({d:cfg.d,t:cfg.t,s:cfg.s,q:cfg.q,c:cfg.c}));}catch(e){}
+    flyXP('✨ Splash config saved — all users will see it');
+  }catch(e){toast('Save failed','error');}
+}
+function adminPreviewSplash(){
+  var cfg=window._splashCfg||{};
+  var tEl=document.getElementById('sp-t');if(tEl)cfg.t=tEl.value;
+  var sEl=document.getElementById('sp-s');if(sEl)cfg.s=sEl.value;
+  var qEl=document.getElementById('sp-q');if(qEl)cfg.q=qEl.value;
+  var cEl=document.getElementById('sp-c');if(cEl)cfg.c=cEl.value;
+  if(!cfg.d)cfg.d=1;
+  try{localStorage.setItem('basiler_splash',JSON.stringify(cfg));}catch(e){}
+  location.reload();
+}
+async function adminResetSplash(){
+  if(!confirm('Reset splash to defaults?'))return;
+  try{
+    await db.ref('meta/splash').set({d:1,t:'VOTIFY',s:'OPINION ARENA',q:'"There your opinion is another life"',c:'This Website is Made by <b>Muhammad Zeeshan</b>'});
+    try{localStorage.removeItem('basiler_splash');}catch(e){}
+    flyXP('✨ Splash reset to defaults');
+    setTimeout(function(){location.reload();},800);
+  }catch(e){toast('Reset failed','error');}
+}
 
 /* ---------- L: BROADCAST (👑 OWNER) ---------- */
 async function adminBroadcast(){if(!isAdmin)return;
@@ -5877,7 +6395,7 @@ if(typeof onRender==='function')onRender(function(){
    user. WebRTC peer-to-peer + Firebase signaling. The app always knows
    when a share is live (red LIVE chip + status page).
    ================================================================== */
-const SS={on:false,role:null,peer:null,pc:null,stream:null,mode:'screen'};
+const SS={on:false,role:null,peer:null,pc:null,stream:null,mode:'screen',peers:{},viewers:0,selectedUids:[],fullscreen:false};
 const SS_CFG={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
 
 /* ---------- LIVE chip (app-wide indicator) ---------- */
@@ -5890,17 +6408,35 @@ function ssChipShow(txt){
 function ssChipHide(){var c=document.getElementById('sschip');if(c)c.classList.remove('on');}
 function ssChipText(){
   if(!SS.on)return '';
-  if(SS.role==='host')return 'LIVE · sharing your '+(SS.mode==='screen'?'screen':'camera');
+  if(SS.role==='host'){
+    var v=SS.viewers||0;
+    return 'LIVE · sharing your '+(SS.mode==='screen'?'screen':'camera')+(v?' · '+v+' watching':'');
+  }
   var n=(allUsers[SS.peer]||{}).name||'user';
   return 'LIVE · watching '+n;
 }
 
-/* ---------- start sharing with a user ---------- */
-async function ssStart(targetUid,targetName){
+/* ---------- toggle a user in the multi-select list ---------- */
+function ssToggleSel(uid){
+  if(!SS.selectedUids)SS.selectedUids=[];
+  var i=SS.selectedUids.indexOf(uid);
+  if(i>=0)SS.selectedUids.splice(i,1);
+  else SS.selectedUids.push(uid);
+  render();
+}
+function ssSelectAllOnline(){
+  SS.selectedUids=onlineUsers.filter(function(u){return u.uid!==MY.uid&&!bannedUsers.has(u.uid);}).map(function(u){return u.uid;});
+  render();
+}
+function ssClearSel(){SS.selectedUids=[];render();}
+
+/* ---------- start sharing — multi-user ---------- */
+async function ssStartMulti(uidsArray){
   if(!MY)return;
   if(SS.on)return toastInfo('Already live — stop the current share first');
-  if(targetUid===MY.uid)return;
+  if(!uidsArray||!uidsArray.length)return toastInfo('Pick at least one fighter first');
   if(!window.RTCPeerConnection)return toast('WebRTC not supported in this browser','error');
+  /* 1. get the stream ONCE */
   var stream=null,mode='screen';
   try{
     if(navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia){
@@ -5913,27 +6449,39 @@ async function ssStart(targetUid,targetName){
     }
   }catch(e){}
   if(!stream)return toastInfo('Screen / camera permission denied',3200);
-  SS.stream=stream;SS.on=true;SS.role='host';SS.peer=targetUid;SS.mode=mode;
-  ssChipShow(ssChipText()+' → '+esc(targetName||'user')+' (waiting…)');
+  SS.stream=stream;SS.on=true;SS.role='host';SS.mode=mode;SS.peers={};SS.viewers=0;
+  stream.getVideoTracks().forEach(function(t){t.addEventListener('ended',function(){ssStop(true);});});
+  ssChipShow(ssChipText());
   if(view==='screenshare')render();
-  try{
-    const pc=new RTCPeerConnection(SS_CFG);
-    SS.pc=pc;
-    stream.getTracks().forEach(function(t){pc.addTrack(t,stream);});
-    pc.onicecandidate=function(ev){
-      if(ev.candidate){try{db.ref('screenshare/'+targetUid+'/invites/'+MY.uid+'/cands').push(JSON.stringify(ev.candidate.toJSON?ev.candidate.toJSON():ev.candidate));}catch(e){}}
-    };
-    stream.getVideoTracks().forEach(function(t){t.addEventListener('ended',function(){ssStop(true);});});
-    const offer=await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    await db.ref('screenshare/'+targetUid+'/invites/'+MY.uid).set({name:MY.name,avatar:MY.avatar||AVATAR_PRESETS[0],uid:MY.uid,ts:Date.now(),sdp:JSON.stringify({type:offer.type,sdp:offer.sdp})});
-    toastInfo('📡 Invite sent to '+(targetName||'user')+' — waiting to join…');
-    ssChipShow(ssChipText()+' → '+esc(targetName||'user'));
-  }catch(e){
-    toast('Could not start share','error');
-    ssStop(true);
+  /* 2. send invite to each target — each gets its own RTCPeerConnection */
+  var sent=0;
+  for(var i=0;i<uidsArray.length;i++){
+    var targetUid=uidsArray[i];
+    if(targetUid===MY.uid)continue;
+    var targetName=((allUsers[targetUid]||{}).name)||'user';
+    try{
+      var pc=new RTCPeerConnection(SS_CFG);
+      SS.peers[targetUid]={name:targetName,pc:pc,status:'invited'};
+      stream.getTracks().forEach(function(t){pc.addTrack(t,stream);});
+      (function(uid){
+        pc.onicecandidate=function(ev){
+          if(ev.candidate){try{db.ref('screenshare/'+uid+'/invites/'+MY.uid+'/cands').push(JSON.stringify(ev.candidate.toJSON?ev.candidate.toJSON():ev.candidate));}catch(e){}}
+        };
+      })(targetUid);
+      var offer=await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      await db.ref('screenshare/'+targetUid+'/invites/'+MY.uid).set({name:MY.name,avatar:MY.avatar||AVATAR_PRESETS[0],uid:MY.uid,ts:Date.now(),sdp:JSON.stringify({type:offer.type,sdp:offer.sdp})});
+      sent++;
+    }catch(e){}
   }
+  if(sent===0){toast('Could not start share','error');ssStop(true);return;}
+  toastInfo('📡 Invites sent to '+sent+' fighter'+(sent>1?'s':'')+' — waiting to join…');
+  ssChipShow(ssChipText()+' → '+sent+' invited');
+  if(view==='screenshare')render();
 }
+
+/* keep single-share as a backward-compat shortcut */
+async function ssStart(targetUid,targetName){return ssStartMulti([targetUid]);}
 
 /* ---------- incoming invite modal ---------- */
 function ssInviteModal(inv,from){
@@ -5944,7 +6492,7 @@ function ssInviteModal(inv,from){
   +'<div class="text-[12.5px] text-white/50 mt-1 mb-4">📡 wants to <b style="color:#F87171">share their screen</b> with you live</div>'
   +'<div class="flex gap-2"><button class="btn-ghost flex-1 py-3 font-bold" style="font-family:inherit" onclick="ssDecline()">Decline</button>'
   +'<button class="btn-primary flex-1 py-3 font-bold" style="font-family:inherit" onclick="ssAccept(\''+from+'\')">✅ Watch Live</button></div>'
-  +'<div class="text-[10px] text-white/35 mt-3">The invite expires in 60 seconds</div>'
+  +'<div class="text-[10px] text-white/35 mt-3">The invite expires in 60 seconds · opens in full screen mode</div>'
   +'</div></div>';
   lucide.createIcons();
 }
@@ -5954,18 +6502,20 @@ function ssDecline(){
   var R=document.getElementById('admin-root');if(R)R.innerHTML='';
 }
 
-/* ---------- accept → become watcher ---------- */
+/* ---------- accept → become watcher (auto enters fullscreen) ---------- */
 async function ssAccept(from){
   const inv=window._ssInv;
   if(!inv||!inv.sdp)return ssDecline();
   var R=document.getElementById('admin-root');if(R)R.innerHTML='';
   try{
     const pc=new RTCPeerConnection(SS_CFG);
-    SS.pc=pc;SS.on=true;SS.role='guest';SS.peer=from;
+    SS.pc=pc;SS.on=true;SS.role='guest';SS.peer=from;SS.fullscreen=false;
     pc.ontrack=function(ev){
       try{SS.stream=ev.streams&&ev.streams[0]||new MediaStream([ev.track]);}catch(e){SS.stream=new MediaStream([ev.track]);}
       ssChipShow(ssChipText());
       if(view==='screenshare')render();
+      /* auto-enter fullscreen after a brief moment so the video element is ready */
+      setTimeout(function(){try{ssEnterFullscreen();}catch(e){}},350);
     };
     pc.onicecandidate=function(ev){
       if(ev.candidate){try{db.ref('screenshare/'+from+'/answers/'+MY.uid+'/cands').push(JSON.stringify(ev.candidate.toJSON?ev.candidate.toJSON():ev.candidate));}catch(e){}}
@@ -5986,16 +6536,52 @@ async function ssAccept(from){
   }catch(e){toast('Could not join the share','error');ssStop(true);}
 }
 
-/* ---------- stop everything ---------- */
+/* ---------- fullscreen controls (guest can enter/exit any time) ---------- */
+function ssEnterFullscreen(){
+  try{
+    var v=document.getElementById('ssVideo');
+    if(!v)return;
+    if(v.requestFullscreen)v.requestFullscreen();
+    else if(v.webkitEnterFullscreen)v.webkitEnterFullscreen();
+    else if(v.webkitRequestFullscreen)v.webkitRequestFullscreen();
+    else if(v.msRequestFullscreen)v.msRequestFullscreen();
+    SS.fullscreen=true;
+  }catch(e){}
+  if(view==='screenshare')render();
+}
+function ssExitFullscreen(){
+  try{
+    if(document.exitFullscreen)document.exitFullscreen();
+    else if(document.webkitExitFullscreen)document.webkitExitFullscreen();
+    else if(document.msExitFullscreen)document.msExitFullscreen();
+  }catch(e){}
+  SS.fullscreen=false;
+  if(view==='screenshare')render();
+}
+/* keep SS.fullscreen in sync if user uses Esc to exit native fullscreen */
+try{
+  document.addEventListener('fullscreenchange',function(){
+    if(!document.fullscreenElement&&SS.fullscreen){SS.fullscreen=false;if(view==='screenshare')render();}
+  });
+  document.addEventListener('webkitfullscreenchange',function(){
+    if(!document.webkitFullscreenElement&&SS.fullscreen){SS.fullscreen=false;if(view==='screenshare')render();}
+  });
+}catch(e){}
+
+/* ---------- stop everything (closes all peer PCs) ---------- */
 async function ssStop(silent){
   try{if(SS.stream)SS.stream.getTracks().forEach(function(t){t.stop();});}catch(e){}
   try{if(SS.pc)SS.pc.close();}catch(e){}
+  try{if(SS.peers)Object.keys(SS.peers).forEach(function(uid){try{if(SS.peers[uid].pc)SS.peers[uid].pc.close();}catch(e){}});}catch(e){}
   try{
-    if(SS.role==='host'&&SS.peer)db.ref('screenshare/'+SS.peer+'/invites/'+MY.uid).remove();
+    if(SS.role==='host'&&SS.peers){
+      Object.keys(SS.peers).forEach(function(uid){try{db.ref('screenshare/'+uid+'/invites/'+MY.uid).remove();}catch(e){}});
+    }
     if(SS.role==='guest'&&SS.peer)db.ref('screenshare/'+SS.peer+'/answers/'+MY.uid).remove();
     db.ref('screenshare/'+MY.uid).remove();
   }catch(e){}
   SS.on=false;SS.role=null;SS.peer=null;SS.pc=null;SS.stream=null;SS.mode='screen';
+  SS.peers={};SS.viewers=0;SS.selectedUids=[];SS.fullscreen=false;
   ssChipHide();
   if(!silent){toastInfo('Share ended');if(view==='screenshare')render();}
   else if(view==='screenshare')render();
@@ -6019,18 +6605,49 @@ onAppStart(function(){
         if(document.hidden){try{sysNotify('📡 '+((inv.name)||'Someone')+' is screen sharing','Tap to watch their screen live',inv.avatar,'wc',from);}catch(e){}}
       }catch(e){}
     },function(){});
-    /* 2. answers to MY outgoing share */
+    /* 2. answers to MY outgoing share — multi-viewer: look up PC by guest UID */
     db.ref('screenshare/'+MY.uid+'/answers').on('child_added',async function(s){
       try{
-        if(!SS.on||SS.role!=='host'||!SS.pc)return;
+        if(!SS.on||SS.role!=='host')return;
         var a=s.val();
         if(!a||!a.sdp)return;
-        await SS.pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(a.sdp)));
-        db.ref('screenshare/'+MY.uid+'/answers/'+s.key+'/cands').on('child_added',function(cs){
-          try{var c=JSON.parse(cs.val());if(c&&SS.pc)SS.pc.addIceCandidate(new RTCIceCandidate(c));}catch(e){}
+        var guestUid=s.key;
+        var peer=SS.peers[guestUid];
+        if(!peer){
+          /* unexpected answer — create a new peer entry on the fly */
+          SS.peers[guestUid]={name:a.name||'User',pc:new RTCPeerConnection(SS_CFG),status:'watching'};
+          peer=SS.peers[guestUid];
+          if(SS.stream)SS.stream.getTracks().forEach(function(t){peer.pc.addTrack(t,SS.stream);});
+          (function(uid){
+            peer.pc.onicecandidate=function(ev){
+              if(ev.candidate){try{db.ref('screenshare/'+uid+'/invites/'+MY.uid+'/cands').push(JSON.stringify(ev.candidate.toJSON?ev.candidate.toJSON():ev.candidate));}catch(e){}}
+            };
+          })(guestUid);
+        }
+        await peer.pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(a.sdp)));
+        peer.status='watching';
+        SS.viewers=(SS.viewers||0)+1;
+        db.ref('screenshare/'+MY.uid+'/answers/'+guestUid+'/cands').on('child_added',function(cs){
+          try{var c=JSON.parse(cs.val());if(c&&peer.pc)peer.pc.addIceCandidate(new RTCIceCandidate(c));}catch(e){}
         },function(){});
         toastInfo('✅ '+(a.name||'User')+' joined your share');
         ssChipShow(ssChipText());
+        if(view==='screenshare')render();
+      }catch(e){}
+    },function(){});
+    /* 2b. answers removed → viewer left → decrement viewer count */
+    db.ref('screenshare/'+MY.uid+'/answers').on('child_removed',function(s){
+      try{
+        if(!SS.on||SS.role!=='host')return;
+        var guestUid=s.key;
+        if(SS.peers[guestUid]){
+          try{if(SS.peers[guestUid].pc)SS.peers[guestUid].pc.close();}catch(e){}
+          delete SS.peers[guestUid];
+          SS.viewers=Math.max(0,(SS.viewers||0)-1);
+          var leftName=(s.val()&&s.val().name)||'A viewer';
+          toastInfo('👋 '+leftName+' left the share');
+          if(view==='screenshare')render();
+        }
       }catch(e){}
     },function(){});
     /* 3. cleanup stale nodes every 2 min */
@@ -6050,40 +6667,70 @@ onAppStart(function(){
   }catch(e){}
 });
 
-/* ---------- SCREEN SHARE PAGE ---------- */
+/* ---------- SCREEN SHARE PAGE (multi-select + viewer count + fullscreen) ---------- */
 PAGES.screenshare=function(){
   if(!MY)return '';
   const supported=!!(navigator.mediaDevices&&(navigator.mediaDevices.getDisplayMedia||navigator.mediaDevices.getUserMedia));
   var live='';
   if(SS.on){
     var title=SS.role==='host'
-      ?('You are sharing your '+(SS.mode==='screen'?'🖥 screen':'📷 camera'))
+      ?('You are sharing your '+(SS.mode==='screen'?'🖥️ screen':'📷 camera'))
       :('Watching '+(esc(((allUsers[SS.peer]||{}).name)||'user'))+' live');
+    var viewerCount=SS.role==='host'?(SS.viewers||0):0;
+    var viewerList='';
+    if(SS.role==='host'&&SS.peers){
+      var accepted=Object.keys(SS.peers).filter(function(uid){return SS.peers[uid].status==='watching';});
+      if(accepted.length){
+        viewerList='<div class="p-3 text-[11px] flex items-center gap-2 flex-wrap" style="border-top:1px solid rgba(255,255,255,.06)"><b style="color:#10B981">👥 Watching now:</b> '+accepted.map(function(uid){
+          var u=allUsers[uid]||{};
+          return '<span class="badge" style="color:#10B981"><img src="'+(u.avatar||AVATAR_PRESETS[0])+'" style="width:14px;height:14px;border-radius:50%!important;vertical-align:middle;margin-right:4px;object-fit:cover">'+esc(SS.peers[uid].name)+'</span>';
+        }).join('')+'</div>';
+      }else{
+        viewerList='<div class="p-3 text-[11px] flex items-center gap-2" style="border-top:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.5)">⏳ No one has joined yet — invites are pending</div>';
+      }
+    }
     live='<div class="glass-strong ss-live-card mb-4" style="border-color:rgba(239,68,68,.45)">'
-    +'<div class="ss-live-bar"><span class="ss-badge"><span class="ss-dot"></span>LIVE</span><b class="font-display text-[15px]">'+title+'</b><div style="flex:1"></div>'
+    +'<div class="ss-live-bar"><span class="ss-badge"><span class="ss-dot"></span>LIVE</span><b class="font-display text-[15px]">'+title+'</b>'
+    +(SS.role==='host'?'<span class="badge" style="color:#10B981;margin-left:6px">👥 '+viewerCount+' watching</span>':'')
+    +'<div style="flex:1"></div>'
     +(SS.role==='guest'?'<button class="a-btn" style="font-family:inherit" onclick="ssStop()">⏹ Leave</button>':'<button class="a-btn" style="font-family:inherit;color:#FDA4AF;border-color:rgba(244,63,94,.45)" onclick="ssStop()">⏹ Stop Sharing</button>')+'</div>'
-    +'<div class="ss-video-wrap"><video id="ssVideo" autoplay playsinline '+(SS.role==='host'?'muted':'')+'></video></div>'
-    +'<div class="p-3 text-[11px] text-white/45 flex items-center gap-2 flex-wrap"><span class="badge" style="color:#F87171">● live indicator on</span> The app knows a share is running — red LIVE chip stays on top until you stop.</div>'
+    +'<div class="ss-video-wrap" style="position:relative">'
+    +'<video id="ssVideo" autoplay playsinline '+(SS.role==='host'?'muted':'')+'></video>'
+    +(SS.role==='guest'?'<div style="position:absolute;top:8px;right:8px;display:flex;gap:6px;z-index:5">'
+      +(SS.fullscreen?'<button class="a-btn" style="font-family:inherit;background:rgba(0,0,0,.75);color:#fff;border-color:rgba(255,255,255,.4)" onclick="ssExitFullscreen()">⦢ Exit Full Screen</button>':'<button class="a-btn" style="font-family:inherit;background:rgba(0,0,0,.75);color:#fff;border-color:rgba(255,255,255,.4)" onclick="ssEnterFullscreen()">⦢ Full Screen</button>')
+      +'</div>':'')
+    +'</div>'
+    +viewerList
+    +'<div class="p-3 text-[11px] text-white/45 flex items-center gap-2 flex-wrap"><span class="badge" style="color:#F87171">● live indicator on</span> '+(SS.role==='host'?'You can keep using the app — viewers watch your screen in real time.':'Video opens in full screen mode automatically — tap "Exit Full Screen" to leave fullscreen.')+'</div>'
     +'</div>';
   }
-  var how='<div class="glass p-4 mb-4"><div class="flex items-center gap-2 mb-2"><i data-lucide="cast" class="w-5 h-5" style="color:#818CF8"></i><b class="font-display text-[15px]">Live Screen Share</b></div>'
-  +'<div class="text-[12px] text-white/55 leading-relaxed">Pick any online fighter → they get a live invite with sound → once they accept, your screen streams to them in real time. Works both ways: when someone shares with you, a popup invite appears here and in notifications. <b style="color:#A5B4FC">Screen not available? The camera is used automatically.</b></div></div>';
+  var how='<div class="glass p-4 mb-4"><div class="flex items-center gap-2 mb-2"><i data-lucide="cast" class="w-5 h-5" style="color:#818CF8"></i><b class="font-display text-[15px]">Live Screen Share · Multi-Viewer</b></div>'
+  +'<div class="text-[12px] text-white/55 leading-relaxed">Tick multiple fighters → they all get a live invite at once → once they accept, your screen streams to <b>all of them simultaneously</b>. The live viewer count is shown on top. When a guest accepts, their video opens in <b style="color:#A5B4FC">full screen mode</b> automatically — they can exit full screen any time and keep watching in normal mode. <b style="color:#A5B4FC">Screen not available? The camera is used automatically.</b></div></div>';
   var online=onlineUsers.filter(function(u){return u.uid!==MY.uid&&!bannedUsers.has(u.uid);});
   var list='<h2 class="font-display font-extrabold text-lg mb-3 mt-1">📡 Share with… <span class="badge" style="color:#10B981">'+online.length+' online</span></h2>';
   if(!online.length)list+='<div class="glass p-8 text-center text-white/40">Nobody is online right now — check back soon.</div>';
-  else list+='<div class="grid gap-2 md:grid-cols-2">'+online.map(function(u){
-    return '<div class="ss-user"><img src="'+(u.avatar||AVATAR_PRESETS[0])+'"><div class="ss-un">'+esc(u.name)+'<div class="text-[10px] font-bold" style="color:#10B981">online now</div></div>'
-    +'<button class="btn-primary px-4 py-2 font-bold text-[12px]" style="font-family:inherit" onclick="ssStart(\''+u.uid+'\',\''+esc(u.name).replace(/'/g,'')+'\')">📡 Share</button></div>';
-  }).join('')+'</div>';
+  else{
+    if(!SS.selectedUids)SS.selectedUids=[];
+    list+='<div class="flex items-center gap-2 mb-3 flex-wrap"><button class="btn-ghost px-3 py-2 text-[12px] font-bold" style="font-family:inherit" onclick="ssSelectAllOnline()">☑ Select All</button><button class="btn-ghost px-3 py-2 text-[12px] font-bold" style="font-family:inherit" onclick="ssClearSel()">☐ Clear</button><span class="badge" style="color:#A5B4FC;margin-left:auto">'+(SS.selectedUids.length||0)+' selected</span></div>';
+    list+='<div class="grid gap-2 md:grid-cols-2">'+online.map(function(u){
+      var checked=SS.selectedUids.indexOf(u.uid)>=0;
+      return '<label class="ss-user" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid '+(checked?'rgba(129,140,248,.55)':'rgba(255,255,255,.1)')+';background:'+(checked?'rgba(99,102,241,.12)':'rgba(255,255,255,.04)')+'">'
+      +'<input type="checkbox" '+(checked?'checked':'')+' onchange="ssToggleSel(\''+u.uid+'\')" style="width:18px;height:18px;accent-color:#6366F1;cursor:pointer">'
+      +'<img src="'+(u.avatar||AVATAR_PRESETS[0])+'" style="width:38px;height:38px;border-radius:50%!important;object-fit:cover;flex-shrink:0">'
+      +'<div class="ss-un">'+esc(u.name)+'<div class="text-[10px] font-bold" style="color:#10B981">online now</div></div>'
+      +'</label>';
+    }).join('')+'</div>';
+    list+='<button class="btn-primary w-full py-3.5 font-bold mt-4" style="font-family:inherit" onclick="ssStartMulti(SS.selectedUids)">📡 Send Live Invites to '+(SS.selectedUids.length||0)+' fighter'+(SS.selectedUids.length===1?'':'s')+'</button>';
+  }
   if(!supported)how+='<div class="glass p-3 text-[11.5px] text-amber-300/80">⚠️ This browser does not support screen/camera sharing. Try Chrome (Android/desktop).</div>';
   return '<div class="max-w-2xl mx-auto fade-up">'
   +'<div class="glass-strong p-5 mb-5" style="border-color:rgba(139,92,246,.45)"><div class="flex items-center gap-3 flex-wrap">'
   +'<div class="w-12 h-12 flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,#8B5CF6,#6366F1);color:#fff;border-radius:14px!important"><i data-lucide="cast" class="w-6 h-6"></i></div>'
-  +'<div class="flex-1" style="min-width:150px"><h1 class="font-display font-extrabold text-2xl">Screen Share</h1><div class="text-[11px] text-white/45 font-bold uppercase tracking-wider">Live · peer to peer · private</div></div>'
-  +(SS.on?'<span class="ss-badge"><span class="ss-dot"></span>LIVE</span>':'')
+  +'<div class="flex-1" style="min-width:150px"><h1 class="font-display font-extrabold text-2xl">Screen Share</h1><div class="text-[11px] text-white/45 font-bold uppercase tracking-wider">Live · peer to peer · multi-viewer</div></div>'
+  +(SS.on?'<span class="ss-badge"><span class="ss-dot"></span>LIVE</span><span class="badge" style="color:#10B981;margin-left:6px">👥 '+(SS.viewers||0)+' watching</span>':'')
   +'</div></div>'
   +live+how+(SS.on?'':list)
-  +'<div class="glass p-3 mt-6 text-center text-[11px] text-white/40">🔒 Streams go directly between the two devices (WebRTC). Votify only relays the connection invite.</div>'
+  +'<div class="glass p-3 mt-6 text-center text-[11px] text-white/40">🔒 Streams go directly between devices (WebRTC). Votify only relays the connection invite. Accepted guests auto-open in full screen mode.</div>'
   +'</div>';
 };
 
@@ -6105,6 +6752,64 @@ onRender(function(){
   applyDayNight();
   if(isDemoMode){try{setupDemoMode();}catch(e){}}
   try{const s=(await db.ref('meta/settings').once('value')).val()||{};SETTINGS={...SETTINGS,...s};applySettings(s);}catch(e){}
+  /* ===== SPLASH: fetch admin-selected design + custom text from Firebase, apply live ===== */
+  try{
+    const sp=(await db.ref('meta/splash').once('value')).val();
+    if(sp){
+      try{localStorage.setItem('basiler_splash',JSON.stringify(sp));}catch(e){}
+      var sel=document.getElementById('splash');
+      if(sel){
+        if(sp.d){
+          for(var i=1;i<=10;i++)sel.classList.remove('splash-d'+i);
+          sel.classList.add('splash-d'+sp.d);
+        }
+        if(sp.t){
+          var tEl=document.getElementById('spTitle');
+          if(tEl){
+            var spans='';
+            for(var j=0;j<sp.t.length;j++){
+              var ch=sp.t.charAt(j);
+              if(ch===' ')ch='&nbsp;';
+              spans+='<span style="--i:'+j+'">'+ch+'</span>';
+            }
+            tEl.innerHTML=spans;
+          }
+        }
+        if(sp.s){var subEl=document.getElementById('spSub');if(subEl)subEl.textContent=sp.s;}
+        if(sp.q){var qEl=document.getElementById('spQuote');if(qEl)qEl.textContent=sp.q;}
+        if(sp.c){var cEl=document.getElementById('spCredit');if(cEl)cEl.innerHTML=sp.c;}
+      }
+      /* live updates */
+      try{
+        db.ref('meta/splash').on('value',function(snap){
+          try{
+            var v=snap.val();if(!v)return;
+            try{localStorage.setItem('basiler_splash',JSON.stringify(v));}catch(e){}
+            var el=document.getElementById('splash');
+            if(el&&v.d){
+              for(var k=1;k<=10;k++)el.classList.remove('splash-d'+k);
+              el.classList.add('splash-d'+v.d);
+            }
+            if(el&&v.t){
+              var tEl=document.getElementById('spTitle');
+              if(tEl){
+                var sp2='';
+                for(var m=0;m<v.t.length;m++){
+                  var c2=v.t.charAt(m);
+                  if(c2===' ')c2='&nbsp;';
+                  sp2+='<span style="--i:'+m+'">'+c2+'</span>';
+                }
+                tEl.innerHTML=sp2;
+              }
+            }
+            if(el&&v.s){var sEl=document.getElementById('spSub');if(sEl)sEl.textContent=v.s;}
+            if(el&&v.q){var qEl=document.getElementById('spQuote');if(qEl)qEl.textContent=v.q;}
+            if(el&&v.c){var cEl=document.getElementById('spCredit');if(cEl)cEl.innerHTML=v.c;}
+          }catch(e){}
+        });
+      }catch(e){}
+    }
+  }catch(e){}
   const h=location.hash.match(/#battle=(.+)/);
   if(h){view='battle';viewParam=h[1];}
   if(isDemoMode){try{const dm=demoMe();if(dm)startApp({uid:'demo-me',...dm});else showAuth();}catch(e){showAuth();}return;}
