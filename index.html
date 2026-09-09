@@ -4704,6 +4704,155 @@ document.head.insertAdjacentHTML('beforeend',`<style>
    ✅ Full Day Mode across all 10 parts
    ✅ All original features preserved
    ================================================================== */
+  /* ==================================================================
+   VOTIFY 3.0 — sw.js (Service Worker v2)
+   One-Tap Install + Offline + Push Notifications
+   ================================================================== */
+
+const CACHE_NAME = 'votify-v3-2';
+const CORE_URLS = [
+  '/',
+  '/index.html'
+];
+const CDN_URLS = [
+  'https://cdn.tailwindcss.com',
+  'https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js',
+  'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js'
+];
+
+/* ===== INSTALL ===== */
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(CORE_URLS))
+      .catch(() => caches.open(CACHE_NAME))
+      .then(() => {
+        /* cache CDN in background, don't block install */
+        caches.open(CACHE_NAME).then(cache => {
+          CDN_URLS.forEach(url => {
+            fetch(new Request(url, {mode:'cors'}))
+              .then(res => { if(res.ok) cache.put(url, res); })
+              .catch(() => {});
+          });
+        });
+      })
+  );
+  self.skipWaiting();
+});
+
+/* ===== ACTIVATE ===== */
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then(names => {
+      return Promise.all(
+        names.filter(n => n !== CACHE_NAME)
+             .map(n => caches.delete(n))
+      );
+    })
+  );
+  self.clients.claim();
+});
+
+/* ===== FETCH ===== */
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  
+  /* Firebase RTDB — always network */
+  if (event.request.url.includes('firebasedatabase.app')) return;
+  if (event.request.url.includes('firebaseio.com')) return;
+  
+  /* DiceBear — network first, cache fallback */
+  if (event.request.url.includes('api.dicebear.com')) {
+    event.respondWith(
+      fetch(event.request)
+        .then(res => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
+          }
+          return res;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+  
+  /* App shell — cache first */
+  event.respondWith(
+    caches.match(event.request)
+      .then(cached => {
+        if (cached) return cached;
+        return fetch(event.request)
+          .then(res => {
+            if (!res || res.status !== 200) return res;
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
+            return res;
+          })
+          .catch(() => {
+            if (event.request.destination === 'document') {
+              return caches.match('/index.html');
+            }
+            return new Response('', {status: 503});
+          });
+      })
+  );
+});
+
+/* ===== PUSH ===== */
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch(e) {
+    data = { title: 'Votify', body: 'New notification' };
+  }
+  
+  const title = data.title || 'Votify';
+  const options = {
+    body: data.body || 'You have a new message!',
+    icon: data.icon,
+    badge: data.icon,
+    tag: data.tag || 'votify-' + Date.now(),
+    data: data.data || {},
+    vibrate: [70, 50, 70],
+    requireInteraction: false
+  };
+  
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
+});
+
+/* ===== NOTIFICATION CLICK ===== */
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  
+  const chatData = event.notification.data;
+  
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then(clients => {
+        for (const client of clients) {
+          if (client.url.includes(self.location.origin)) {
+            client.postMessage({
+              type: 'NAVIGATE',
+              chat: chatData ? chatData.chat : null,
+              uid: chatData ? chatData.uid : null
+            });
+            return client.focus();
+          }
+        }
+        return self.clients.openWindow('/');
+      })
+  );
+});
+
+/* ===== MESSAGE ===== */
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
 /* ==================================================================
    ===== BOOT (runs after all parts are loaded) =====
    ================================================================== */
