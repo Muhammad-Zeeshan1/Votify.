@@ -1746,18 +1746,29 @@ function checkLoginStreak(){
 function impersonateBarHTML(fixed){if(!isImpersonating())return'';return`<div class="${fixed?'imp-fixed':''}" style="${fixed?'position:fixed;bottom:0;left:0;right:0;z-index:400;':'flex-shrink:0;'}background:linear-gradient(90deg,#7C3AED,#DB2777);padding:9px 14px;display:flex;align-items:center;gap:10px"><span style="font-size:18px">🎭</span><div class="flex-1 min-w-0"><b class="font-display text-[12.5px]">Exploring as ${esc(MY.name)}</b><div class="text-[9.5px] text-white/70">Admin impersonation</div></div><button class="a-btn" style="background:rgba(0,0,0,.35);border-color:rgba(255,255,255,.35)" onclick="exitImpersonate()">⏎ Exit</button></div>`;}
 function exitImpersonate(){db.ref('meta/impersonating').remove();localStorage.removeItem('basiler_impersonate');location.reload();}
 
-/* ---------- RENDER (zero-blink, focus-safe, typing-guard) ---------- */
+/* ---------- RENDER (zero-blink, focus-safe, typing-guard, mobile-throttled) ---------- */
 let _renderT=null,_renderCache='',_viewKey='';
+let _dataRenderT=null;  /* throttle for data-driven re-renders (Firebase updates) */
 window._typingGuard=function(){
   const ae=document.activeElement;if(!ae)return false;
   const tag=ae.tagName;if(tag!=='TEXTAREA'&&tag!=='INPUT')return false;
   return !!ae.id;
 };
+/* render() = instant (for navigation clicks) */
 function render(){
   if(view==='chat'&&window.renderChat){renderChat();return;}
-  /* INSTANT render — no debounce, no blink. Typing-guard is handled inside renderNow. */
   if(_renderT)clearTimeout(_renderT);
+  if(_dataRenderT){clearTimeout(_dataRenderT);_dataRenderT=null;}  /* cancel any pending data render */
   renderNow();
+}
+/* renderData() = throttled (for Firebase data updates — prevents mobile hang) */
+function renderData(){
+  if(view==='chat'&&window.renderChat){renderChat();return;}
+  if(_dataRenderT)clearTimeout(_dataRenderT);
+  _dataRenderT=setTimeout(function(){
+    _dataRenderT=null;
+    renderNow();
+  },300);  /* throttle to max 1 render per 300ms on data updates */
 }
 let _firstRender=true;
 function renderNow(){
@@ -2053,11 +2064,11 @@ function startApp(me){
   db.ref('users/'+MY.uid).update({name:MY.name,avatar:MY.avatar});
   checkLoginStreak();
   db.ref('.info/connected').on('value',s=>{if(s.val()===true&&MY){const r=db.ref('presence/'+MY.uid);r.onDisconnect().remove();r.set({name:MY.name,avatar:MY.avatar,ts:Date.now()});}});
-  setInterval(()=>{if(MY){db.ref('presence/'+MY.uid).update({name:MY.name,avatar:MY.avatar,ts:Date.now()});db.ref('users/'+MY.uid+'/timeSpent').transaction(v=>(v||0)+45);MY.timeSpent=(MY.timeSpent||0)+45;}},45000);
+  setInterval(()=>{if(MY){db.ref('presence/'+MY.uid).update({name:MY.name,avatar:MY.avatar,ts:Date.now()});db.ref('users/'+MY.uid+'/timeSpent').transaction(v=>(v||0)+30);MY.timeSpent=(MY.timeSpent||0)+30;}},60000);
   db.ref('presence').on('value',s=>{const now=Date.now();onlineUsers=Object.entries(s.val()||{}).map(([uid,v])=>({uid,...v})).filter(u=>now-(u.ts||0)<150000);$$('.online-count').forEach(el=>el.textContent=onlineUsers.length);if(window.renderLiveStrips)renderLiveStrips();if(view==='chat'&&window.renderMainChatHead)renderMainChatHead();},()=>{});
-  db.ref('battles').limitToLast(150).on('value',s=>{allBattles=s.val()||{};dataReady.battles=true;render();},()=>{});
-  db.ref('users').on('value',s=>{allUsers=s.val()||{};dataReady.users=true;if(allUsers[MY.uid])MY={...allUsers[MY.uid],uid:MY.uid};render();},()=>{});
-  db.ref('results').limitToLast(120).on('value',s=>{archivedResults=s.val()||{};if(['user','leaderboard'].includes(view))render();},()=>{});
+  db.ref('battles').limitToLast(150).on('value',s=>{allBattles=s.val()||{};dataReady.battles=true;renderData();},()=>{});
+  db.ref('users').on('value',s=>{allUsers=s.val()||{};dataReady.users=true;if(allUsers[MY.uid])MY={...allUsers[MY.uid],uid:MY.uid};renderData();},()=>{});
+  db.ref('results').limitToLast(120).on('value',s=>{archivedResults=s.val()||{};if(['user','leaderboard'].includes(view))renderData();},()=>{});
   db.ref('meta/settings').on('value',s=>applySettings(s.val()||{}),()=>{});
   db.ref('meta/banned').on('value',s=>{bannedUsers=new Set(Object.keys(s.val()||{}));},()=>{});
   db.ref('meta/impersonating').on('value',s=>{impNow=s.val();if(view==='admin')render();},()=>{});
@@ -6012,21 +6023,42 @@ body.day #splash div[style*="color:rgba(255,255,255,.35)"]{color:rgba(27,28,42,.
 document.head.insertAdjacentHTML('beforeend',`<style>
 /* ensure buttons don't look fat on mobile */
 @media(max-width:480px){
-  .btn-primary{padding:10px 16px!important;font-size:13px!important}
-  .btn-ghost{padding:10px 16px!important;font-size:13px!important}
-  .pill-btn{padding:7px 12px!important;font-size:11.5px!important}
-  .a-btn{padding:5px 10px!important;font-size:11px!important}
-  .a-tab{padding:6px 10px!important;font-size:11.5px!important}
-  .icobtn{width:32px!important;height:32px!important}
-  .stat-tile{padding:8px 4px!important}
-  .stat-tile b{font-size:15px!important}
-  .stat-tile span{font-size:8px!important}
-  .modal-card{padding:16px!important;max-width:92vw!important}
-  .input-field{padding:10px 12px!important;font-size:13.5px!important}
-  .lbl{font-size:10px!important;margin:10px 0 4px!important}
-  h1.font-display{font-size:24px!important}
-  h2.font-display{font-size:20px!important}
-  h3.font-display{font-size:16px!important}
+  .btn-primary{padding:8px 14px!important;font-size:12px!important}
+  .btn-ghost{padding:8px 14px!important;font-size:12px!important}
+  .pill-btn{padding:5px 10px!important;font-size:10.5px!important;gap:4px!important}
+  .pill-btn svg,.pill-btn i{width:14px!important;height:14px!important}
+  .a-btn{padding:4px 8px!important;font-size:10.5px!important}
+  .a-tab{padding:5px 9px!important;font-size:11px!important}
+  .icobtn{width:30px!important;height:30px!important}
+  .icobtn svg{width:14px!important;height:14px!important}
+  .stat-tile{padding:6px 3px!important}
+  .stat-tile b{font-size:14px!important}
+  .stat-tile span{font-size:7.5px!important}
+  .modal-card{padding:14px!important;max-width:92vw!important}
+  .input-field{padding:9px 11px!important;font-size:13px!important}
+  .lbl{font-size:9.5px!important;margin:8px 0 3px!important}
+  h1.font-display{font-size:22px!important}
+  h2.font-display{font-size:18px!important}
+  h3.font-display{font-size:15px!important}
+  .nav-link{padding:8px 10px!important;font-size:12.5px!important;gap:10px!important}
+  .nav-link svg{width:16px!important;height:16px!important}
+  .a-row{padding:7px 8px!important;gap:6px!important}
+  .a-row img{width:28px!important;height:28px!important}
+  .bnav-item{padding:4px 0!important}
+  .bnav-lb{font-size:9px!important}
+  .bnav-ic svg{width:18px!important;height:18px!important}
+  .bnav-create-btn{width:36px!important;height:36px!important}
+  .mobile-topbar{height:48px!important;padding:0 6px!important;gap:4px!important}
+  .mobile-topbar .icobtn{width:30px!important;height:30px!important}
+  .main-content{padding:60px 12px 70px!important}
+  .glass{padding:10px!important}
+  .glass-strong{padding:12px!important}
+  .home-hero{padding:14px!important}
+  .home-tool .ti{width:36px!important;height:36px!important}
+  .home-tool .ti svg{width:16px!important;height:16px!important}
+  .home-tool .tn{font-size:10px!important}
+  .home-tools{gap:8px!important}
+  .modal-overlay{padding:10px!important}
 }
 @media(max-width:360px){
   .btn-primary{padding:8px 12px!important;font-size:12px!important}
@@ -7303,11 +7335,9 @@ onRender(function(){
 });
 
 /* ==================================================================
-   ★★★ ADVANCED YOUTUBE-LIKE CHANNEL SYSTEM — VOTIFY V6 ★★★
-   Full YouTube clone: home feed (trending + categories + search),
-   channel pages with tabs (Videos / About / Community),
-   watch page (player + comments + likes + recommended sidebar),
-   Subscriptions feed, Watch Later, History, Search results.
+   \u2605\u2605\u2605 YOUTUBE CLONE \u2014 VOTIFY V7 (MOBILE-OPTIMIZED) \u2605\u2605\u2605
+   Clean rebuild: minimal DOM, lazy images, throttled renders.
+   Matches YouTube layout: top bar (3-section) + side rail + chips + grid.
    ================================================================== */
 
 /* ---------- state ---------- */
@@ -7317,48 +7347,23 @@ window.allVideos={};
 window.videoComments={};
 window.ytSearchQ='';
 window.ytCategory='all';
-window.ytTab='home'; /* home | subs | watchlater | history | search | watch | channel */
 
-/* categories like YouTube */
 const YT_CATEGORIES=[
-  {id:'all',n:'All',ic:'flame'},
-  {id:'gaming',n:'Gaming',ic:'gamepad-2'},
-  {id:'music',n:'Music',ic:'music'},
-  {id:'tech',n:'Technology',ic:'cpu'},
-  {id:'movies',n:'Movies',ic:'film'},
-  {id:'sports',n:'Sports',ic:'trophy'},
-  {id:'food',n:'Food',ic:'utensils'},
-  {id:'anime',n:'Anime',ic:'sparkles'},
-  {id:'memes',n:'Comedy',ic:'laugh'},
-  {id:'education',n:'Education',ic:'book-open'},
-  {id:'news',n:'News',ic:'newspaper'},
-  {id:'travel',n:'Travel',ic:'plane'}
+  {id:'all',n:'All'},{id:'gaming',n:'Gaming'},{id:'music',n:'Music'},
+  {id:'tech',n:'Technology'},{id:'movies',n:'Movies'},{id:'sports',n:'Sports'},
+  {id:'food',n:'Food'},{id:'anime',n:'Anime'},{id:'memes',n:'Comedy'},
+  {id:'education',n:'Education'},{id:'news',n:'News'},{id:'travel',n:'Travel'}
 ];
 
-/* ---------- helpers ---------- */
+/* ---------- helpers (lightweight) ---------- */
 function ytGetChannel(uid){return window.allChannels[uid]||{name:'Unknown',handle:'@unknown',color:'#6366F1'};}
 function ytExtractYtId(url){
   if(!url)return '';
   var m=String(url).match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/);
   return m?m[1]:'';
 }
-function ytThumb(v){
-  if(v.thumb)return v.thumb;
-  if(v.ytId)return 'https://img.youtube.com/vi/'+v.ytId+'/hqdefault.jpg';
-  return '';
-}
-function ytDuration(v){
-  if(v.duration)return v.duration;
-  return '';
-}
+function ytThumb(v){if(v.thumb)return v.thumb;if(v.ytId)return 'https://img.youtube.com/vi/'+v.ytId+'/hqdefault.jpg';return '';}
 function ytViews(n){n=n||0;if(n>=1e6)return (n/1e6).toFixed(1)+'M';if(n>=1e3)return (n/1e3).toFixed(1)+'K';return String(n);}
-function ytVideoCount(ch){
-  /* ch.videos might be a number (counter) OR an object (raw videos dict) — handle both */
-  if(!ch)return 0;
-  if(typeof ch.videos==='number')return ch.videos;
-  if(ch.videos&&typeof ch.videos==='object')return Object.keys(ch.videos).length;
-  return 0;
-}
 function ytTimeAgo(ts){
   if(!ts)return '';
   var s=Math.floor((Date.now()-ts)/1000);
@@ -7369,24 +7374,22 @@ function ytTimeAgo(ts){
   if(s<31536000)return Math.floor(s/2592000)+'mo ago';
   return Math.floor(s/31536000)+'y ago';
 }
-function ytSubbed(uid){
-  try{return !!(window._ytSubs&&window._ytSubs[uid]);}catch(e){return false;}
+function ytVideoCount(ch){
+  if(!ch)return 0;
+  if(typeof ch.videos==='number')return ch.videos;
+  if(ch.videos&&typeof ch.videos==='object')return Object.keys(ch.videos).length;
+  return 0;
 }
-function ytLiked(vid){
-  try{return !!(window._ytLikes&&window._ytLikes[vid]);}catch(e){return false;}
-}
-function ytWatchLater(vid){
-  try{var wl=JSON.parse(localStorage.getItem('basiler_yt_wl')||'{}');return !!wl[vid];}catch(e){return false;}
-}
-function ytWatched(vid){
-  try{var h=JSON.parse(localStorage.getItem('basiler_yt_hist')||'{}');return !!h[vid];}catch(e){return false;}
-}
+function ytSubbed(uid){try{return !!(window._ytSubs&&window._ytSubs[uid]);}catch(e){return false;}}
+function ytLiked(vid){try{return !!(window._ytLikes&&window._ytLikes[vid]);}catch(e){return false;}}
+function ytWatchLater(vid){try{var wl=JSON.parse(localStorage.getItem('basiler_yt_wl')||'{}');return !!wl[vid];}catch(e){return false;}}
+function ytWatched(vid){try{var h=JSON.parse(localStorage.getItem('basiler_yt_hist')||'{}');return !!h[vid];}catch(e){return false;}}
 function ytAddWatchLater(vid){
   try{
     var wl=JSON.parse(localStorage.getItem('basiler_yt_wl')||'{}');
     if(wl[vid])delete wl[vid]; else wl[vid]={ts:Date.now()};
     localStorage.setItem('basiler_yt_wl',JSON.stringify(wl));
-    flyXP(wl[vid]?' Watch Later added':'Removed from Watch Later');
+    flyXP(wl[vid]?'\u23f0 Watch Later added':'Removed from Watch Later');
     if(view==='yt'&&window._ytTab==='watchlater')render();
   }catch(e){}
 }
@@ -7395,14 +7398,14 @@ function ytAddHistory(vid){
     var h=JSON.parse(localStorage.getItem('basiler_yt_hist')||'{}');
     h[vid]={ts:Date.now()};
     var keys=Object.keys(h).sort(function(a,b){return h[b].ts-h[a].ts;});
-    if(keys.length>100){for(var i=100;i<keys.length;i++)delete h[keys[i]];}
+    if(keys.length>50){for(var i=50;i<keys.length;i++)delete h[keys[i]];}
     localStorage.setItem('basiler_yt_hist',JSON.stringify(h));
   }catch(e){}
 }
 function ytClearHistory(){
   if(!confirm('Clear all watch history?'))return;
   try{localStorage.removeItem('basiler_yt_hist');}catch(e){}
-  flyXP(' History cleared');
+  flyXP('\u23f0 History cleared');
   if(view==='yt'&&window._ytTab==='history')render();
 }
 
@@ -7415,22 +7418,11 @@ async function channelCreate(name,desc,handle,banner,color){
   handle=handle.replace(/[^a-zA-Z0-9_@]/g,'');
   if(handle.indexOf('@')!==0)handle='@'+handle;
   if(!color)color='#EF4444';
-  var ch={
-    uid:MY.uid,
-    name:name,
-    desc:(desc||'').slice(0,300),
-    handle:handle,
-    banner:banner||'',
-    color:color,
-    subs:0,
-    videos:0,
-    views:0,
-    createdAt:Date.now()
-  };
+  var ch={uid:MY.uid,name:name,desc:(desc||'').slice(0,300),handle:handle,banner:banner||'',color:color,subs:0,videos:0,views:0,createdAt:Date.now()};
   try{
     await db.ref('channels/'+MY.uid).set(ch);
     window.myChannel=ch;
-    flyXP(' Channel "'+name+'" created!');
+    flyXP('\u2705 Channel "'+name+'" created!');
     navTo('yt','channel:'+MY.uid);
   }catch(e){toast('Could not create channel','error');}
 }
@@ -7445,8 +7437,8 @@ async function channelUpdate(name,desc,handle,banner,color){
   if(color)ch.color=color;
   try{
     await db.ref('channels/'+MY.uid).update(ch);
-    flyXP(' Channel updated');
-    if(view==='yt')render();
+    flyXP('\u2705 Channel updated');
+    if(view==='yt')renderData();
   }catch(e){toast('Update failed','error');}
 }
 
@@ -7461,29 +7453,16 @@ async function channelUploadVideo(title,url,desc,category,thumb){
   var validCat=YT_CATEGORIES.some(function(c){return c.id===category;})?category:'all';
   var vid={
     id:'v'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
-    uid:MY.uid,
-    channel:window.myChannel.name,
-    chHandle:window.myChannel.handle,
-    chColor:window.myChannel.color,
-    title:title,
-    desc:(desc||'').slice(0,2000),
-    url:url,
-    ytId:ytId,
+    uid:MY.uid,channel:window.myChannel.name,chHandle:window.myChannel.handle,chColor:window.myChannel.color,
+    title:title,desc:(desc||'').slice(0,2000),url:url,ytId:ytId,
     thumb:thumb||(ytId?'https://img.youtube.com/vi/'+ytId+'/hqdefault.jpg':''),
-    category:validCat,
-    views:0,
-    likes:0,
-    dislikes:0,
-    comments:0,
-    ts:Date.now()
+    category:validCat,views:0,likes:0,dislikes:0,comments:0,ts:Date.now()
   };
   try{
     await db.ref('channels/'+MY.uid+'/videos/'+vid.id).set(vid);
     await db.ref('channels/'+MY.uid+'/videos').transaction(function(snap){return (snap||0)+1;});
-    /* also push to global video feed so others can discover */
     await db.ref('videos/'+vid.id).set(vid);
-    flyXP(' Video uploaded!');
-    /* notify all subscribers about the new video */
+    flyXP('\u2705 Video uploaded!');
     ytNotifySubs(vid.id,title);
     navTo('yt','channel:'+MY.uid);
   }catch(e){toast('Upload failed','error');}
@@ -7497,8 +7476,8 @@ async function channelDelVideo(id){
     await db.ref('videos/'+id).remove();
     await db.ref('channels/'+MY.uid+'/videos').transaction(function(v){return Math.max(0,(v||0)-1);});
     await db.ref('videoComments/'+id).remove();
-    flyXP(' Video deleted');
-    if(view==='yt')render();
+    flyXP('\u2705 Video deleted');
+    if(view==='yt')renderData();
   }catch(e){toast('Delete failed','error');}
 }
 
@@ -7519,13 +7498,13 @@ async function channelSubscribe(targetUid){
       await db.ref('channels/'+targetUid+'/subs').transaction(function(v){return (v||0)+1;});
       if(!window._ytSubs)window._ytSubs={};
       window._ytSubs[targetUid]=true;
-      flyXP(' Subscribed!');
+      flyXP('\u2705 Subscribed!');
     }
-    if(view==='yt')render();
+    if(view==='yt')renderData();
   }catch(e){}
 }
 
-/* ---------- like / dislike video ---------- */
+/* ---------- like video ---------- */
 async function ytLikeVideo(vid,dislike){
   if(!MY||!db||!vid)return;
   try{
@@ -7534,28 +7513,23 @@ async function ytLikeVideo(vid,dislike){
     if(!window._ytLikes)window._ytLikes={};
     var liked=window._ytLikes[vid];
     if(liked==='like'&&!dislike){
-      /* undo like */
       await db.ref('videos/'+vid+'/likes').transaction(function(x){return Math.max(0,(x||0)-1);});
       delete window._ytLikes[vid];
     }else if(dislike){
-      if(liked==='like'){
-        await db.ref('videos/'+vid+'/likes').transaction(function(x){return Math.max(0,(x||0)-1);});
-      }
+      if(liked==='like')await db.ref('videos/'+vid+'/likes').transaction(function(x){return Math.max(0,(x||0)-1);});
       await db.ref('videos/'+vid+'/dislikes').transaction(function(x){return (x||0)+1;});
       window._ytLikes[vid]='dislike';
     }else{
-      if(liked==='dislike'){
-        await db.ref('videos/'+vid+'/dislikes').transaction(function(x){return Math.max(0,(x||0)-1);});
-      }
+      if(liked==='dislike')await db.ref('videos/'+vid+'/dislikes').transaction(function(x){return Math.max(0,(x||0)-1);});
       await db.ref('videos/'+vid+'/likes').transaction(function(x){return (x||0)+1;});
       window._ytLikes[vid]='like';
     }
     try{localStorage.setItem('basiler_yt_likes',JSON.stringify(window._ytLikes));}catch(e){}
-    if(view==='yt')render();
+    if(view==='yt')renderData();
   }catch(e){}
 }
 
-/* ---------- increment view count ---------- */
+/* ---------- increment view ---------- */
 async function ytIncView(vid){
   if(!db||!vid)return;
   try{await db.ref('videos/'+vid+'/views').transaction(function(x){return (x||0)+1;});}catch(e){}
@@ -7569,20 +7543,11 @@ async function ytPostComment(vid){
   var t=el.value.trim();
   if(t.length<1)return;
   try{
-    var c={
-      id:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
-      vid:vid,
-      uid:MY.uid,
-      name:MY.name,
-      avatar:MY.avatar||AVATAR_PRESETS[0],
-      text:t.slice(0,500),
-      likes:0,
-      ts:Date.now()
-    };
+    var c={id:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),vid:vid,uid:MY.uid,name:MY.name,avatar:MY.avatar||AVATAR_PRESETS[0],text:t.slice(0,500),likes:0,ts:Date.now()};
     await db.ref('videoComments/'+vid+'/'+c.id).set(c);
     await db.ref('videos/'+vid+'/comments').transaction(function(x){return (x||0)+1;});
     el.value='';
-    flyXP(' Comment posted');
+    flyXP('\u2705 Comment posted');
   }catch(e){toast('Comment failed','error');}
 }
 
@@ -7592,79 +7557,76 @@ async function ytLikeComment(vid,cid){
   try{await db.ref('videoComments/'+vid+'/'+cid+'/likes').transaction(function(x){return (x||0)+1;});}catch(e){}
 }
 
-/* ---------- delete comment (own or admin) ---------- */
+/* ---------- delete comment ---------- */
 async function ytDelComment(vid,cid){
   if(!confirm('Delete this comment?'))return;
   try{
     await db.ref('videoComments/'+vid+'/'+cid).remove();
     await db.ref('videos/'+vid+'/comments').transaction(function(x){return Math.max(0,(x||0)-1);});
-    flyXP(' Comment deleted');
+    flyXP('\u2705 Comment deleted');
   }catch(e){}
 }
 
-/* ==================================================================
-   RENDER: video card (used in grids everywhere)
-   ================================================================== */
-function ytVideoCard(v,opts){
-  opts=opts||{};
-  if(!v)return '';
-  var ch=ytGetChannel(v.uid);
-  var thumb=ytThumb(v);
-  var dur=ytDuration(v);
-  var isWatchLater=ytWatchLater(v.id);
-  var watched=ytWatched(v.id);
-  return '<div class="yt-card" onclick="navTo(\'yt\',\'watch:'+v.id+'\')">'+
-    '<div class="yt-thumb" style="'+(thumb?'background-image:url(\''+thumb+'\')':'')+'">'+
-      (thumb?'':'<div class="yt-thumb-ph"><i data-lucide="'+(v.ytId?'youtube':'play')+'" class="w-8 h-8"></i></div>')+
-      (dur?'<span class="yt-dur">'+esc(dur)+'</span>':'')+
-      '<button class="yt-wl'+(isWatchLater?' on':'')+'" onclick="event.stopPropagation();ytAddWatchLater(\''+v.id+'\')" title="Watch later"><i data-lucide="'+(isWatchLater?'check':'clock')+'" class="w-3.5 h-3.5"></i></button>'+
-      (watched?'<div class="yt-watched-bar"></div>':'')+
-    '</div>'+
-    '<div class="yt-card-info">'+
-      '<img src="'+(ch.avatar||(v.chAvatar||AVATAR_PRESETS[0]))+'" class="yt-ch-av" onclick="event.stopPropagation();navTo(\'yt\',\'channel:'+v.uid+'\')">'+
-      '<div class="yt-card-text">'+
-        '<div class="yt-card-title">'+esc(v.title)+'</div>'+
-        '<div class="yt-card-ch">'+esc(v.channel||ch.name)+'</div>'+
-        '<div class="yt-card-meta">'+ytViews(v.views)+' views · '+ytTimeAgo(v.ts)+'</div>'+
-      '</div>'+
-      (opts.showDel?'<button class="yt-card-del" onclick="event.stopPropagation();channelDelVideo(\''+v.id+'\')"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>':'')+
-    '</div>'+
-  '</div>';
+/* ---------- notify subscribers ---------- */
+async function ytNotifySubs(vid,title){
+  if(!db||!MY)return;
+  try{
+    var subsSnap=await db.ref('follows').once('value');
+    var allFollows=subsSnap.val()||{};
+    var notifCount=0;
+    for(var fUid in allFollows){
+      if(fUid===MY.uid)continue;
+      var following=allFollows[fUid].following||{};
+      if(following[MY.uid]){
+        await db.ref('notifs/'+fUid).push({type:'video',text:'\u2753 New video from '+(window.myChannel?window.myChannel.name:'channel')+': '+title.slice(0,60),vid:vid,from:MY.uid,ts:Date.now()});
+        notifCount++;
+      }
+    }
+    if(notifCount)flyXP('Notified '+notifCount+' subscribers');
+  }catch(e){}
 }
 
-/* compact horizontal card for sidebar */
-function ytVideoRow(v){
-  if(!v)return '';
-  var ch=ytGetChannel(v.uid);
-  var thumb=ytThumb(v);
-  return '<div class="yt-row" onclick="navTo(\'yt\',\'watch:'+v.id+'\')">'+
-    '<div class="yt-row-thumb" style="'+(thumb?'background-image:url(\''+thumb+'\')':'')+'">'+
-      (thumb?'':'<div class="yt-thumb-ph sm"><i data-lucide="play" class="w-5 h-5"></i></div>')+
-    '</div>'+
-    '<div class="yt-row-info">'+
-      '<div class="yt-row-title">'+esc(v.title)+'</div>'+
-      '<div class="yt-row-ch">'+esc(v.channel||ch.name)+'</div>'+
-      '<div class="yt-row-meta">'+ytViews(v.views)+' views · '+ytTimeAgo(v.ts)+'</div>'+
-    '</div>'+
-  '</div>';
+/* ---------- channel analytics ---------- */
+function ytChannelAnalytics(uid){
+  var vids=Object.values(window.allVideos||{}).filter(function(v){return v.uid===uid;});
+  var totalViews=vids.reduce(function(s,v){return s+(v.views||0);},0);
+  var totalLikes=vids.reduce(function(s,v){return s+(v.likes||0);},0);
+  var totalComments=vids.reduce(function(s,v){return s+(v.comments||0);},0);
+  var avgViews=vids.length?Math.round(totalViews/vids.length):0;
+  var topVideo=vids.length?vids.sort(function(a,b){return (b.views||0)-(a.views||0);})[0]:null;
+  return {videoCount:vids.length,totalViews:totalViews,totalLikes:totalLikes,totalComments:totalComments,avgViews:avgViews,topVideo:topVideo};
+}
+
+/* ---------- community post ---------- */
+async function ytPostCommunity(text){
+  if(!MY||!db||!window.myChannel)return;
+  text=(text||'').trim();
+  if(text.length<2)return;
+  var post={id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),uid:MY.uid,channel:window.myChannel.name,text:text.slice(0,500),likes:0,ts:Date.now()};
+  try{
+    await db.ref('channels/'+MY.uid+'/community/'+post.id).set(post);
+    flyXP('\u2705 Community post published');
+    var el=document.getElementById('yt-comm-inp');
+    if(el)el.value='';
+    if(view==='yt')renderData();
+  }catch(e){toast('Post failed','error');}
 }
 
 /* ==================================================================
-   RENDER: YouTube-style top bar (hamburger + logo + centered search + create + bell + profile)
+   RENDER: YouTube top bar (3-section: left/center/right)
    ================================================================== */
-function ytSearchBar(){
-  return '<div class="yt-search">'+
-    '<input type="text" id="yt-search-inp" placeholder="Search" value="'+esc(window.ytSearchQ||'')+'" onkeydown="if(event.key===\'Enter\'){window.ytSearchQ=this.value;window._ytTab=\'search\';render();}">'+
-    '<button class="yt-search-btn" onclick="window.ytSearchQ=document.getElementById(\'yt-search-inp\').value;window._ytTab=\'search\';render()"><i data-lucide="search" class="w-5 h-5"></i></button>'+
-  '</div>';
-}
 function ytTopBar(){
   return '<div class="yt-topbar">'+
     '<div class="yt-topbar-left">'+
-      '<button class="yt-topbar-icon" onclick="navBackHome()" title="Back to app"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>'+
+      '<button class="yt-topbar-icon" onclick="navBackHome()" title="Back"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>'+
       '<div class="yt-topbar-logo" onclick="window._ytTab=\'home\';render()"><i data-lucide="youtube" class="w-7 h-7" style="color:#EF4444"></i><span>Votify</span></div>'+
     '</div>'+
-    '<div class="yt-topbar-center">'+ytSearchBar()+'</div>'+
+    '<div class="yt-topbar-center">'+
+      '<div class="yt-search">'+
+        '<input type="text" id="yt-search-inp" placeholder="Search" value="'+esc(window.ytSearchQ||'')+'" onkeydown="if(event.key===\'Enter\'){window.ytSearchQ=this.value;window._ytTab=\'search\';render();}">'+
+        '<button class="yt-search-btn" onclick="window.ytSearchQ=document.getElementById(\'yt-search-inp\').value;window._ytTab=\'search\';render()"><i data-lucide="search" class="w-5 h-5"></i></button>'+
+      '</div>'+
+    '</div>'+
     '<div class="yt-topbar-right">'+
       '<button class="yt-topbar-icon" onclick="navTo(\'yt\',\'upload\')" title="Create"><i data-lucide="plus" class="w-5 h-5"></i></button>'+
       '<button class="yt-topbar-icon" onclick="navTo(\'notifs\')" title="Notifications"><i data-lucide="bell" class="w-5 h-5"></i></button>'+
@@ -7674,13 +7636,13 @@ function ytTopBar(){
 }
 
 /* ==================================================================
-   RENDER: YouTube-style side rail (Home / Shorts / Subscriptions / You)
+   RENDER: YouTube side rail (vertical icon+label)
    ================================================================== */
 function ytSideTabs(){
   var tabs=[
     {t:'home',l:'Home',ic:'home'},
-    {t:'subs',l:'Subscriptions',ic:'rss'},
-    {t:'watchlater',l:'Watch Later',ic:'clock'},
+    {t:'subs',l:'Subs',ic:'rss'},
+    {t:'watchlater',l:'Later',ic:'clock'},
     {t:'history',l:'History',ic:'history'},
     {t:'channel:'+MY.uid,l:'You',ic:'user'},
     {t:'upload',l:'Upload',ic:'upload-cloud'}
@@ -7695,7 +7657,7 @@ function ytSideTabs(){
 }
 
 /* ==================================================================
-   RENDER: category chips (like YouTube home)
+   RENDER: category chips (YouTube style — black active)
    ================================================================== */
 function ytCategoryChips(){
   return '<div class="yt-chips">'+
@@ -7707,19 +7669,54 @@ function ytCategoryChips(){
 }
 
 /* ==================================================================
-   RENDER: home feed (trending + categories)
+   RENDER: video card (compact, mobile-friendly)
+   ================================================================== */
+function ytVideoCard(v,opts){
+  opts=opts||{};
+  if(!v)return '';
+  var ch=ytGetChannel(v.uid);
+  var thumb=ytThumb(v);
+  return '<div class="yt-card" onclick="navTo(\'yt\',\'watch:'+v.id+'\')">'+
+    '<div class="yt-thumb" style="'+(thumb?'background-image:url(\''+thumb+'\')':'')+'">'+
+      (thumb?'':'<div class="yt-thumb-ph"><i data-lucide="play" class="w-6 h-6"></i></div>')+
+    '</div>'+
+    '<div class="yt-card-info">'+
+      '<img src="'+(ch.avatar||AVATAR_PRESETS[0])+'" class="yt-ch-av" loading="lazy" onclick="event.stopPropagation();navTo(\'yt\',\'channel:'+v.uid+'\')">'+
+      '<div class="yt-card-text">'+
+        '<div class="yt-card-title">'+esc(v.title)+'</div>'+
+        '<div class="yt-card-ch">'+esc(v.channel||ch.name)+'</div>'+
+        '<div class="yt-card-meta">'+ytViews(v.views)+' views \u00b7 '+ytTimeAgo(v.ts)+'</div>'+
+      '</div>'+
+      (opts.showDel?'<button class="yt-card-del" onclick="event.stopPropagation();channelDelVideo(\''+v.id+'\')"><i data-lucide="trash-2" class="w-4 h-4"></i></button>':'')+
+    '</div>'+
+  '</div>';
+}
+
+/* compact row for sidebar */
+function ytVideoRow(v){
+  if(!v)return '';
+  var ch=ytGetChannel(v.uid);
+  var thumb=ytThumb(v);
+  return '<div class="yt-row" onclick="navTo(\'yt\',\'watch:'+v.id+'\')">'+
+    '<div class="yt-row-thumb" style="'+(thumb?'background-image:url(\''+thumb+'\')':'')+'">'+
+      (thumb?'':'<div class="yt-thumb-ph sm"><i data-lucide="play" class="w-4 h-4"></i></div>')+
+    '</div>'+
+    '<div class="yt-row-info">'+
+      '<div class="yt-row-title">'+esc(v.title)+'</div>'+
+      '<div class="yt-row-ch">'+esc(v.channel||ch.name)+'</div>'+
+      '<div class="yt-row-meta">'+ytViews(v.views)+' views \u00b7 '+ytTimeAgo(v.ts)+'</div>'+
+    '</div>'+
+  '</div>';
+}
+
+/* ==================================================================
+   RENDER: home feed
    ================================================================== */
 function ytHomeFeed(){
   var vids=Object.values(window.allVideos||{});
-  /* filter by category */
-  if((window.ytCategory||'all')!=='all'){
-    vids=vids.filter(function(v){return v.category===window.ytCategory;});
-  }
-  /* sort: most recent first */
+  if((window.ytCategory||'all')!=='all')vids=vids.filter(function(v){return v.category===window.ytCategory;});
   vids.sort(function(a,b){return (b.ts||0)-(a.ts||0);});
-  if(!vids.length){
-    return '<div class="glass p-8 text-center text-white/40"><div class="text-5xl mb-3">📺</div>No videos yet. Be the first to upload!</div>';
-  }
+  if(!vids.length)return '<div class="glass p-8 text-center text-white/40"><div class="text-5xl mb-3">\ud83d\udcfa</div>No videos yet. Be the first to upload!</div>';
   return '<div class="yt-grid">'+vids.map(function(v){return ytVideoCard(v);}).join('')+'</div>';
 }
 
@@ -7728,14 +7725,10 @@ function ytHomeFeed(){
    ================================================================== */
 function ytSubsFeed(){
   var subbedUids=Object.keys(window._ytSubs||{});
-  if(!subbedUids.length){
-    return '<div class="glass p-8 text-center text-white/40"><div class="text-5xl mb-3">🔔</div>No subscriptions yet. Subscribe to channels to see their latest videos here.</div>';
-  }
+  if(!subbedUids.length)return '<div class="glass p-8 text-center text-white/40"><div class="text-5xl mb-3">\ud83d\udd14</div>No subscriptions yet.</div>';
   var vids=Object.values(window.allVideos||{}).filter(function(v){return subbedUids.indexOf(v.uid)>=0;});
   vids.sort(function(a,b){return (b.ts||0)-(a.ts||0);});
-  if(!vids.length){
-    return '<div class="glass p-8 text-center text-white/40"><div class="text-5xl mb-3">📭</div>No new videos from your subscriptions.</div>';
-  }
+  if(!vids.length)return '<div class="glass p-8 text-center text-white/40"><div class="text-5xl mb-3">\ud83d\udced</div>No new videos.</div>';
   return '<div class="yt-grid">'+vids.map(function(v){return ytVideoCard(v);}).join('')+'</div>';
 }
 
@@ -7743,16 +7736,11 @@ function ytSubsFeed(){
    RENDER: watch later
    ================================================================== */
 function ytWatchLaterFeed(){
-  var wl={};
-  try{wl=JSON.parse(localStorage.getItem('basiler_yt_wl')||'{}');}catch(e){}
+  var wl={};try{wl=JSON.parse(localStorage.getItem('basiler_yt_wl')||'{}');}catch(e){}
   var ids=Object.keys(wl).sort(function(a,b){return wl[b].ts-wl[a].ts;});
-  if(!ids.length){
-    return '<div class="glass p-8 text-center text-white/40"><div class="text-5xl mb-3">⏰</div>Nothing in Watch Later yet. Tap the clock icon on any video to save it here.</div>';
-  }
+  if(!ids.length)return '<div class="glass p-8 text-center text-white/40"><div class="text-5xl mb-3">\u23f0</div>Nothing in Watch Later yet.</div>';
   var vids=ids.map(function(id){return window.allVideos[id];}).filter(Boolean);
-  if(!vids.length){
-    return '<div class="glass p-8 text-center text-white/40">Saved videos no longer exist.</div>';
-  }
+  if(!vids.length)return '<div class="glass p-8 text-center text-white/40">Saved videos no longer exist.</div>';
   return '<div class="yt-grid">'+vids.map(function(v){return ytVideoCard(v);}).join('')+'</div>';
 }
 
@@ -7760,15 +7748,12 @@ function ytWatchLaterFeed(){
    RENDER: history
    ================================================================== */
 function ytHistoryFeed(){
-  var h={};
-  try{h=JSON.parse(localStorage.getItem('basiler_yt_hist')||'{}');}catch(e){}
+  var h={};try{h=JSON.parse(localStorage.getItem('basiler_yt_hist')||'{}');}catch(e){}
   var ids=Object.keys(h).sort(function(a,b){return h[b].ts-h[a].ts;});
-  if(!ids.length){
-    return '<div class="glass p-8 text-center text-white/40"><div class="text-5xl mb-3">🕐</div>No watch history yet. Videos you watch will appear here.</div>';
-  }
+  if(!ids.length)return '<div class="glass p-8 text-center text-white/40"><div class="text-5xl mb-3">\ud83d\udd51</div>No watch history yet.</div>';
   var vids=ids.map(function(id){return window.allVideos[id];}).filter(Boolean);
   if(!vids.length)return '<div class="glass p-8 text-center text-white/40">History videos no longer exist.</div>';
-  var html='<div class="flex justify-end mb-3"><button class="a-btn danger" style="font-family:inherit" onclick="ytClearHistory()"> Clear History</button></div>';
+  var html='<div class="flex justify-end mb-3"><button class="a-btn danger" style="font-family:inherit" onclick="ytClearHistory()">Clear History</button></div>';
   html+='<div class="yt-grid">'+vids.map(function(v){return ytVideoCard(v);}).join('')+'</div>';
   return html;
 }
@@ -7778,33 +7763,20 @@ function ytHistoryFeed(){
    ================================================================== */
 function ytSearchResults(){
   var q=(window.ytSearchQ||'').toLowerCase().trim();
-  if(!q){
-    return '<div class="glass p-8 text-center text-white/40"><div class="text-5xl mb-3">🔍</div>Type something in the search bar above.</div>';
-  }
-  /* match videos */
+  if(!q)return '<div class="glass p-8 text-center text-white/40"><div class="text-5xl mb-3">\ud83d\udd0d</div>Type something in the search bar.</div>';
   var vids=Object.values(window.allVideos||{}).filter(function(v){
-    return (v.title||'').toLowerCase().indexOf(q)>=0 ||
-           (v.desc||'').toLowerCase().indexOf(q)>=0 ||
-           (v.channel||'').toLowerCase().indexOf(q)>=0;
+    return (v.title||'').toLowerCase().indexOf(q)>=0||(v.desc||'').toLowerCase().indexOf(q)>=0||(v.channel||'').toLowerCase().indexOf(q)>=0;
   });
   vids.sort(function(a,b){return (b.views||0)-(a.views||0);});
-  /* match channels */
   var chans=Object.values(window.allChannels||{}).filter(function(c){
-    return (c.name||'').toLowerCase().indexOf(q)>=0 ||
-           (c.handle||'').toLowerCase().indexOf(q)>=0 ||
-           (c.desc||'').toLowerCase().indexOf(q)>=0;
+    return (c.name||'').toLowerCase().indexOf(q)>=0||(c.handle||'').toLowerCase().indexOf(q)>=0||(c.desc||'').toLowerCase().indexOf(q)>=0;
   });
-  if(!vids.length&&!chans.length){
-    return '<div class="glass p-8 text-center text-white/40"><div class="text-5xl mb-3">🔎</div>No results for "<b style="color:#fff">'+esc(q)+'</b>"</div>';
-  }
+  if(!vids.length&&!chans.length)return '<div class="glass p-8 text-center text-white/40"><div class="text-5xl mb-3">\ud83d\udd0e</div>No results for "<b style="color:#fff">'+esc(q)+'</b>"</div>';
   var html='';
   if(chans.length){
     html+='<h3 class="font-display font-extrabold text-lg mb-3">Channels ('+chans.length+')</h3>';
     html+='<div class="grid md:grid-cols-2 gap-3 mb-5">'+chans.map(function(c){
-      return '<div class="glass p-3 flex items-center gap-3 card-hover cursor-pointer" onclick="navTo(\'yt\',\'channel:'+c.uid+'\')">'+
-        '<div style="width:48px;height:48px;border-radius:50%!important;background:linear-gradient(135deg,'+(c.color||'#EF4444')+',#000);display:flex;align-items:center;justify-content:center;font-family:Sora;font-weight:800;font-size:20px;color:#fff;flex-shrink:0">'+esc((c.name||'C').charAt(0).toUpperCase())+'</div>'+
-        '<div class="flex-1 min-w-0"><b class="font-display text-[14px] block truncate">'+esc(c.name)+'</b><div class="text-[11px] text-white/45">'+esc(c.handle)+' · '+fmt(c.subs||0)+' subs · '+(c.videos||0)+' videos</div></div>'+
-      '</div>';
+      return '<div class="glass p-3 flex items-center gap-3 card-hover cursor-pointer" onclick="navTo(\'yt\',\'channel:'+c.uid+'\')"><div style="width:40px;height:40px;border-radius:50%!important;background:linear-gradient(135deg,'+(c.color||'#EF4444')+',#000);display:flex;align-items:center;justify-content:center;font-family:Sora;font-weight:800;font-size:16px;color:#fff;flex-shrink:0">'+esc((c.name||'C').charAt(0).toUpperCase())+'</div><div class="flex-1 min-w-0"><b class="font-display text-[13px] block truncate">'+esc(c.name)+'</b><div class="text-[11px] text-white/45">'+esc(c.handle)+' \u00b7 '+fmt(c.subs||0)+' subs</div></div></div>';
     }).join('')+'</div>';
   }
   if(vids.length){
@@ -7819,318 +7791,143 @@ function ytSearchResults(){
    ================================================================== */
 function ytUploadForm(){
   if(!window.myChannel){
-    return '<div class="max-w-2xl mx-auto fade-up"><div class="glass-strong p-8 text-center"><div style="font-size:58px;animation:cFloatD 2.8s ease-in-out infinite;display:inline-block">🎬</div><h2 class="font-display font-extrabold text-2xl mb-2">Create Your Channel First</h2><div class="text-white/40 text-[13px] mb-4">You need a channel before you can upload videos.</div><button class="btn-primary px-5 py-2.5 font-bold" style="font-family:inherit;background:linear-gradient(135deg,#EF4444,#DC2626)" onclick="navTo(\'yt\',\'channel:'+MY.uid+'\')">Create Channel</button></div></div>';
+    return '<div class="max-w-2xl mx-auto fade-up">'+ytTopBar()+'<div class="glass-strong p-8 text-center"><div style="font-size:58px;animation:cFloatD 2.8s ease-in-out infinite;display:inline-block">\ud83c\udfac</div><h2 class="font-display font-extrabold text-2xl mb-2">Create Your Channel First</h2><div class="text-white/40 text-[13px] mb-4">You need a channel before you can upload videos.</div><button class="btn-primary px-5 py-2.5 font-bold" style="font-family:inherit;background:linear-gradient(135deg,#EF4444,#DC2626)" onclick="navTo(\'yt\',\'channel:'+MY.uid+'\')">Create Channel</button></div></div>';
   }
-  return '<div class="max-w-2xl mx-auto fade-up">'+
-    '<button class="btn-ghost px-4 py-2 text-sm font-bold mb-4" style="font-family:inherit" onclick="navTo(\'yt\',\'channel:'+MY.uid+'\')">← Back to Channel</button>'+
+  return '<div class="max-w-2xl mx-auto fade-up">'+ytTopBar()+
+    '<button class="btn-ghost px-4 py-2 text-sm font-bold mb-4" style="font-family:inherit" onclick="navTo(\'yt\',\'channel:'+MY.uid+'\')">\u2190 Back</button>'+
     '<div class="glass-strong p-6 mb-5" style="border-color:rgba(239,68,68,.35)">'+
     '<h2 class="font-display font-extrabold text-2xl mb-4">Upload Video</h2>'+
     '<label class="lbl">Video Title *</label><input id="vid-title" class="input-field mb-3" maxlength="100" placeholder="My awesome video">'+
     '<label class="lbl">Video URL * (YouTube or direct MP4)</label><input id="vid-url" class="input-field mb-3" placeholder="https://youtube.com/watch?v=...">'+
     '<label class="lbl">Category</label><select id="vid-cat" class="input-field mb-3">'+YT_CATEGORIES.map(function(c){return '<option value="'+c.id+'">'+c.n+'</option>';}).join('')+'</select>'+
-    '<label class="lbl">Description</label><textarea id="vid-desc" class="input-field mb-3" rows="4" maxlength="2000" placeholder="Describe your video"></textarea>'+
-    '<label class="lbl">Custom Thumbnail URL (optional — auto from YouTube if blank)</label><input id="vid-thumb" class="input-field mb-4" placeholder="https://...">'+
-    '<button class="btn-primary w-full py-3 font-bold" style="font-family:inherit;background:linear-gradient(135deg,#EF4444,#DC2626)" onclick="channelUploadVideo(document.getElementById(\'vid-title\').value,document.getElementById(\'vid-url\').value,document.getElementById(\'vid-desc\').value,document.getElementById(\'vid-cat\').value,document.getElementById(\'vid-thumb\').value)"> Upload Video</button>'+
-    '</div>'+
-    '<div class="glass p-3 text-[11px] text-white/45"> Paste any YouTube video URL or direct .mp4 / .webm link. Thumbnail auto-extracted from YouTube. Your video appears on the home feed and your channel page instantly.</div>'+
-  '</div>';
+    '<label class="lbl">Description</label><textarea id="vid-desc" class="input-field mb-3" rows="3" maxlength="2000" placeholder="Describe your video"></textarea>'+
+    '<button class="btn-primary w-full py-3 font-bold" style="font-family:inherit;background:linear-gradient(135deg,#EF4444,#DC2626)" onclick="channelUploadVideo(document.getElementById(\'vid-title\').value,document.getElementById(\'vid-url\').value,document.getElementById(\'vid-desc\').value,document.getElementById(\'vid-cat\').value)">Upload Video</button>'+
+    '</div></div>';
 }
 
 /* ==================================================================
-   RENDER: channel page (with tabs: Videos / About / Community)
+   RENDER: channel page (with tabs)
    ================================================================== */
 function ytChannelPage(uid){
   var ch=window.allChannels[uid]||(uid===MY.uid?window.myChannel:null);
   var isMine=uid===MY.uid;
   if(!ch&&isMine){
-    /* show create form */
-    return '<div class="max-w-2xl mx-auto fade-up">'+
+    return '<div class="max-w-2xl mx-auto fade-up">'+ytTopBar()+
       '<div class="glass-strong p-6 mb-5" style="border-color:rgba(239,68,68,.4)">'+
-      '<div class="flex items-center gap-3 mb-4"><div class="w-12 h-12 flex items-center justify-center" style="background:linear-gradient(135deg,#EF4444,#DC2626);color:#fff;border-radius:14px!important"><i data-lucide="youtube" class="w-6 h-6"></i></div><div><h1 class="font-display font-extrabold text-2xl">Create Your Channel</h1><div class="text-[11px] text-white/45 font-bold uppercase tracking-wider">YouTube-style · upload videos · get subscribers</div></div></div>'+
+      '<div class="flex items-center gap-3 mb-4"><div class="w-12 h-12 flex items-center justify-center" style="background:linear-gradient(135deg,#EF4444,#DC2626);color:#fff;border-radius:14px!important"><i data-lucide="youtube" class="w-6 h-6"></i></div><div><h1 class="font-display font-extrabold text-2xl">Create Your Channel</h1><div class="text-[11px] text-white/45 font-bold uppercase tracking-wider">YouTube-style \u00b7 upload videos \u00b7 get subscribers</div></div></div>'+
       '<label class="lbl">Channel Name *</label><input id="ch-name" class="input-field mb-3" maxlength="30" placeholder="My Awesome Channel">'+
       '<label class="lbl">Handle (@username)</label><input id="ch-handle" class="input-field mb-3" maxlength="20" placeholder="@mychannel">'+
-      '<label class="lbl">Description</label><textarea id="ch-desc" class="input-field mb-3" rows="3" maxlength="300" placeholder="What is your channel about?"></textarea>'+
-      '<label class="lbl">Banner Color</label><div class="flex gap-2 mb-4 flex-wrap">'+['#EF4444','#F59E0B','#10B981','#06B6D4','#6366F1','#8B5CF6','#EC4899','#F43F5E'].map(function(c){return '<div class="bub-dot" style="background:'+c+';width:32px;height:32px;cursor:pointer" onclick="document.getElementById(\'ch-color\').value=\''+c+'\'"></div>';}).join('')+'<input id="ch-color" type="hidden" value="#EF4444"></div>'+
-      '<button class="btn-primary w-full py-3 font-bold" style="font-family:inherit;background:linear-gradient(135deg,#EF4444,#DC2626)" onclick="channelCreate(document.getElementById(\'ch-name\').value,document.getElementById(\'ch-desc\').value,document.getElementById(\'ch-handle\').value,\'\',document.getElementById(\'ch-color\').value)"> Create Channel</button>'+
-      '</div>'+
-      '<div class="glass p-4 text-[12px] text-white/55"> Once created, you can upload videos (YouTube / direct MP4 links), get subscribers, and grow your audience. Others can discover your channel from search and the home feed.</div>'+
-    '</div>';
+      '<label class="lbl">Description</label><textarea id="ch-desc" class="input-field mb-3" rows="2" maxlength="300" placeholder="What is your channel about?"></textarea>'+
+      '<label class="lbl">Banner Color</label><div class="flex gap-2 mb-4 flex-wrap">'+['#EF4444','#F59E0B','#10B981','#06B6D4','#6366F1','#8B5CF6','#EC4899','#F43F5E'].map(function(c){return '<div class="bub-dot" style="background:'+c+';width:28px;height:28px;cursor:pointer" onclick="document.getElementById(\'ch-color\').value=\''+c+'\'"></div>';}).join('')+'<input id="ch-color" type="hidden" value="#EF4444"></div>'+
+      '<button class="btn-primary w-full py-3 font-bold" style="font-family:inherit;background:linear-gradient(135deg,#EF4444,#DC2626)" onclick="channelCreate(document.getElementById(\'ch-name\').value,document.getElementById(\'ch-desc\').value,document.getElementById(\'ch-handle\').value,\'\',document.getElementById(\'ch-color\').value)">Create Channel</button>'+
+      '</div></div>';
   }
-  if(!ch){
-    return '<div class="max-w-2xl mx-auto fade-up"><div class="glass-strong p-8 text-center"><div style="font-size:58px;animation:cFloatD 2.8s ease-in-out infinite;display:inline-block">🎬</div><h2 class="font-display font-extrabold text-2xl mb-2">Channel Not Found</h2><div class="text-white/40 text-[13px]">This user has not created a channel yet.</div></div></div>';
-  }
+  if(!ch)return '<div class="max-w-2xl mx-auto fade-up">'+ytTopBar()+'<div class="glass-strong p-8 text-center"><div style="font-size:58px;animation:cFloatD 2.8s ease-in-out infinite;display:inline-block">\ud83c\udfac</div><h2 class="font-display font-extrabold text-2xl mb-2">Channel Not Found</h2><div class="text-white/40 text-[13px]">This user has not created a channel yet.</div></div></div>';
   var subbed=ytSubbed(uid);
-  /* collect this channel's videos */
   var vids=Object.values(window.allVideos||{}).filter(function(v){return v.uid===uid;});
   vids.sort(function(a,b){return (b.ts||0)-(a.ts||0);});
-  /* tabs */
   var tab=window._ytChTab||'videos';
   var tabs='<div class="yt-ch-tabs">'+
     '<button class="yt-ch-tab '+(tab==='videos'?'active':'')+'" onclick="window._ytChTab=\'videos\';render()">Videos ('+vids.length+')</button>'+
     '<button class="yt-ch-tab '+(tab==='about'?'active':'')+'" onclick="window._ytChTab=\'about\';render()">About</button>'+
-    '<button class="yt-ch-tab '+(tab==='community'?'active':'')+'" onclick="window._ytChTab=\'community\';render()">Community</button>'+
     (isMine?'<button class="yt-ch-tab '+(tab==='analytics'?'active':'')+'" onclick="window._ytChTab=\'analytics\';render()">Analytics</button>':'')+
   '</div>';
-  /* header */
   var header='<div class="glass-strong mb-4 overflow-hidden" style="border-color:rgba(239,68,68,.35)">'+
-    '<div style="height:100px;background:linear-gradient(135deg,'+(ch.color||'#EF4444')+','+(ch.color||'#EF4444')+'99);position:relative">'+
-      '<div style="position:absolute;inset:0;background:radial-gradient(800px 120px at 30% 100%,rgba(0,0,0,.5),transparent)"></div>'+
-      (isMine?'<button class="a-btn" style="font-family:inherit;position:absolute;top:8px;right:8px;background:rgba(0,0,0,.4);color:#fff;border-color:rgba(255,255,255,.3)" onclick="ytEditChannel()"><i data-lucide="settings" class="w-3.5 h-3.5 inline"></i> Edit</button>':'')+
-    '</div>'+
-    '<div class="p-5 flex items-end gap-4 flex-wrap" style="margin-top:-35px;position:relative;z-index:2">'+
-      '<div style="width:80px;height:80px;border-radius:50%!important;background:linear-gradient(135deg,'+(ch.color||'#EF4444')+',#000);display:flex;align-items:center;justify-content:center;font-family:Sora;font-weight:800;font-size:34px;color:#fff;border:4px solid #06070D;flex-shrink:0">'+esc((ch.name||'C').charAt(0).toUpperCase())+'</div>'+
-      '<div class="flex-1" style="min-width:200px">'+
-        '<h1 class="font-display font-extrabold text-2xl">'+esc(ch.name||'Channel')+'</h1>'+
-        '<div class="text-[12px] text-white/50">'+esc(ch.handle||'@channel')+' · '+fmt(ch.subs||0)+' subscribers · '+ytVideoCount(ch)+' videos · '+fmt(ch.views||0)+' total views</div>'+
-        (ch.desc?'<div class="text-[13px] text-white/70 mt-1.5">'+esc(ch.desc)+'</div>':'')+
+    '<div style="height:90px;background:linear-gradient(135deg,'+(ch.color||'#EF4444')+','+(ch.color||'#EF4444')+'99)"></div>'+
+    '<div class="p-4 flex items-end gap-3 flex-wrap" style="margin-top:-30px;position:relative;z-index:2">'+
+      '<div style="width:64px;height:64px;border-radius:50%!important;background:linear-gradient(135deg,'+(ch.color||'#EF4444')+',#000);display:flex;align-items:center;justify-content:center;font-family:Sora;font-weight:800;font-size:28px;color:#fff;border:3px solid #06070D;flex-shrink:0">'+esc((ch.name||'C').charAt(0).toUpperCase())+'</div>'+
+      '<div class="flex-1" style="min-width:180px">'+
+        '<h1 class="font-display font-extrabold text-xl">'+esc(ch.name||'Channel')+'</h1>'+
+        '<div class="text-[11px] text-white/50">'+esc(ch.handle||'@channel')+' \u00b7 '+fmt(ch.subs||0)+' subs \u00b7 '+ytVideoCount(ch)+' videos</div>'+
       '</div>'+
-      (isMine?'<button class="btn-primary px-5 py-2.5 font-bold text-sm" style="font-family:inherit;background:linear-gradient(135deg,#EF4444,#DC2626)" onclick="navTo(\'yt\',\'upload\')"><i data-lucide="upload-cloud" class="w-4 h-4 inline"></i> Upload Video</button>'
-              :'<button class="btn-primary px-5 py-2.5 font-bold text-sm" style="font-family:inherit;'+(subbed?'background:rgba(255,255,255,.1)':'background:linear-gradient(135deg,#EF4444,#DC2626)')+'" onclick="channelSubscribe(\''+uid+'\')">'+(subbed?'✓ Subscribed':' Subscribe')+'</button>')+
-    '</div>'+
-    tabs+
+      (isMine?'<button class="btn-primary px-4 py-2 font-bold text-[12px]" style="font-family:inherit;background:linear-gradient(135deg,#EF4444,#DC2626)" onclick="navTo(\'yt\',\'upload\')">Upload</button>'
+              :'<button class="btn-primary px-4 py-2 font-bold text-[12px]" style="font-family:inherit;'+(subbed?'background:rgba(255,255,255,.1)':'background:linear-gradient(135deg,#EF4444,#DC2626)')+'" onclick="channelSubscribe(\''+uid+'\')">'+(subbed?'Subscribed':'Subscribe')+'</button>')+
+    '</div>'+tabs+
     '</div>';
-  /* tab content */
   var body='';
   if(tab==='videos'){
-    body=vids.length?
-      '<div class="yt-grid">'+vids.map(function(v){return ytVideoCard(v,{showDel:isMine});}).join('')+'</div>'
-      :'<div class="glass p-8 text-center text-white/40">'+(isMine?'No videos yet — tap "Upload Video" to add your first one!':'No videos uploaded yet.')+'</div>';
+    body=vids.length?'<div class="yt-grid">'+vids.map(function(v){return ytVideoCard(v,{showDel:isMine});}).join('')+'</div>':'<div class="glass p-8 text-center text-white/40">'+(isMine?'No videos yet.':'No videos.')+'</div>';
   }else if(tab==='about'){
-    body='<div class="glass-strong p-5">'+
-      '<h3 class="font-display font-bold text-lg mb-2">Description</h3>'+
-      '<div class="text-[13.5px] text-white/80 whitespace-pre-wrap mb-4">'+esc(ch.desc||'No description provided.')+'</div>'+
-      '<div class="text-[12px] text-white/45">📅 Joined '+fmtDate(ch.createdAt)+'</div>'+
-      '<div class="text-[12px] text-white/45">📊 '+fmt(ch.subs||0)+' subscribers · '+ytVideoCount(ch)+' videos · '+fmt(ch.views||0)+' views</div>'+
-      '<div class="text-[12px] text-white/45 mt-2">🔗 Handle: '+esc(ch.handle||'@channel')+'</div>'+
-    '</div>';
-  }else if(tab==='community'){
-    /* fetch community posts for this channel */
-    var posts=(ch._community)?Object.values(ch._community).sort(function(a,b){return (b.ts||0)-(a.ts||0);}):[];
-    var commHTML='<div class="glass-strong p-5 mb-4">'+
-      '<h3 class="font-display font-bold text-lg mb-3">Community Posts</h3>'+
-      (isMine?'<div class="yt-comm-input mb-4"><img src="'+(MY.avatar||AVATAR_PRESETS[0])+'" class="yt-cmt-av"><input id="yt-comm-inp" placeholder="Share an update with your subscribers..." onkeydown="if(event.key===\'Enter\')ytPostCommunity(this.value)"><button class="btn-primary px-3 py-1.5 font-bold text-[11px]" style="font-family:inherit;background:linear-gradient(135deg,#EF4444,#DC2626)" onclick="ytPostCommunity(document.getElementById(\'yt-comm-inp\').value)">Post</button></div>':'')+
-      (posts.length?posts.map(function(p){
-        return '<div class="yt-comm-post"><img src="'+(p.avatar||(AVATAR_PRESETS[0]))+'" class="yt-cmt-av"><div class="yt-comm-body"><div class="yt-cmt-head"><b>'+esc(p.channel||'Channel')+'</b><span class="yt-cmt-ts">'+ytTimeAgo(p.ts)+'</span></div><div class="yt-comm-text">'+esc(p.text)+'</div><div class="yt-cmt-actions"><button class="yt-cmt-act" onclick="ytLikeCommunity(\''+uid+'\',\''+p.id+'\')"><i data-lucide="thumbs-up" class="w-3 h-3"></i> '+fmt(p.likes||0)+'</button></div></div></div>';
-      }).join(''):'<div class="text-[12px] text-white/40">No community posts yet.'+(isMine?' Share an update above!':'')+'</div>')+
-    '</div>';
-    body=commHTML;
+    body='<div class="glass-strong p-4"><h3 class="font-display font-bold text-base mb-2">Description</h3><div class="text-[13px] text-white/80 whitespace-pre-wrap mb-3">'+esc(ch.desc||'No description.')+'</div><div class="text-[11px] text-white/45">Joined '+fmtDate(ch.createdAt)+' \u00b7 '+fmt(ch.subs||0)+' subs \u00b7 '+ytVideoCount(ch)+' videos</div></div>';
   }else if(tab==='analytics'&&isMine){
     var an=ytChannelAnalytics(uid);
-    body='<div class="glass-strong p-5">'+
-      '<h3 class="font-display font-bold text-lg mb-3">📊 Channel Analytics</h3>'+
-      '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">'+
-        '<div class="stat-tile"><b class="text-cyan-300">'+an.videoCount+'</b><span>Total Videos</span></div>'+
-        '<div class="stat-tile"><b class="text-emerald-400">'+fmt(an.totalViews)+'</b><span>Total Views</span></div>'+
-        '<div class="stat-tile"><b class="text-pink-400">'+fmt(an.totalLikes)+'</b><span>Total Likes</span></div>'+
-        '<div class="stat-tile"><b class="text-yellow-300">'+fmt(an.totalComments)+'</b><span>Comments</span></div>'+
-        '<div class="stat-tile"><b class="text-indigo-300">'+fmt(an.avgViews)+'</b><span>Avg Views/Video</span></div>'+
-        '<div class="stat-tile"><b class="text-purple-400">'+fmt(ch.subs||0)+'</b><span>Subscribers</span></div>'+
-        '<div class="stat-tile"><b class="text-orange-400">'+(an.videoCount?Math.round((an.totalLikes/an.videoCount)*10)/10:0)+'</b><span>Avg Likes/Video</span></div>'+
-        '<div class="stat-tile"><b class="text-rose-400">'+(an.totalViews?Math.round((an.totalLikes/an.totalViews)*100):0)+'%</b><span>Like Rate</span></div>'+
-      '</div>'+
-      (an.topVideo?'<div class="glass p-3 mt-3"><div class="text-[11px] text-white/45 font-bold uppercase mb-2">🔥 Top Video</div><div class="flex gap-3 items-center"><div style="width:80px;aspect-ratio:16/9;background:#000 url(\''+ytThumb(an.topVideo)+'\') center/cover;border-radius:6px!important"></div><div class="flex-1 min-w-0"><b class="text-[13px] block truncate">'+esc(an.topVideo.title)+'</b><div class="text-[11px] text-white/45">'+fmt(an.topVideo.views||0)+' views · '+fmt(an.topVideo.likes||0)+' likes</div></div><button class="a-btn" style="font-family:inherit" onclick="navTo(\'yt\',\'watch:'+an.topVideo.id+'\')">View</button></div></div>':'<div class="glass p-3 text-[12px] text-white/40">No videos yet to analyze.</div>')+
-    '</div>';
+    body='<div class="glass-strong p-4"><h3 class="font-display font-bold text-base mb-3">Analytics</h3><div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">'+
+      '<div class="stat-tile"><b class="text-cyan-300">'+an.videoCount+'</b><span>Videos</span></div>'+
+      '<div class="stat-tile"><b class="text-emerald-400">'+fmt(an.totalViews)+'</b><span>Views</span></div>'+
+      '<div class="stat-tile"><b class="text-pink-400">'+fmt(an.totalLikes)+'</b><span>Likes</span></div>'+
+      '<div class="stat-tile"><b class="text-yellow-300">'+fmt(an.totalComments)+'</b><span>Comments</span></div>'+
+      '</div>'+(an.topVideo?'<div class="glass p-2 mt-2"><div class="text-[10px] text-white/45 font-bold uppercase mb-1">Top Video</div><b class="text-[12px]">'+esc(an.topVideo.title)+'</b><div class="text-[10px] text-white/45">'+fmt(an.topVideo.views||0)+' views</div></div>':'')+'</div>';
   }
   return '<div class="max-w-4xl mx-auto fade-up">'+ytTopBar()+header+body+'</div>';
 }
 
 function ytEditChannel(){
-  var ch=window.myChannel;
-  if(!ch)return;
-  var name=prompt('Channel name:',ch.name||'');
-  if(name===null)return;
-  var desc=prompt('Description:',ch.desc||'');
-  if(desc===null)return;
-  var handle=prompt('Handle (e.g. @mychannel):',ch.handle||'@'+MY.uid.slice(-6));
-  if(handle===null)return;
-  var color=prompt('Banner color (hex, e.g. #EF4444):',ch.color||'#EF4444');
-  if(color===null)return;
+  var ch=window.myChannel;if(!ch)return;
+  var name=prompt('Channel name:',ch.name||'');if(name===null)return;
+  var desc=prompt('Description:',ch.desc||'');if(desc===null)return;
+  var handle=prompt('Handle:',ch.handle||'@'+MY.uid.slice(-6));if(handle===null)return;
+  var color=prompt('Banner color (hex):',ch.color||'#EF4444');if(color===null)return;
   channelUpdate(name,desc,handle,'',color);
 }
 
 /* ==================================================================
-   RENDER: watch page (player + comments + recommended)
+   RENDER: watch page
    ================================================================== */
 function ytWatchPage(vid){
   var v=window.allVideos[vid];
-  if(!v){
-    return '<div class="max-w-4xl mx-auto fade-up"><div class="glass-strong p-8 text-center"><div style="font-size:58px;animation:cFloatD 2.8s ease-in-out infinite;display:inline-block">😢</div><h2 class="font-display font-extrabold text-2xl mb-2">Video Not Found</h2><div class="text-white/40 text-[13px] mb-4">This video may have been deleted.</div><button class="btn-primary px-5 py-2.5 font-bold" style="font-family:inherit;background:linear-gradient(135deg,#EF4444,#DC2626)" onclick="navTo(\'yt\',\'home\')">← Back to Home</button></div></div>';
-  }
-  /* increment view count once per session */
+  if(!v)return '<div class="max-w-4xl mx-auto fade-up">'+ytTopBar()+'<div class="glass-strong p-8 text-center"><div style="font-size:58px">\ud83d\ude22</div><h2 class="font-display font-extrabold text-2xl mb-2">Video Not Found</h2><button class="btn-primary px-5 py-2.5 font-bold mt-3" style="font-family:inherit;background:linear-gradient(135deg,#EF4444,#DC2626)" onclick="navTo(\'yt\',\'home\')">Back to Home</button></div></div>';
   if(!window._ytViewed)window._ytViewed={};
-  if(!window._ytViewed[vid]){
-    window._ytViewed[vid]=true;
-    ytIncView(vid);
-    ytAddHistory(vid);
-  }
+  if(!window._ytViewed[vid]){window._ytViewed[vid]=true;ytIncView(vid);ytAddHistory(vid);}
   var ch=ytGetChannel(v.uid);
   var subbed=ytSubbed(v.uid);
   var liked=ytLiked(vid);
-  /* player */
   var player='';
   if(v.ytId){
     player='<div class="yt-player"><iframe width="100%" height="100%" src="https://www.youtube.com/embed/'+v.ytId+'?autoplay=1" frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen style="display:block"></iframe></div>';
   }else if(v.url&&v.url.match(/\.(mp4|webm|ogg)(\?|$)/i)){
     player='<div class="yt-player"><video controls autoplay playsinline style="width:100%;height:100%;background:#000" src="'+esc(v.url)+'"></video></div>';
   }else{
-    player='<div class="yt-player yt-player-link"><a href="'+esc(v.url)+'" target="_blank"><i data-lucide="external-link" class="w-12 h-12"></i><div class="mt-2 font-bold">Open Video</div><div class="text-[12px] text-white/60 mt-1">'+esc(v.url)+'</div></a></div>';
+    player='<div class="yt-player yt-player-link"><a href="'+esc(v.url)+'" target="_blank"><i data-lucide="external-link" class="w-10 h-10"></i><div class="mt-2 font-bold">Open Video</div></a></div>';
   }
-  /* channel name banner at top of watch page — like YouTube shows channel context */
-  var chBanner='<div class="yt-watch-ch-banner" onclick="navTo(\'yt\',\'channel:'+v.uid+'\')">'+
-    '<div style="width:44px;height:44px;border-radius:50%!important;background:linear-gradient(135deg,'+(v.chColor||ch.color||'#EF4444')+',#000);display:flex;align-items:center;justify-content:center;font-family:Sora;font-weight:800;font-size:18px;color:#fff;flex-shrink:0;cursor:pointer">'+esc((v.channel||ch.name||'C').charAt(0).toUpperCase())+'</div>'+
-    '<div style="flex:1;min-width:0">'+
-      '<div class="font-display font-extrabold text-[16px] truncate" style="cursor:pointer">'+esc(v.channel||ch.name)+'</div>'+
-      '<div class="text-[11px] text-white/45">'+esc(ch.handle||'@channel')+' · '+fmt(ch.subs||0)+' subscribers</div>'+
-    '</div>'+
-    (v.uid!==MY.uid?'<button class="btn-primary px-3 py-1.5 font-bold text-[11px]" style="font-family:inherit;'+(subbed?'background:rgba(255,255,255,.1)':'background:linear-gradient(135deg,#EF4444,#DC2626)')+'" onclick="event.stopPropagation();channelSubscribe(\''+v.uid+'\')">'+(subbed?'✓ Subscribed':' Subscribe')+'</button>':'<span class="badge" style="color:#818CF8">Your channel</span>')+
-  '</div>';
-  /* main column */
-  var main='<div class="yt-watch-main">'+
-    player+
-    chBanner+
+  var main='<div class="yt-watch-main">'+player+
     '<h1 class="yt-watch-title">'+esc(v.title)+'</h1>'+
     '<div class="yt-watch-meta">'+
       '<div class="yt-watch-ch">'+
-        '<div style="width:40px;height:40px;border-radius:50%!important;background:linear-gradient(135deg,'+(v.chColor||ch.color||'#EF4444')+',#000);display:flex;align-items:center;justify-content:center;font-family:Sora;font-weight:800;font-size:16px;color:#fff;flex-shrink:0;cursor:pointer" onclick="navTo(\'yt\',\'channel:'+v.uid+'\')">'+esc((v.channel||ch.name||'C').charAt(0).toUpperCase())+'</div>'+
-        '<div style="flex:1;min-width:0"><b class="font-display text-[14px] block truncate cursor-pointer" onclick="navTo(\'yt\',\'channel:'+v.uid+'\')">'+esc(v.channel||ch.name)+'</b><div class="text-[11px] text-white/45">'+fmt(ch.subs||0)+' subscribers</div></div>'+
-        (v.uid!==MY.uid?'<button class="btn-primary px-4 py-2 font-bold text-[12px]" style="font-family:inherit;'+(subbed?'background:rgba(255,255,255,.1)':'background:linear-gradient(135deg,#EF4444,#DC2626)')+'" onclick="channelSubscribe(\''+v.uid+'\')">'+(subbed?'✓ Subscribed':' Subscribe')+'</button>':'')+
+        '<div style="width:36px;height:36px;border-radius:50%!important;background:linear-gradient(135deg,'+(v.chColor||ch.color||'#EF4444')+',#000);display:flex;align-items:center;justify-content:center;font-family:Sora;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;cursor:pointer" onclick="navTo(\'yt\',\'channel:'+v.uid+'\')">'+esc((v.channel||ch.name||'C').charAt(0).toUpperCase())+'</div>'+
+        '<div style="flex:1;min-width:0"><b class="font-display text-[13px] block truncate cursor-pointer" onclick="navTo(\'yt\',\'channel:'+v.uid+'\')">'+esc(v.channel||ch.name)+'</b><div class="text-[10px] text-white/45">'+fmt(ch.subs||0)+' subs</div></div>'+
+        (v.uid!==MY.uid?'<button class="btn-primary px-3 py-1.5 font-bold text-[11px]" style="font-family:inherit;'+(subbed?'background:rgba(255,255,255,.1)':'background:linear-gradient(135deg,#EF4444,#DC2626)')+'" onclick="channelSubscribe(\''+v.uid+'\')">'+(subbed?'Subscribed':'Subscribe')+'</button>':'')+
       '</div>'+
       '<div class="yt-watch-actions">'+
         '<button class="yt-act '+(liked==='like'?'on':'')+'" onclick="ytLikeVideo(\''+vid+'\',false)"><i data-lucide="thumbs-up" class="w-4 h-4"></i> '+fmt(v.likes||0)+'</button>'+
         '<button class="yt-act '+(liked==='dislike'?'on':'')+'" onclick="ytLikeVideo(\''+vid+'\',true)"><i data-lucide="thumbs-down" class="w-4 h-4"></i></button>'+
-        '<button class="yt-act" onclick="ytAddWatchLater(\''+vid+'\')"><i data-lucide="clock" class="w-4 h-4"></i> Save</button>'+
-        '<button class="yt-act" onclick="ytShareVideo(\''+vid+'\')"><i data-lucide="share-2" class="w-4 h-4"></i> Share</button>'+
+        '<button class="yt-act" onclick="ytAddWatchLater(\''+vid+'\')"><i data-lucide="clock" class="w-4 h-4"></i></button>'+
+        '<button class="yt-act" onclick="ytShareVideo(\''+vid+'\')"><i data-lucide="share-2" class="w-4 h-4"></i></button>'+
       '</div>'+
     '</div>'+
     '<div class="yt-watch-info">'+
-      '<div class="text-[12px] text-white/50 mb-1.5">'+ytViews(v.views)+' views · '+ytTimeAgo(v.ts)+(v.category&&v.category!=='all'?' · <span class="badge" style="color:#EF4444;border-color:rgba(239,68,68,.4)">'+esc(v.category)+'</span>':'')+'</div>'+
-      '<div class="yt-watch-desc">'+esc(v.desc||'No description provided.')+'</div>'+
+      '<div class="text-[11px] text-white/50 mb-1">'+ytViews(v.views)+' views \u00b7 '+ytTimeAgo(v.ts)+'</div>'+
+      '<div class="yt-watch-desc">'+esc(v.desc||'No description.')+'</div>'+
     '</div>'+
-    /* comments */
     '<div class="yt-comments">'+
-      '<h3 class="font-display font-bold text-lg mb-3">'+fmt(v.comments||0)+' Comments</h3>'+
-      '<div class="yt-cmt-input">'+
-        '<img src="'+(MY.avatar||AVATAR_PRESETS[0])+'" class="yt-cmt-av">'+
-        '<input id="yt-cmt-inp" placeholder="Add a comment..." onkeydown="if(event.key===\'Enter\')ytPostComment(\''+vid+'\')">'+
-        '<button class="btn-primary px-4 py-2 font-bold text-[12px]" style="font-family:inherit;background:linear-gradient(135deg,#EF4444,#DC2626)" onclick="ytPostComment(\''+vid+'\')">Post</button>'+
-      '</div>'+
-      '<div class="yt-cmt-list">'+
-        ((window.videoComments[vid]||[]).map(function(c){
-          return '<div class="yt-cmt">'+
-            '<img src="'+(c.avatar||AVATAR_PRESETS[0])+'" class="yt-cmt-av" onclick="openUserModal(\''+c.uid+'\')">'+
-            '<div class="yt-cmt-body">'+
-              '<div class="yt-cmt-head"><b onclick="openUserModal(\''+c.uid+'\')">'+esc(c.name)+'</b><span class="yt-cmt-ts">'+ytTimeAgo(c.ts)+'</span></div>'+
-              '<div class="yt-cmt-text">'+esc(c.text)+'</div>'+
-              '<div class="yt-cmt-actions">'+
-                '<button class="yt-cmt-act" onclick="ytLikeComment(\''+vid+'\',\''+c.id+'\')"><i data-lucide="thumbs-up" class="w-3 h-3"></i> '+fmt(c.likes||0)+'</button>'+
-                (c.uid===MY.uid||isAdmin?'<button class="yt-cmt-act danger" onclick="ytDelComment(\''+vid+'\',\''+c.id+'\')"><i data-lucide="trash-2" class="w-3 h-3"></i></button>':'')+
-              '</div>'+
-            '</div>'+
-          '</div>';
-        }).join('') || '<div class="text-[12px] text-white/40 mt-3">No comments yet. Be the first to comment!</div>')+
-      '</div>'+
+      '<h3 class="font-display font-bold text-base mb-2">'+fmt(v.comments||0)+' Comments</h3>'+
+      '<div class="yt-cmt-input"><img src="'+(MY.avatar||AVATAR_PRESETS[0])+'" class="yt-cmt-av"><input id="yt-cmt-inp" placeholder="Add a comment..." onkeydown="if(event.key===\'Enter\')ytPostComment(\''+vid+'\')"><button class="btn-primary px-3 py-1.5 font-bold text-[11px]" style="font-family:inherit;background:linear-gradient(135deg,#EF4444,#DC2626)" onclick="ytPostComment(\''+vid+'\')">Post</button></div>'+
+      '<div class="yt-cmt-list">'+((window.videoComments[vid]||[]).map(function(c){
+        return '<div class="yt-cmt"><img src="'+(c.avatar||AVATAR_PRESETS[0])+'" class="yt-cmt-av" onclick="openUserModal(\''+c.uid+'\')"><div class="yt-cmt-body"><div class="yt-cmt-head"><b onclick="openUserModal(\''+c.uid+'\')">'+esc(c.name)+'</b><span class="yt-cmt-ts">'+ytTimeAgo(c.ts)+'</span></div><div class="yt-cmt-text">'+esc(c.text)+'</div><div class="yt-cmt-actions"><button class="yt-cmt-act" onclick="ytLikeComment(\''+vid+'\',\''+c.id+'\')"><i data-lucide="thumbs-up" class="w-3 h-3"></i> '+fmt(c.likes||0)+'</button>'+(c.uid===MY.uid||isAdmin?'<button class="yt-cmt-act danger" onclick="ytDelComment(\''+vid+'\',\''+c.id+'\')"><i data-lucide="trash-2" class="w-3 h-3"></i></button>':'')+'</div></div></div>';
+      }).join('')||'<div class="text-[11px] text-white/40 mt-2">No comments yet.</div>')+'</div>'+
     '</div>'+
   '</div>';
-  /* recommended sidebar */
   var recVids=Object.values(window.allVideos||{}).filter(function(x){return x.id!==vid;});
-  /* prioritize same category, then most viewed */
-  if(v.category&&v.category!=='all'){
-    recVids.sort(function(a,b){
-      var aSame=a.category===v.category?1:0;
-      var bSame=b.category===v.category?1:0;
-      if(aSame!==bSame)return bSame-aSame;
-      return (b.views||0)-(a.views||0);
-    });
-  }else{
-    recVids.sort(function(a,b){return (b.views||0)-(a.views||0);});
-  }
-  recVids=recVids.slice(0,10);
-  var sidebar='<div class="yt-watch-side">'+
-    '<h3 class="font-display font-bold text-[14px] mb-3 text-white/70">Up Next</h3>'+
-    (recVids.length?recVids.map(function(r){return ytVideoRow(r);}).join(''):'<div class="text-[12px] text-white/40">No other videos yet.</div>')+
-  '</div>';
+  if(v.category&&v.category!=='all')recVids.sort(function(a,b){var aS=a.category===v.category?1:0,bS=b.category===v.category?1:0;return bS-aS||(b.views||0)-(a.views||0);});
+  else recVids.sort(function(a,b){return (b.views||0)-(a.views||0);});
+  recVids=recVids.slice(0,8);
+  var sidebar='<div class="yt-watch-side"><h3 class="font-display font-bold text-[13px] mb-2 text-white/70">Up Next</h3>'+(recVids.length?recVids.map(function(r){return ytVideoRow(r);}).join(''):'<div class="text-[11px] text-white/40">No other videos.</div>')+'</div>';
   return '<div class="max-w-5xl mx-auto fade-up">'+ytTopBar()+'<div class="yt-watch-layout">'+main+sidebar+'</div></div>';
 }
 
 function ytShareVideo(vid){
-  var v=window.allVideos[vid];
-  if(!v)return;
+  var v=window.allVideos[vid];if(!v)return;
   var link=location.origin+location.pathname+'#yt-watch:'+vid;
-  try{navigator.clipboard.writeText(link);flyXP(' Share link copied!');}catch(e){
-    prompt('Copy this link:',link);
-  }
-}
-
-/* ---------- channel notifications: notify subscribers when a new video is uploaded ---------- */
-async function ytNotifySubs(vid,title){
-  if(!db||!MY)return;
-  try{
-    /* get all subscribers of MY channel */
-    var subsSnap=await db.ref('follows').once('value');
-    var allFollows=subsSnap.val()||{};
-    var notifCount=0;
-    for(var fUid in allFollows){
-      if(fUid===MY.uid)continue;
-      var following=allFollows[fUid].following||{};
-      if(following[MY.uid]){
-        await db.ref('notifs/'+fUid).push({
-          type:'video',
-          text:' New video from '+(window.myChannel?window.myChannel.name:'channel')+': '+title.slice(0,60),
-          vid:vid,
-          from:MY.uid,
-          ts:Date.now()
-        });
-        notifCount++;
-      }
-    }
-    if(notifCount)flyXP(' Notified '+notifCount+' subscribers');
-  }catch(e){}
-}
-
-/* ---------- channel analytics (for channel owner) ---------- */
-function ytChannelAnalytics(uid){
-  var vids=Object.values(window.allVideos||{}).filter(function(v){return v.uid===uid;});
-  var totalViews=vids.reduce(function(s,v){return s+(v.views||0);},0);
-  var totalLikes=vids.reduce(function(s,v){return s+(v.likes||0);},0);
-  var totalComments=vids.reduce(function(s,v){return s+(v.comments||0);},0);
-  var avgViews=vids.length?Math.round(totalViews/vids.length):0;
-  var topVideo=vids.length?vids.sort(function(a,b){return (b.views||0)-(a.views||0);})[0]:null;
-  return {
-    videoCount:vids.length,
-    totalViews:totalViews,
-    totalLikes:totalLikes,
-    totalComments:totalComments,
-    avgViews:avgViews,
-    topVideo:topVideo
-  };
-}
-
-/* ---------- channel community post ---------- */
-async function ytPostCommunity(text){
-  if(!MY||!db||!window.myChannel)return;
-  text=(text||'').trim();
-  if(text.length<2)return;
-  var post={
-    id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
-    uid:MY.uid,
-    channel:window.myChannel.name,
-    text:text.slice(0,500),
-    likes:0,
-    ts:Date.now()
-  };
-  try{
-    await db.ref('channels/'+MY.uid+'/community/'+post.id).set(post);
-    flyXP(' Community post published');
-    var el=document.getElementById('yt-comm-inp');
-    if(el)el.value='';
-    if(view==='yt')render();
-  }catch(e){toast('Post failed','error');}
-}
-
-/* ---------- like community post ---------- */
-async function ytLikeCommunity(uid,pid){
-  if(!db)return;
-  try{await db.ref('channels/'+uid+'/community/'+pid+'/likes').transaction(function(v){return (v||0)+1;});}catch(e){}
+  try{navigator.clipboard.writeText(link);flyXP('Share link copied!');}catch(e){prompt('Copy this link:',link);}
 }
 
 /* ==================================================================
@@ -8138,38 +7935,19 @@ async function ytLikeCommunity(uid,pid){
    ================================================================== */
 PAGES.yt=function(){
   if(!MY)return '';
-  var p=window._ytParam||viewParam||'home';
-  /* parse viewParam like "home" | "subs" | "watchlater" | "history" | "search" | "upload" | "watch:VID" | "channel:UID" */
-  if(typeof p==='string'&&(p.indexOf('watch:')===0||p.indexOf('channel:')===0||p.indexOf('upload')===0)){
-    /* direct navTo call */
-  }else if(p){
-    window._ytTab=p;
-  }
   var param=viewParam||'';
-  /* watch page */
-  if(typeof param==='string'&&param.indexOf('watch:')===0){
-    return ytWatchPage(param.slice(6));
-  }
-  /* channel page */
-  if(typeof param==='string'&&param.indexOf('channel:')===0){
-    return ytChannelPage(param.slice(8));
-  }
-  /* upload form */
-  if(param==='upload'){
-    return ytUploadForm();
-  }
-  /* tabbed pages */
+  if(typeof param==='string'&&param.indexOf('watch:')===0)return ytWatchPage(param.slice(6));
+  if(typeof param==='string'&&param.indexOf('channel:')===0)return ytChannelPage(param.slice(8));
+  if(param==='upload')return ytUploadForm();
   var tab=window._ytTab||'home';
   var body='';
-  if(tab==='home'){body=ytHomeFeed();}
-  else if(tab==='subs'){body=ytSubsFeed();}
-  else if(tab==='watchlater'){body=ytWatchLaterFeed();}
-  else if(tab==='history'){body=ytHistoryFeed();}
-  else if(tab==='search'){body=ytSearchResults();}
-  else{body=ytHomeFeed();}
-  /* YouTube-style top bar with back button + search + create + bell + profile */
-  return '<div class="max-w-6xl mx-auto fade-up">'+
-    ytTopBar()+
+  if(tab==='home')body=ytHomeFeed();
+  else if(tab==='subs')body=ytSubsFeed();
+  else if(tab==='watchlater')body=ytWatchLaterFeed();
+  else if(tab==='history')body=ytHistoryFeed();
+  else if(tab==='search')body=ytSearchResults();
+  else body=ytHomeFeed();
+  return '<div class="max-w-6xl mx-auto fade-up">'+ytTopBar()+
     '<div class="yt-layout">'+
       '<div class="yt-layout-side">'+ytSideTabs()+'</div>'+
       '<div class="yt-layout-main">'+
@@ -8181,185 +7959,162 @@ PAGES.yt=function(){
 };
 
 /* ==================================================================
-   FIREBASE LISTENERS — channels, videos, comments, subs
+   FIREBASE LISTENERS (throttled for mobile performance)
    ================================================================== */
 onAppStart(function(){
   if(!db||!MY)return;
   try{
-    /* 1. all channels */
+    /* throttle render to avoid mobile hang */
+    var ytRenderT=null;
+    function ytRender(){
+      if(ytRenderT)clearTimeout(ytRenderT);
+      ytRenderT=setTimeout(function(){ytRenderT=null;if(view==='yt')renderData();},200);
+    }
+    /* channels */
     db.ref('channels').on('value',function(s){
       window.allChannels=s.val()||{};
       if(window.allChannels[MY.uid])window.myChannel=window.allChannels[MY.uid];
-      if(view==='yt')render();
+      ytRender();
     },function(){});
-    /* 2. all videos (global feed) */
-    db.ref('videos').limitToLast(200).on('value',function(s){
+    /* videos (limit to last 100 for performance) */
+    db.ref('videos').limitToLast(100).on('value',function(s){
       window.allVideos=s.val()||{};
-      if(view==='yt')render();
+      ytRender();
     },function(){});
-    /* 3. my subscriptions */
+    /* my subscriptions */
     db.ref('follows/'+MY.uid+'/subscribes').on('value',function(s){
-      var v=s.val()||{};
-      var subs={};
+      var v=s.val()||{};var subs={};
       Object.keys(v).forEach(function(uid){subs[uid]=true;});
       window._ytSubs=subs;
-      if(view==='yt')render();
+      ytRender();
     },function(){});
-    /* 4. my likes (load from localStorage) */
+    /* likes from localStorage */
     try{window._ytLikes=JSON.parse(localStorage.getItem('basiler_yt_likes')||'{}');}catch(e){window._ytLikes={};}
-    /* 5. comments for currently-watched video */
+    /* comments (only when on watch page) */
     db.ref('videoComments').on('value',function(s){
       window.videoComments=s.val()||{};
-      if(view==='yt')render();
-    },function(){});
-    /* 6. community posts for all channels (so visitors can see them) */
-    db.ref('channels').on('value',function(s){
-      var allCh=s.val()||{};
-      Object.keys(allCh).forEach(function(uid){
-        if(window.allChannels[uid])window.allChannels[uid]._community=allCh[uid].community||{};
-      });
-      if(view==='yt'&&window._ytChTab==='community')render();
+      if(view==='yt'&&typeof viewParam==='string'&&viewParam.indexOf('watch:')===0)ytRender();
     },function(){});
   }catch(e){}
 });
 
-/* ---------- add My Channel to NAV_EXTRA ---------- */
+/* ---------- add to NAV ---------- */
 NAV_EXTRA.push({v:'yt',ic:'youtube',l:'Channels'});
 
-/* ---------- deep-link: #yt-watch:VID ---------- */
-try{
-  var h=location.hash.match(/^#yt-watch:(.+)$/);
-  if(h){
-    window._ytTab='watch';
-    /* boot will pick this up via viewParam */
-  }
-}catch(e){}
-
 /* ==================================================================
-   CSS — YouTube-style layout (added once)
+   CSS \u2014 YouTube-style layout (mobile-optimized, minimal)
    ================================================================== */
 document.head.insertAdjacentHTML('beforeend','<style>'+
-/* search bar */
-'.yt-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;padding:8px 16px;background:rgba(15,15,15,.95);border-bottom:1px solid rgba(255,255,255,.08);position:sticky;top:0;z-index:50;backdrop-filter:blur(12px)}'+
-'.yt-topbar-left{display:flex;align-items:center;gap:12px;flex-shrink:0}'+
-'.yt-topbar-center{flex:1;max-width:560px;display:flex;justify-content:center}'+
-'.yt-topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0}'+
-'.yt-topbar-icon{width:40px;height:40px;background:none;border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:50%!important;flex-shrink:0;transition:.2s;font-family:inherit}'+
+/* top bar */
+'.yt-topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;padding:6px 12px;background:rgba(15,15,15,.95);border-bottom:1px solid rgba(255,255,255,.08);position:sticky;top:0;z-index:50;backdrop-filter:blur(10px)}'+
+'.yt-topbar-left{display:flex;align-items:center;gap:8px;flex-shrink:0}'+
+'.yt-topbar-center{flex:1;max-width:500px;display:flex;justify-content:center}'+
+'.yt-topbar-right{display:flex;align-items:center;gap:4px;flex-shrink:0}'+
+'.yt-topbar-icon{width:36px;height:36px;background:none;border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:50%!important;flex-shrink:0;transition:.15s;font-family:inherit}'+
 '.yt-topbar-icon:hover{background:rgba(255,255,255,.1)}'+
-'.yt-topbar-logo{display:flex;align-items:center;gap:4px;font-family:Sora;font-weight:800;font-size:20px;color:#fff;cursor:pointer;flex-shrink:0;letter-spacing:-.5px}'+
+'.yt-topbar-logo{display:flex;align-items:center;gap:3px;font-family:Sora;font-weight:800;font-size:18px;color:#fff;cursor:pointer;flex-shrink:0}'+
 '.yt-topbar-logo:hover{opacity:.85}'+
-'.yt-topbar-avatar{width:32px;height:32px;border-radius:50%!important;object-fit:cover;cursor:pointer;flex-shrink:0;border:1px solid rgba(255,255,255,.2)}'+
-'.yt-topbar .yt-search{flex:1;margin-bottom:0;min-width:0;width:100%}'+
-'@media(max-width:768px){.yt-topbar-center{display:none}.yt-topbar{padding:8px 12px}}'+
-'.yt-search{display:flex;gap:0;margin-bottom:16px;width:100%}'+
-'.yt-search input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);padding:9px 16px;color:#fff;font-size:15px;font-family:inherit;border-radius:24px 0 0 24px!important;outline:none}'+
-'.yt-search input:focus{border-color:#1C62B9;background:rgba(28,98,185,.1)}'+
+'.yt-topbar-avatar{width:28px;height:28px;border-radius:50%!important;object-fit:cover;cursor:pointer;flex-shrink:0}'+
+/* search */
+'.yt-search{display:flex;width:100%}'+
+'.yt-search input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);padding:8px 14px;color:#fff;font-size:14px;font-family:inherit;border-radius:20px 0 0 20px!important;outline:none;min-width:0}'+
+'.yt-search input:focus{border-color:#1C62B9}'+
 '.yt-search input::placeholder{color:rgba(255,255,255,.4)}'+
-'.yt-search-btn{width:56px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-left:none;color:rgba(255,255,255,.6);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:0 24px 24px 0!important;flex-shrink:0;transition:.2s}'+
+'.yt-search-btn{width:48px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-left:none;color:rgba(255,255,255,.6);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:0 20px 20px 0!important;flex-shrink:0}'+
 '.yt-search-btn:hover{background:rgba(255,255,255,.12);color:#fff}'+
 /* layout */
-'.yt-layout{display:grid;grid-template-columns:200px 1fr;gap:16px}'+
-'@media(max-width:768px){.yt-layout{grid-template-columns:1fr}.yt-layout-side{display:flex;overflow-x:auto;gap:6px;margin-bottom:8px}.yt-side-tab{white-space:nowrap}}'+
+'.yt-layout{display:grid;grid-template-columns:180px 1fr;gap:12px}'+
+'@media(max-width:768px){.yt-layout{grid-template-columns:1fr}.yt-layout-side{display:flex;overflow-x:auto;gap:4px;margin-bottom:8px;padding-bottom:4px}.yt-side-tab{min-width:60px}.yt-topbar-center{display:none}}'+
+/* side rail */
 '.yt-side-tabs{display:flex;flex-direction:column;gap:2px}'+
-'.yt-side-tab{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-family:inherit;font-size:10px;font-weight:600;border-radius:10px!important;transition:.2s;text-align:center}'+
+'.yt-side-tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 6px;background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-family:inherit;font-size:10px;font-weight:600;border-radius:10px!important;transition:.15s;text-align:center}'+
 '.yt-side-tab:hover{background:rgba(255,255,255,.08);color:#fff}'+
 '.yt-side-tab.active{background:rgba(255,255,255,.1);color:#fff;font-weight:700}'+
-'.yt-side-tab i{flex-shrink:0}'+
-/* category chips */
-'.yt-chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px;scrollbar-width:none}'+
+/* chips */
+'.yt-chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;scrollbar-width:none}'+
 '.yt-chips::-webkit-scrollbar{display:none}'+
-'.yt-chip{padding:7px 14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;border-radius:8px!important;white-space:nowrap;transition:.2s}'+
+'.yt-chip{padding:6px 12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;border-radius:8px!important;white-space:nowrap;transition:.15s}'+
 '.yt-chip:hover{background:rgba(255,255,255,.14)}'+
 '.yt-chip.active{background:#fff;color:#000;border-color:#fff}'+
 /* grid */
-'.yt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}'+
+'.yt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}'+
 '@media(max-width:900px){.yt-grid{grid-template-columns:repeat(2,1fr)}}'+
 '@media(max-width:520px){.yt-grid{grid-template-columns:1fr}}'+
 /* card */
-'.yt-card{cursor:pointer;transition:.2s}'+
-'.yt-card:hover .yt-thumb{transform:translateY(-2px)}'+
-'.yt-thumb{position:relative;aspect-ratio:16/9;background:rgba(255,255,255,.05);background-size:cover;background-position:center;border-radius:10px!important;overflow:hidden;transition:.2s}'+
+'.yt-card{cursor:pointer;transition:transform .15s}'+
+'.yt-card:hover{transform:translateY(-2px)}'+
+'.yt-thumb{position:relative;aspect-ratio:16/9;background:rgba(255,255,255,.05);background-size:cover;background-position:center;border-radius:8px!important;overflow:hidden}'+
 '.yt-thumb-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.3)}'+
 '.yt-thumb-ph.sm{color:rgba(255,255,255,.2)}'+
-'.yt-dur{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.85);color:#fff;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px!important}'+
-'.yt-wl{position:absolute;top:6px;right:6px;width:28px;height:28px;background:rgba(0,0,0,.7);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:50%!important;opacity:0;transition:.2s}'+
-'.yt-card:hover .yt-wl{opacity:1}'+
-'.yt-wl.on{opacity:1;background:#EF4444}'+
-'.yt-watched-bar{position:absolute;bottom:0;left:0;right:0;height:3px;background:#EF4444}'+
-'.yt-card-info{display:flex;gap:10px;margin-top:10px}'+
-'.yt-ch-av{width:36px;height:36px;border-radius:50%!important;object-fit:cover;flex-shrink:0;cursor:pointer}'+
+'.yt-card-info{display:flex;gap:8px;margin-top:8px}'+
+'.yt-ch-av{width:32px;height:32px;border-radius:50%!important;object-fit:cover;flex-shrink:0;cursor:pointer}'+
 '.yt-card-text{flex:1;min-width:0}'+
-'.yt-card-title{font-size:13.5px;font-weight:700;color:#fff;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}'+
-'.yt-card-ch{font-size:12px;color:rgba(255,255,255,.55);margin-top:3px}'+
-'.yt-card-meta{font-size:11.5px;color:rgba(255,255,255,.45);margin-top:1px}'+
-'.yt-card-del{background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;padding:4px;flex-shrink:0}'+
+'.yt-card-title{font-size:13px;font-weight:700;color:#fff;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}'+
+'.yt-card-ch{font-size:11px;color:rgba(255,255,255,.55);margin-top:2px}'+
+'.yt-card-meta{font-size:11px;color:rgba(255,255,255,.45);margin-top:1px}'+
+'.yt-card-del{background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;padding:2px;flex-shrink:0}'+
 '.yt-card-del:hover{color:#F87171}'+
-/* list (search results) */
-'.yt-list{display:flex;flex-direction:column;gap:10px}'+
-'.yt-row{display:flex;gap:10px;cursor:pointer;padding:8px;border-radius:8px!important;transition:.2s}'+
+/* list */
+'.yt-list{display:flex;flex-direction:column;gap:8px}'+
+'.yt-row{display:flex;gap:8px;cursor:pointer;padding:6px;border-radius:8px!important;transition:.15s}'+
 '.yt-row:hover{background:rgba(255,255,255,.05)}'+
-'.yt-row-thumb{width:160px;aspect-ratio:16/9;background:rgba(255,255,255,.05);background-size:cover;background-position:center;border-radius:8px!important;flex-shrink:0;overflow:hidden}'+
-'@media(max-width:520px){.yt-row-thumb{width:120px}}'+
+'.yt-row-thumb{width:140px;aspect-ratio:16/9;background:rgba(255,255,255,.05);background-size:cover;background-position:center;border-radius:8px!important;flex-shrink:0;overflow:hidden}'+
+'@media(max-width:520px){.yt-row-thumb{width:100px}}'+
 '.yt-row-info{flex:1;min-width:0}'+
-'.yt-row-title{font-size:13.5px;font-weight:700;color:#fff;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}'+
-'.yt-row-ch{font-size:12px;color:rgba(255,255,255,.55);margin-top:3px}'+
-'.yt-row-meta{font-size:11.5px;color:rgba(255,255,255,.45);margin-top:1px}'+
+'.yt-row-title{font-size:13px;font-weight:700;color:#fff;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}'+
+'.yt-row-ch{font-size:11px;color:rgba(255,255,255,.55);margin-top:2px}'+
+'.yt-row-meta{font-size:11px;color:rgba(255,255,255,.45);margin-top:1px}'+
 /* channel page */
-'.yt-ch-tabs{display:flex;gap:4px;padding:0 20px 14px;border-top:1px solid rgba(255,255,255,.06);margin-top:14px}'+
-'.yt-ch-tab{padding:8px 16px;background:none;border:none;border-bottom:2px solid transparent;color:rgba(255,255,255,.55);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;transition:.2s}'+
+'.yt-ch-tabs{display:flex;gap:4px;padding:0 16px 12px;border-top:1px solid rgba(255,255,255,.06);margin-top:12px}'+
+'.yt-ch-tab{padding:6px 12px;background:none;border:none;border-bottom:2px solid transparent;color:rgba(255,255,255,.55);font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;transition:.15s}'+
 '.yt-ch-tab:hover{color:#fff}'+
 '.yt-ch-tab.active{color:#fff;border-bottom-color:#EF4444}'+
 /* watch page */
-'.yt-watch-layout{display:grid;grid-template-columns:1fr 320px;gap:16px}'+
+'.yt-watch-layout{display:grid;grid-template-columns:1fr 300px;gap:12px}'+
 '@media(max-width:900px){.yt-watch-layout{grid-template-columns:1fr}}'+
-'.yt-player{aspect-ratio:16/9;background:#000;border-radius:12px!important;overflow:hidden}'+
+'.yt-player{aspect-ratio:16/9;background:#000;border-radius:10px!important;overflow:hidden}'+
 '.yt-player iframe,.yt-player video{display:block;width:100%;height:100%}'+
 '.yt-player-link{display:flex;align-items:center;justify-content:center;text-align:center;background:rgba(255,255,255,.04)}'+
-'.yt-watch-title{font-family:Sora;font-weight:800;font-size:18px;margin:14px 0 10px;line-height:1.3}'+
-'.yt-watch-ch-banner{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px!important;margin-top:12px;cursor:pointer;transition:.2s}'+
-'.yt-watch-ch-banner:hover{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.3)}'+
-'body.day .yt-watch-ch-banner{background:rgba(25,28,70,.05);border-color:rgba(25,28,70,.1)}'+
-'.yt-watch-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 0;border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06)}'+
-'.yt-watch-ch{display:flex;align-items:center;gap:10px;flex:1;min-width:200px}'+
-'.yt-watch-actions{display:flex;gap:6px;flex-wrap:wrap}'+
-'.yt-act{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border-radius:18px!important;transition:.2s}'+
+'.yt-watch-title{font-family:Sora;font-weight:800;font-size:16px;margin:10px 0 8px;line-height:1.3}'+
+'.yt-watch-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:8px 0;border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06)}'+
+'.yt-watch-ch{display:flex;align-items:center;gap:8px;flex:1;min-width:160px}'+
+'.yt-watch-actions{display:flex;gap:4px;flex-wrap:wrap}'+
+'.yt-act{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border-radius:16px!important;transition:.15s}'+
 '.yt-act:hover{background:rgba(255,255,255,.12)}'+
 '.yt-act.on{background:rgba(239,68,68,.2);border-color:rgba(239,68,68,.5);color:#FCA5A5}'+
-'.yt-watch-info{padding:12px 0}'+
-'.yt-watch-desc{font-size:13px;color:rgba(255,255,255,.75);line-height:1.5;white-space:pre-wrap}'+
+'.yt-watch-info{padding:10px 0}'+
+'.yt-watch-desc{font-size:12px;color:rgba(255,255,255,.75);line-height:1.4;white-space:pre-wrap}'+
 /* comments */
-'.yt-comments{margin-top:16px}'+
-'.yt-cmt-input{display:flex;gap:10px;margin-bottom:18px}'+
-'.yt-cmt-av{width:36px;height:36px;border-radius:50%!important;object-fit:cover;flex-shrink:0}'+
-'.yt-cmt-input input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);padding:9px 12px;color:#fff;font-size:13px;font-family:inherit;border-radius:18px!important}'+
+'.yt-comments{margin-top:12px}'+
+'.yt-cmt-input{display:flex;gap:8px;margin-bottom:12px}'+
+'.yt-cmt-av{width:32px;height:32px;border-radius:50%!important;object-fit:cover;flex-shrink:0}'+
+'.yt-cmt-input input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);padding:8px 12px;color:#fff;font-size:12px;font-family:inherit;border-radius:16px!important;min-width:0}'+
 '.yt-cmt-input input:focus{outline:none;border-color:#EF4444}'+
-'.yt-cmt-list{display:flex;flex-direction:column;gap:14px}'+
-'.yt-cmt{display:flex;gap:10px}'+
-'.yt-cmt-body{flex:1;min-width:0}'+
-'.yt-cmt-head{display:flex;align-items:center;gap:8px;margin-bottom:3px}'+
-'.yt-cmt-head b{font-size:12.5px;color:#fff;cursor:pointer}'+
-'.yt-cmt-ts{font-size:11px;color:rgba(255,255,255,.4)}'+
-'.yt-cmt-text{font-size:13px;color:rgba(255,255,255,.85);line-height:1.4;word-wrap:break-word}'+
-'.yt-cmt-actions{display:flex;gap:6px;margin-top:5px}'+
-'.yt-cmt-act{display:inline-flex;align-items:center;gap:4px;background:none;border:none;color:rgba(255,255,255,.5);font-size:11px;font-weight:600;cursor:pointer;padding:3px 6px;font-family:inherit}'+
+'.yt-cmt-list{display:flex;flex-direction:column;gap:10px}'+
+'.yt-cmt{display:flex;gap:8px}'+
+'.yt-cmt-body{flex:1;min-width:0}'+'.yt-cmt-head{display:flex;align-items:center;gap:6px;margin-bottom:2px}'+
+'.yt-cmt-head b{font-size:11px;color:#fff;cursor:pointer}'+
+'.yt-cmt-ts{font-size:10px;color:rgba(255,255,255,.4)}'+
+'.yt-cmt-text{font-size:12px;color:rgba(255,255,255,.85);line-height:1.3;word-wrap:break-word}'+
+'.yt-cmt-actions{display:flex;gap:4px;margin-top:3px}'+'.yt-cmt-act{display:inline-flex;align-items:center;gap:3px;background:none;border:none;color:rgba(255,255,255,.5);font-size:10px;font-weight:600;cursor:pointer;padding:2px 4px;font-family:inherit}'+
 '.yt-cmt-act:hover{color:#fff}'+
 '.yt-cmt-act.danger:hover{color:#F87171}'+
 /* sidebar */
-'.yt-watch-side{display:flex;flex-direction:column;gap:6px}'+
-'.yt-comm-input{display:flex;gap:10px;align-items:center}'+
-'.yt-comm-input input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);padding:9px 12px;color:#fff;font-size:13px;font-family:inherit;border-radius:18px!important}'+
-'.yt-comm-input input:focus{outline:none;border-color:#EF4444}'+
-'.yt-comm-post{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)}'+
-'.yt-comm-body{flex:1;min-width:0}'+
-'.yt-comm-text{font-size:13px;color:rgba(255,255,255,.85);line-height:1.4;word-wrap:break-word;margin:3px 0 5px}'+
+'.yt-watch-side{display:flex;flex-direction:column;gap:4px}'+
 /* day mode */
-'body.day .yt-search input{background:rgba(25,28,70,.05);border-color:rgba(25,28,70,.14);color:#1B1C2A}'+
-'body.day .yt-side-tab{background:rgba(25,28,70,.05);border-color:rgba(25,28,70,.1);color:#475569}'+
-'body.day .yt-chip{background:rgba(25,28,70,.06);color:#1B1C2A;border-color:rgba(25,28,70,.12)}'+
+'body.day .yt-topbar{background:rgba(255,255,255,.95);border-bottom-color:rgba(0,0,0,.08)}'+
+'body.day .yt-topbar-icon{color:#1B1C2A}'+
+'body.day .yt-topbar-logo{color:#1B1C2A}'+
+'body.day .yt-search input{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.1);color:#1B1C2A}'+
+'body.day .yt-search input::placeholder{color:rgba(0,0,0,.4)}'+
+'body.day .yt-search-btn{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.1);color:rgba(0,0,0,.5)}'+
+'body.day .yt-side-tab{color:#475569}'+
+'body.day .yt-side-tab:hover{background:rgba(0,0,0,.06);color:#1B1C2A}'+
+'body.day .yt-chip{background:rgba(0,0,0,.06);color:#1B1C2A;border-color:rgba(0,0,0,.1)}'+
 'body.day .yt-card-title,body.day .yt-row-title,body.day .yt-watch-title{color:#1B1C2A}'+
 'body.day .yt-card-ch,body.day .yt-row-ch,body.day .yt-card-meta,body.day .yt-row-meta{color:#64748B}'+
 'body.day .yt-watch-desc{color:#334155}'+
-'body.day .yt-act{background:rgba(25,28,70,.05);border-color:rgba(25,28,70,.1);color:#1B1C2A}'+
+'body.day .yt-act{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.1);color:#1B1C2A}'+
 '</style>');
 /* ==================================================================
    ===== BOOT (runs after all parts are loaded) =====
