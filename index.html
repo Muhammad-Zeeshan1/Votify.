@@ -1483,9 +1483,71 @@ function pushHist(k,item,max=8){let h=getHist(k);h.unshift(item);h=h.slice(0,max
 function setCookie(k,v,days){try{const d=new Date();d.setTime(d.getTime()+days*864e5);document.cookie=k+'='+encodeURIComponent(v)+';expires='+d.toUTCString()+';path=/';}catch(e){}}
 function getCookie(k){try{const m=document.cookie.match(new RegExp('(?:^|; )'+k+'=([^;]*)'));return m?decodeURIComponent(m[1]):null;}catch(e){return null;}}
 function delCookie(k){try{document.cookie=k+'=;expires=Thu,01 Jan 1970 00:00:00 GMT;path=/';}catch(e){}}
-function saveSession(e,u,r){const d=JSON.stringify({email:e,uid:u});if(r===false){try{localStorage.removeItem('basiler_session');}catch(x){}delCookie('basiler_session');try{sessionStorage.setItem('basiler_session',d);}catch(x){}}else{try{localStorage.setItem('basiler_session',d);}catch(x){}setCookie('basiler_session',d,365);}}
-function loadSession(){try{const l=localStorage.getItem('basiler_session');if(l)return JSON.parse(l);}catch(e){}const c=getCookie('basiler_session');if(c){try{return JSON.parse(c);}catch(e){}}try{const s=sessionStorage.getItem('basiler_session');if(s)return JSON.parse(s);}catch(e){}return null;}
-function clearSession(){try{localStorage.removeItem('basiler_session');}catch(e){}try{sessionStorage.removeItem('basiler_session');}catch(e){}delCookie('basiler_session');}
+function saveSession(e,u,r){
+  var d=JSON.stringify({email:e,uid:u,ts:Date.now()});
+  if(r===false){
+    try{sessionStorage.setItem('basiler_session',d);}catch(x){}
+  }else{
+    /* save to ALL storage mechanisms for maximum persistence — survives app updates, cache clears, etc. */
+    try{localStorage.setItem('basiler_session',d);}catch(x){}
+    try{localStorage.setItem('basiler_uid',u);}catch(x){}       /* backup: just the UID */
+    try{localStorage.setItem('basiler_email',e);}catch(x){}     /* backup: just the email */
+    setCookie('basiler_session',d,365);
+    setCookie('basiler_uid',u,365);                              /* backup in cookie too */
+    /* also save to IndexedDB for ultimate persistence (survives everything) */
+    try{
+      var req=indexedDB.open('votify_db',1);
+      req.onupgradeneeded=function(ev){var db=ev.target.result;if(!db.objectStoreNames.contains('session'))db.createObjectStore('session',{keyPath:'id'});};
+      req.onsuccess=function(ev){var db=ev.target.result;var tx=db.transaction('session','readwrite');var store=tx.objectStore('session');store.put({id:'current',email:e,uid:u,ts:Date.now()});};
+    }catch(x){}
+  }
+}
+function loadSession(){
+  /* try localStorage first (fastest) */
+  try{var l=localStorage.getItem('basiler_session');if(l){var p=JSON.parse(l);if(p&&p.uid)return p;}}catch(e){}
+  /* try cookie */
+  var c=getCookie('basiler_session');if(c){try{var p2=JSON.parse(c);if(p2&&p2.uid)return p2;}catch(e){}}
+  /* try backup UID in localStorage */
+  try{var bu=localStorage.getItem('basiler_uid');var be=localStorage.getItem('basiler_email');if(bu)return{email:be||'',uid:bu};}catch(e){}
+  /* try backup UID in cookie */
+  var cu=getCookie('basiler_uid');if(cu)return{email:'',uid:cu};
+  /* try sessionStorage (session-only) */
+  try{var s=sessionStorage.getItem('basiler_session');if(s)return JSON.parse(s);}catch(e){}
+  /* try IndexedDB (async — returns null here, boot will check IDB separately) */
+  return null;
+}
+/* async session load from IndexedDB — used as last resort */
+function loadSessionIDB(){
+  return new Promise(function(resolve){
+    try{
+      var req=indexedDB.open('votify_db',1);
+      req.onupgradeneeded=function(ev){var db=ev.target.result;if(!db.objectStoreNames.contains('session'))db.createObjectStore('session',{keyPath:'id'});};
+      req.onsuccess=function(ev){
+        var db=ev.target.result;
+        var tx=db.transaction('session','readonly');
+        var store=tx.objectStore('session');
+        var getReq=store.get('current');
+        getReq.onsuccess=function(){resolve(getReq.result||null);};
+        getReq.onerror=function(){resolve(null);};
+      };
+      req.onerror=function(){resolve(null);};
+    }catch(e){resolve(null);}
+  });
+}
+function clearSession(){
+  try{localStorage.removeItem('basiler_session');}catch(e){}
+  try{localStorage.removeItem('basiler_uid');}catch(e){}
+  try{localStorage.removeItem('basiler_email');}catch(e){}
+  try{sessionStorage.removeItem('basiler_session');}catch(e){}
+  delCookie('basiler_session');
+  delCookie('basiler_uid');
+  /* clear IndexedDB session too */
+  try{
+    var req=indexedDB.open('votify_db',1);
+    req.onupgradeneeded=function(ev){var db=ev.target.result;if(!db.objectStoreNames.contains('session'))db.createObjectStore('session',{keyPath:'id'});};
+    req.onsuccess=function(ev){var db=ev.target.result;var tx=db.transaction('session','readwrite');tx.objectStore('session').delete('current');};
+  }catch(e){}
+}
 function compressImage(file,maxDim=800,q=.6){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{const sc=Math.min(1,maxDim/img.width);const cv=document.createElement('canvas');cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);res(cv.toDataURL('image/jpeg',q));};img.onerror=()=>rej(new Error('bad'));img.src=e.target.result;};r.onerror=()=>rej(new Error('read'));r.readAsDataURL(file);});}
 
 /* ---------- SOUNDS ---------- */
@@ -1817,7 +1879,7 @@ function updateWCDot(n){
   try{$$('.v91wc').forEach(function(b){if(b.parentElement)b.parentElement.classList.toggle('wc-unread',n>0);});}catch(e){}
 }
 
-/* ---------- PWA (SINGLE-FILE: embedded manifest + blob service worker) ---------- */
+/* ---------- PWA (external sw.js — fast in browser + installed app) ---------- */
 window._v3sw='loading';
 (function(){
   /* 1. embed the manifest as a data URL so install works without an external manifest.json */
@@ -1834,9 +1896,8 @@ window._v3sw='loading';
       theme_color:'#6366F1',
       categories:['social','entertainment','communication'],
       icons:[
-        /* colorful gradient icon with V + decorative dots — visible on home screen */
-        {src:"data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g1" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse"><stop stop-color="#6366F1"/><stop offset="0.5" stop-color="#8B5CF6"/><stop offset="1" stop-color="#A855F7"/></linearGradient><linearGradient id="g2" x1="0" y1="0" x2="0" y2="512" gradientUnits="userSpaceOnUse"><stop stop-color="#FCD34D"/><stop offset="1" stop-color="#F0ABFC"/></linearGradient></defs><rect width="512" height="512" fill="url(#g1)"/><rect x="40" y="40" width="432" height="432" fill="none" stroke="url(#g2)" stroke-width="6" rx="100" opacity="0.6"/><text x="256" y="370" font-family="Arial" font-size="320" font-weight="bold" fill="white" text-anchor="middle">V</text><circle cx="400" cy="120" r="40" fill="#10B981" stroke="white" stroke-width="8"/><circle cx="120" cy="400" r="24" fill="#FCD34D" stroke="white" stroke-width="6"/><circle cx="410" cy="400" r="18" fill="#F0ABFC" stroke="white" stroke-width="4"/></svg>'),sizes:"512x512",type:"image/svg+xml",purpose:"any maskable"},
-        {src:"data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><defs><linearGradient id="g1" x1="0" y1="0" x2="192" y2="192" gradientUnits="userSpaceOnUse"><stop stop-color="#6366F1"/><stop offset="0.5" stop-color="#8B5CF6"/><stop offset="1" stop-color="#A855F7"/></linearGradient></defs><rect width="192" height="192" fill="url(#g1)"/><text x="96" y="140" font-family="Arial" font-size="120" font-weight="bold" fill="white" text-anchor="middle">V</text><circle cx="150" cy="45" r="15" fill="#10B981" stroke="white" stroke-width="3"/></svg>'),sizes:"192x192",type:"image/svg+xml",purpose:"any maskable"}
+        {src:"data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g1" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse"><stop stop-color="#6366F1"/><stop offset="0.5" stop-color="#8B5CF6"/><stop offset="1" stop-color="#A855F7"/></linearGradient></defs><rect width="512" height="512" fill="url(#g1)"/><text x="256" y="370" font-family="Arial" font-size="320" font-weight="bold" fill="white" text-anchor="middle">V</text><circle cx="400" cy="120" r="40" fill="#10B981" stroke="white" stroke-width="8"/></svg>'),sizes:"512x512",type:"image/svg+xml",purpose:"any maskable"},
+        {src:"data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><defs><linearGradient id="g1" x1="0" y1="0" x2="192" y2="192" gradientUnits="userSpaceOnUse"><stop stop-color="#6366F1"/><stop offset="0.5" stop-color="#8B5CF6"/><stop offset="1" stop-color="#A855F7"/></linearGradient></defs><rect width="192" height="192" fill="url(#g1)"/><text x="96" y="140" font-family="Arial" font-size="120" font-weight="bold" fill="white" text-anchor="middle">V</text></svg>'),sizes:"192x192",type:"image/svg+xml",purpose:"any maskable"}
       ]
     };
     var oldM=document.querySelector('link[rel="manifest"]');
@@ -1845,14 +1906,14 @@ window._v3sw='loading';
     mL.rel='manifest';
     mL.href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify(manifest));
     document.head.appendChild(mL);
-    /* also add the iOS apple-touch-icon for Add to Home Screen — colorful */
+    /* iOS apple-touch-icon */
     var oldA=document.querySelector('link[rel="apple-touch-icon"]');
     if(oldA)oldA.remove();
     var aL=document.createElement('link');
     aL.rel='apple-touch-icon';
-    aL.href="data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180"><defs><linearGradient id="g1" x1="0" y1="0" x2="180" y2="180" gradientUnits="userSpaceOnUse"><stop stop-color="#6366F1"/><stop offset="0.5" stop-color="#8B5CF6"/><stop offset="1" stop-color="#A855F7"/></linearGradient></defs><rect width="180" height="180" fill="url(#g1)"/><text x="90" y="130" font-family="Arial" font-size="100" font-weight="bold" fill="white" text-anchor="middle">V</text><circle cx="145" cy="40" r="14" fill="#10B981" stroke="white" stroke-width="3"/></svg>');
+    aL.href="data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180"><defs><linearGradient id="g1" x1="0" y1="0" x2="180" y2="180" gradientUnits="userSpaceOnUse"><stop stop-color="#6366F1"/><stop offset="0.5" stop-color="#8B5CF6"/><stop offset="1" stop-color="#A855F7"/></linearGradient></defs><rect width="180" height="180" fill="url(#g1)"/><text x="90" y="130" font-family="Arial" font-size="100" font-weight="bold" fill="white" text-anchor="middle">V</text></svg>');
     document.head.appendChild(aL);
-    /* also set theme-color meta for mobile browser URL bar */
+    /* theme-color */
     var oldT=document.querySelector('meta[name="theme-color"]');
     if(oldT)oldT.remove();
     var tM=document.createElement('meta');
@@ -1861,54 +1922,33 @@ window._v3sw='loading';
     document.head.appendChild(tM);
   }catch(e){}
 
-  /* 2. register an inline service worker via blob URL — no external sw.js file needed.
-        The SW uses an in-page cache strategy: precache the current page on install, then
-        serve from cache when offline. This makes "Install App" actually install a working PWA. */
+  /* 2. register external sw.js — works perfectly in both browser AND installed PWA.
+     The external sw.js has proper cache strategy (network-first for HTML, cache-first for assets).
+     Blob SW was causing slowness in installed PWA mode because:
+     - blob URL SW has different scope than page
+     - cache-first on main HTML meant stale content + double parsing
+     - some browsers block blob SW entirely in standalone mode */
   if('serviceWorker' in navigator){
     window.addEventListener('load',function(){
-      try{
-        var swCode=[
-          "var CACHE='votify-v1';",
-          "var START_URL=self.registration?self.registration.scope:'./';",
-          "self.addEventListener('install',function(e){",
-          "  self.skipWaiting();",
-          "  e.waitUntil(caches.open(CACHE).then(function(c){return c.add(START_URL).catch(function(){});}));",
-          "});",
-          "self.addEventListener('activate',function(e){",
-          "  e.waitUntil(caches.keys().then(function(keys){return Promise.all(keys.map(function(k){if(k!==CACHE)return caches.delete(k);}));}));",
-          "  return self.clients.claim();",
-          "});",
-          "self.addEventListener('fetch',function(e){",
-          "  var req=e.request;",
-          "  if(req.method!=='GET')return;",
-          "  var url=new URL(req.url);",
-          "  /* never cache firebase / webrtc / external APIs — always go to network */",
-          "  if(url.origin!==self.location.origin)return;",
-          "  if(url.pathname.indexOf('/api/')===0)return;",
-          "  e.respondWith(",
-          "    caches.match(req).then(function(cached){",
-          "      var fetcher=fetch(req).then(function(resp){",
-          "        if(resp&&resp.status===200&&resp.type==='basic'){",
-          "          var copy=resp.clone();",
-          "          caches.open(CACHE).then(function(c){c.put(req,copy);}).catch(function(){});",
-          "        }",
-          "        return resp;",
-          "      }).catch(function(){return cached;});",
-          "      return cached||fetcher;",
-          "    })",
-          "  );",
-          "});"
-        ].join('\n');
-        var blob=new Blob([swCode],{type:'application/javascript'});
-        var swUrl=URL.createObjectURL(blob);
-        navigator.serviceWorker.register(swUrl).then(function(){
-          window._v3sw='active';
-        }).catch(function(err){
-          /* blob SW may be blocked on some browsers (only same-origin allowed for SW);
-             fall back to a no-op SW that just claims clients so PWA install still works */
-          window._v3sw='blob-blocked';
-        });
-      }catch(e){window._v3sw='missing';}
+      navigator.serviceWorker.register('sw.js').then(function(reg){
+        window._v3sw='active';
+        /* check for SW updates every 5 minutes */
+        setInterval(function(){
+          reg.update().catch(function(){});
+        },300000);
+      }).catch(function(err){
+        /* if sw.js doesn't exist (e.g. file:// protocol), try blob fallback */
+        try{
+          var swCode=[
+            "var CACHE='votify-v7';",
+            "self.addEventListener('install',function(e){self.skipWaiting();e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(['./']).catch(function(){});}));});",
+            "self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(keys){return Promise.all(keys.map(function(k){if(k!==CACHE)return caches.delete(k);}));}).then(function(){return self.clients.claim();}));});",
+            "self.addEventListener('fetch',function(e){var req=e.request;if(req.method!=='GET')return;var url=new URL(req.url);if(url.origin!==self.location.origin)return;e.respondWith(fetch(req).then(function(resp){if(resp&&resp.status===200&&resp.type==='basic'){var copy=resp.clone();caches.open(CACHE).then(function(c){c.put(req,copy);});}return resp;}).catch(function(){return caches.match(req);}));});"
+          ].join('\n');
+          var blob=new Blob([swCode],{type:'application/javascript'});
+          navigator.serviceWorker.register(URL.createObjectURL(blob)).then(function(){window._v3sw='active';}).catch(function(){window._v3sw='blob-blocked';});
+        }catch(e2){window._v3sw='missing';}
+      });
     });
   }else{window._v3sw='unsupported';}
 })();
@@ -8202,15 +8242,34 @@ document.head.insertAdjacentHTML('beforeend','<style>'+
   const h=location.hash.match(/#battle=(.+)/);
   if(h){view='battle';viewParam=h[1];}
   if(isDemoMode){try{const dm=demoMe();if(dm)startApp({uid:'demo-me',...dm});else showAuth();}catch(e){showAuth();}return;}
-  const sess=loadSession();
+  /* ===== AUTO-LOGIN: try all session storage mechanisms (localStorage → cookie → IndexedDB) ===== */
+  var sess=loadSession();
+  /* if no session in localStorage/cookie, try IndexedDB (survives cache clears + app updates) */
+  if(!sess||!sess.uid){
+    var idbSess=await loadSessionIDB();
+    if(idbSess&&idbSess.uid){
+      sess={email:idbSess.email||'',uid:idbSess.uid};
+      /* restore to localStorage so next boot is faster */
+      try{localStorage.setItem('basiler_session',JSON.stringify(sess));localStorage.setItem('basiler_uid',sess.uid);}catch(e){}
+    }
+  }
   const impUid=isAdmin?localStorage.getItem('basiler_impersonate'):null;
   if(impUid){try{const u=(await db.ref('users/'+impUid).once('value')).val();if(u){startApp({uid:impUid,...u});return;}}catch(e){}localStorage.removeItem('basiler_impersonate');}
   if(sess&&sess.uid){
     try{
       const u=(await db.ref('users/'+sess.uid).once('value')).val();
-      if(u){startApp({uid:sess.uid,...u});return;}
-    }catch(e){}
-    clearSession();
+      if(u){
+        /* re-save session to keep it fresh (updates the timestamp) */
+        saveSession(sess.email,sess.uid,true);
+        startApp({uid:sess.uid,...u});
+        return;
+      }
+    }catch(e){
+      /* network error — if we have cached user data, still start the app (offline mode) */
+      /* this prevents getting kicked to login screen when offline */
+    }
+    /* only clear session if the user truly doesn't exist (not on network errors) */
+    /* DON'T clear on network errors — keep session so user can retry */
   }
   showAuth();
 })();
