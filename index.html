@@ -7,7 +7,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Votify — Opinion Arena</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='%236366F1'/><text x='32' y='44' font-family='Arial' font-size='36' font-weight='bold' fill='white' text-anchor='middle'>V</text></svg>">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js"></script>
@@ -1600,6 +1603,40 @@ function updateWCDot(n){
     });
   }
 })();
+
+/* ---------- TAB VISIBILITY FIX ----------
+   When the user switches to another browser tab, JS timers get throttled
+   and Firebase listeners may not fire immediately for new messages.
+   When they come back, we need to force a re-sync of the chat cache and
+   re-render the messages — otherwise the chat looks frozen until refresh. */
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden)return;
+  /* Tab just became visible again. Wait a tick for any queued Firebase
+     callbacks to flush, then re-sync the chat if user is on chat view. */
+  setTimeout(function(){
+    try{
+      if(typeof view!=='undefined'&&view==='chat'&&chatListenPath){
+        var cached=chatCache[chatListenPath];
+        if(cached){
+          var nowT=Date.now();
+          var cut=(chatMode==='dm'&&dmTarget)?(chatClearedAt[dmTarget.uid]||0):0;
+          var newMsgs=cached.msgs.filter(function(m){return m.ts>cut;});
+          var temps=chatMsgs.filter(function(m){return m.pending&&(!m.cid||!cached.msgs.some(function(x){return x.cid===m.cid;}))&&(nowT-(m.localTs||nowT))<20000;});
+          chatMsgs=[].concat(newMsgs,temps);
+          /* Force re-render — bypass the signature dedupe */
+          _p5msgSig='';
+          if(typeof renderChatMsgs==='function')renderChatMsgs();
+          if(typeof renderPinnedBar==='function')renderPinnedBar();
+          if(typeof scrollChat==='function')scrollChat(true);
+        }
+      }
+      /* Re-mark global chat as seen if we're on it */
+      if(typeof view!=='undefined'&&view==='chat'&&chatMode==='global'&&!document.hidden){
+        if(typeof wcMarkSeen==='function')wcMarkSeen();
+      }
+    }catch(e){}
+  },200);
+});
 function v3Installed(){try{return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true;}catch(e){return false;}}
 function closeV3(){const r=document.getElementById('admin-root');if(r)r.innerHTML='';}
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window._pwaPrompt=e;});
@@ -1661,9 +1698,25 @@ async function doSignup(){
     saveSession(email,uid,true);
     /* New users get sound ON by default + ask for notification permission */
     soundOn=true;try{localStorage.setItem('basiler_sound','on');}catch(e){}
+    /* Force DAY MODE for brand-new accounts so the install popup shows
+       dark-black text on a light background (per owner request) */
+    try{
+      isDay=true;
+      localStorage.setItem('basiler_daynight','day');
+      if(typeof applyDayNight==='function')applyDayNight();
+    }catch(e){}
     startApp({uid,name,email,avatar,xp:5000,links:[],bio:'',createdAt:Date.now()});
     _sgBusy=false;fireConfetti();chime();
     setTimeout(function(){try{askNotifOnce();}catch(e){}},1500);
+    /* Show the Install App popup automatically ~2.5s after signup so brand-new
+       users see the install option right away (in day mode with dark text). */
+    setTimeout(function(){
+      try{
+        if(typeof showInstallPopup==='function'&&!v3Installed()){
+          showInstallPopup();
+        }
+      }catch(e){}
+    },2500);
   }catch(e){_sgBusy=false;if(btn){btn.textContent='⚡ Create Account (Instant)';btn.style.opacity=1;}toast('Signup failed — check connection','error');}
 }
 function showEmailExists(email){
@@ -7946,21 +7999,81 @@ function toastInfo(msg,ms){
   }catch(e){}
 }
 
-/* ---------- V4: DIRECT INSTALL (no popup — native install only) ---------- */
+/* ---------- V4: INSTALL APP — custom popup → native prompt ---------- */
+/* Day-mode aware install popup. In day mode, dark black text is shown on the
+   light background; in night mode, the existing white-on-dark style is used.
+   The icon-maskable-512.png image is used as the app icon inside the popup. */
 async function pwaInstall(){
   if(v3Installed())return toastInfo('✅ Votify is already installed');
+  showInstallPopup();
+}
+function showInstallPopup(){
+  var day=isDay;
+  /* Text colors adapt to day/night mode so the popup is always readable */
+  var T_TITLE   = day ? '#0F172A' : '#FFFFFF';            /* heading */
+  var T_BODY    = day ? '#475569' : 'rgba(255,255,255,.55)'; /* paragraph */
+  var T_FEATURE = day ? '#334155' : 'rgba(255,255,255,.75)'; /* feature rows */
+  var BG_POPUP  = day ? '#FFFFFF' : '#06070D';              /* modal card bg */
+  var BG_GLASS  = day ? 'rgba(15,23,42,.04)' : 'rgba(255,255,255,.04)'; /* inner card bg */
+  var BD_GLASS  = day ? 'rgba(15,23,42,.12)' : 'rgba(129,140,248,.25)';
+  /* The app icon — uses the maskable PNG that ships with the app */
+  var iconHtml='<img src="icon-maskable-512.png" alt="Votify icon" width="92" height="92" style="width:92px;height:92px;margin:0 auto 14px;display:block;border-radius:22px;box-shadow:0 14px 36px rgba(99,102,241,.45);animation:cPopIn2 .5s both" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div style="width:92px;height:92px;margin:0 auto 14px;border-radius:22px;background:linear-gradient(135deg,#6366F1,#A855F7,#EC4899);display:none;align-items:center;justify-content:center;font-family:Sora,sans-serif;font-size:46px;font-weight:800;color:#fff;box-shadow:0 14px 36px rgba(99,102,241,.45);animation:cPopIn2 .5s both">V</div>';
+  var ua=navigator.userAgent||'';
+  var isIOS=/iphone|ipad|ipod/i.test(ua);
+  var isAndroid=/android/i.test(ua);
+  var html='<div class="modal-overlay" style="z-index:9500" onclick="if(event.target===this)closeInstallPopup()">'+
+    '<div class="modal-card scale-in text-center" style="max-width:420px;background:linear-gradient(180deg,'+(day?'#FFFFFF,#F4F5FA':'#0A0B16,#06070D')+')">'+
+      iconHtml+
+      '<h3 class="font-display font-extrabold text-xl mb-1" style="color:'+T_TITLE+'">Install Votify</h3>'+
+      '<p class="text-[13px] mb-4 max-w-[300px] mx-auto" style="color:'+T_BODY+'">Install the app on your device home screen for quick access, offline mode & full-screen experience.</p>'+
+      '<div class="p-2.5 mb-4 text-[12px] flex flex-col gap-1.5" style="background:'+BG_GLASS+';border:1px solid '+BD_GLASS+'">'+
+        '<div class="flex items-center gap-2" style="color:'+T_FEATURE+'"><span style="color:#10B981">⚡</span><span>Works offline — battles load even without internet</span></div>'+
+        '<div class="flex items-center gap-2" style="color:'+T_FEATURE+'"><span style="color:#6366F1">📲</span><span>One-tap open — no browser address bar</span></div>'+
+        '<div class="flex items-center gap-2" style="color:'+T_FEATURE+'"><span style="color:#F43F5E">🔔</span><span>Push notifications for new messages</span></div>'+
+      '</div>'+
+      (isIOS?
+        '<div class="p-3 mb-3 text-[12px] text-left" style="background:'+BG_GLASS+';border:1px solid rgba(37,211,102,.4);color:'+(day?'#0F172A':'#fff')+'">'+
+          '<b style="color:#16A34A;font-size:13px">📱 iPhone/iPad steps:</b><br>'+
+          '1. Tap <b>Share</b> icon ⬆️ at the bottom<br>'+
+          '2. Scroll & tap <b>Add to Home Screen</b><br>'+
+          '3. Tap <b>Add</b> — done! ✅'+
+        '</div>':
+        '<div class="flex gap-2">'+
+          '<button class="btn-ghost flex-1 py-3 font-bold" style="font-family:inherit;color:'+(day?'#0F172A':'#fff')+'" onclick="closeInstallPopup()">Not now</button>'+
+          '<button class="btn-primary flex-1 py-3 font-bold" style="font-family:inherit;background:linear-gradient(135deg,#6366F1,#A855F7);border:none;color:#fff" onclick="triggerNativeInstall()">📲 Install</button>'+
+        '</div>'
+      )+
+      (isIOS?'<button class="btn-ghost w-full py-2.5 font-bold mt-2" style="font-family:inherit;font-size:12px;color:'+(day?'#0F172A':'#fff')+'" onclick="closeInstallPopup()">Got it</button>':'')+
+    '</div>'+
+  '</div>';
+  $('#modal-root').innerHTML=html;
+}
+function closeInstallPopup(){$('#modal-root').innerHTML='';}
+async function triggerNativeInstall(){
+  /* Hide our custom popup, then fire native browser install prompt */
+  closeInstallPopup();
   if(window._pwaPrompt){
     try{
       window._pwaPrompt.prompt();
       const c=await window._pwaPrompt.userChoice;
-      if(c&&c.outcome==='accepted'){fireConfetti();toastInfo('🎉 Votify installed on your device!');}
+      if(c&&c.outcome==='accepted'){
+        fireConfetti();
+        setTimeout(function(){toastInfo('🎉 Votify installed! Check your home screen 📲');},400);
+      }else{
+        toastInfo('No problem — you can install it later from the menu 🙂');
+      }
       window._pwaPrompt=null;
-      return;
-    }catch(e){window._pwaPrompt=null;}
+    }catch(e){
+      window._pwaPrompt=null;
+      toastInfo('📱 Open browser ⋮ menu → Install app',3400);
+    }
+  }else{
+    /* Browser didn't fire beforeinstallprompt — show manual steps */
+    var ua=navigator.userAgent||'';
+    if(/iphone|ipad|ipod/i.test(ua))toastInfo('📱 Safari → Share ⬆️ → Add to Home Screen',3400);
+    else if(/android/i.test(ua))toastInfo('📱 Chrome ⋮ menu → Install app / Add to Home screen',3400);
+    else toastInfo('📱 Browser ⋮ menu → Install Votify as app',3400);
   }
-  var ua=navigator.userAgent;
-  if(/iphone|ipad|ipod/i.test(ua))toastInfo('📱 Safari → Share ⬆️ → Add to Home Screen',3400);
-  else toastInfo('📱 Open browser ⋮ menu → Install app',3400);
 }
 
 /* ---------- V4: CHAT SETTINGS = sliding side panel (was popup) ---------- */
