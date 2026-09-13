@@ -1,86 +1,14 @@
-/* ================================================================
-   VOTIFY PWA SERVICE WORKER — sw.js (V7 — PWA-optimized)
-   Strategy: network-first for HTML (always fresh app),
-             cache-first for static assets (fast load),
-             no caching for Firebase/WebRTC (real-time data).
-   This prevents the "slow installed app" problem by ensuring
-   the main HTML always loads from network (not stale cache).
-   ================================================================ */
-
-var CACHE = 'votify-v7';
-var START_URL = './';
-
-/* ===== INSTALL: precache app shell ===== */
-self.addEventListener('install', function(e){
-  self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE).then(function(c){
-      return c.addAll([START_URL]).catch(function(){});
-    })
-  );
-});
-
-/* ===== ACTIVATE: clean old caches ===== */
-self.addEventListener('activate', function(e){
-  e.waitUntil(
-    caches.keys().then(function(keys){
-      return Promise.all(keys.map(function(k){
-        if (k !== CACHE) return caches.delete(k);
-      }));
-    }).then(function(){
-      return self.clients.claim();
-    })
-  );
-});
-
-/* ===== FETCH: smart routing ===== */
-self.addEventListener('fetch', function(e){
-  var req = e.request;
-  if (req.method !== 'GET') return;
-
-  var url = new URL(req.url);
-
-  /* NEVER intercept cross-origin (Firebase, WebRTC, CDN) — let browser handle */
-  if (url.origin !== self.location.origin) return;
-
-  /* For the main HTML page: network-first (always get fresh app code).
-     This is the key fix for PWA slowness — installed app always loads latest HTML. */
-  if (req.mode === 'navigate' || (req.headers.get('accept') && req.headers.get('accept').indexOf('text/html') >= 0)) {
-    e.respondWith(
-      fetch(req).then(function(resp){
-        if (resp && resp.status === 200) {
-          var copy = resp.clone();
-          caches.open(CACHE).then(function(c){ c.put(req, copy); }).catch(function(){});
-        }
-        return resp;
-      }).catch(function(){
-        /* offline → serve cached HTML */
-        return caches.match(req).then(function(cached){
-          return cached || caches.match(START_URL);
-        });
-      })
-    );
-    return;
-  }
-
-  /* For same-origin static assets (JS, CSS, images): cache-first (fast) */
-  e.respondWith(
-    caches.match(req).then(function(cached){
-      if (cached) return cached;
-      return fetch(req).then(function(resp){
-        if (resp && resp.status === 200 && resp.type === 'basic') {
-          var copy = resp.clone();
-          caches.open(CACHE).then(function(c){ c.put(req, copy); }).catch(function(){});
-        }
-        return resp;
-      });
-    })
-  );
-});
-
-/* ===== MESSAGE: allow page to trigger skipWaiting ===== */
-self.addEventListener('message', function(e){
-  if (e.data && e.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
+/* sw.js — Votify PWA service worker v1.0.0 */
+const VERSION='votify-v1.0.0';
+const CACHE_APP='votify-app-'+VERSION;
+const CACHE_RT='votify-runtime-'+VERSION;
+const APP_SHELL=['./','./votify.html','https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js'];
+const NO_CACHE_HOSTS=['firebaseio.com','firebasedatabase.app','firebase.google.com','firebasestorage.googleapis.com','identitytoolkit.googleapis.com','securetoken.googleapis.com','wa.me','api.whatsapp.com'];
+self.addEventListener('install',function(e){self.skipWaiting();e.waitUntil(caches.open(CACHE_APP).then(function(c){return Promise.allSettled(APP_SHELL.map(function(u){return c.add(u).catch(function(){});}));}));});
+self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(keys){return Promise.all(keys.filter(function(k){return k.startsWith('votify-')&&k!==CACHE_APP&&k!==CACHE_RT;}).map(function(k){return caches.delete(k);}));}).then(function(){return self.clients.claim();}));});
+function shouldBypass(url){if(NO_CACHE_HOSTS.some(function(h){return url.hostname.indexOf(h)>=0;}))return true;if(url.protocol==='chrome-extension:'||url.protocol==='blob:')return true;return false;}
+self.addEventListener('fetch',function(event){const req=event.request;if(req.method!=='GET')return;const url=new URL(req.url);if(shouldBypass(url))return;
+  if(req.mode==='navigate'||req.destination==='document'){event.respondWith(fetch(req).then(function(r){if(r&&r.status===200){var c=r.clone();caches.open(CACHE_APP).then(function(c){c.put(req,c);}).catch(function(){});}return r;}).catch(function(){return caches.match(req).then(function(c){return c||caches.match('./votify.html')||caches.match('./');});}));return;}
+  if(url.origin!==self.location.origin){event.respondWith(caches.match(req).then(function(c){if(c)return c;return fetch(req).then(function(r){if(r&&r.status===200&&(r.type==='basic'||r.type==='cors')){var cl=r.clone();caches.open(CACHE_RT).then(function(c){c.put(req,cl);}).catch(function(){});}return r;}).catch(function(){return caches.match(req);});}));return;}
+  event.respondWith(caches.match(req).then(function(c){var fp=fetch(req).then(function(r){if(r&&r.status===200){var cl=r.clone();caches.open(CACHE_RT).then(function(c){c.put(req,cl);}).catch(function(){});}return r;}).catch(function(){return c;});return c||fp;}));});
+self.addEventListener('message',function(e){if(e.data==='SKIP_WAITING')self.skipWaiting();if(e.data==='GET_VERSION'&&e.source)e.source.postMessage({type:'VERSION',version:VERSION});});
