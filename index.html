@@ -797,25 +797,6 @@ body.day .hero-btn-secondary{background:rgba(25,28,70,.06);border-color:rgba(25,
 </head>
 <body>
 <!-- ==================================================================
-     PWA — ALWAYS-VISIBLE FLOATING INSTALL BUTTON
-     (Works any time: day/night, online/offline, before/after login)
-     ================================================================== -->
-<button id="pwa-fab-install" aria-label="Install Votify App" style="position:fixed;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));z-index:9998;display:none;align-items:center;gap:8px;padding:10px 14px 10px 10px;background:linear-gradient(135deg,#6366F1,#8B5CF6 55%,#A855F7);color:#fff;border:none;font-family:'Plus Jakarta Sans','Sora',system-ui,sans-serif;font-weight:700;font-size:12px;letter-spacing:.02em;cursor:pointer;box-shadow:0 8px 24px -6px rgba(99,102,241,.7),0 0 0 1px rgba(255,255,255,.12) inset;transition:transform .15s,box-shadow .15s;animation:pwaFabPulse 2.4s ease-in-out infinite;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)" onmouseover="this.style.animation='none';this.style.boxShadow='0 12px 32px -6px rgba(139,92,246,.85),0 0 0 1px rgba(255,255,255,.18) inset'" onmouseout="this.style.animation='pwaFabPulse 2.4s ease-in-out infinite';this.style.boxShadow='0 8px 24px -6px rgba(99,102,241,.7),0 0 0 1px rgba(255,255,255,.12) inset'" onclick="window.VotifyPWA&&window.VotifyPWA.install()">
-  <span style="width:24px;height:24px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex:0 0 auto">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><polyline points="7 8 12 3 17 8"/><path d="M5 21h14"/></svg>
-  </span>
-  <span>Install App</span>
-</button>
-<style>
-@keyframes pwaFabPulse{
-  0%,100%{box-shadow:0 8px 24px -6px rgba(99,102,241,.7),0 0 0 1px rgba(255,255,255,.12) inset}
-  50%{box-shadow:0 12px 36px -4px rgba(139,92,246,.95),0 0 0 4px rgba(99,102,241,.18),0 0 0 1px rgba(255,255,255,.18) inset}
-}
-@media(max-width:480px){#pwa-fab-install>span:last-child{display:none}#pwa-fab-install{padding:9px}}
-body.day #pwa-fab-install{box-shadow:0 8px 24px -6px rgba(99,102,241,.55),0 0 0 1px rgba(0,0,0,.08)}
-</style>
-
-<!-- ==================================================================
      PWA INSTALL BANNER + iOS INSTRUCTIONS MODAL
      (Auto-shows when browser fires `beforeinstallprompt`,
       and shows iOS "Add to Home Screen" guide for iPhone users)
@@ -867,13 +848,11 @@ body.pwa-modal-open{overflow:hidden}
 
 <script>
 /* ==================================================================
-   PWA INSTALL HANDLER  (v4 — bulletproof)
+   PWA INSTALL HANDLER
    - Captures `beforeinstallprompt` event
-   - Shows banner + ALWAYS-VISIBLE floating button (top-right)
+   - Shows banner with "Install" button on Android/Chrome/Edge
    - Shows iOS instructions modal for iPhone/iPad users
-   - Registers Service Worker for offline support
-   - Works any time: day/night, online/offline, before/after login
-   - Auto-hides install UI when running as installed PWA
+   - Registers the Service Worker for offline support
    ================================================================== */
 (function(){
   'use strict';
@@ -884,7 +863,6 @@ body.pwa-modal-open{overflow:hidden}
   var installBtn = document.getElementById('pwa-install-btn');
   var closeBtn  = document.getElementById('pwa-install-close');
   var iosCloseBtn = document.getElementById('pwa-ios-close');
-  var fab       = document.getElementById('pwa-fab-install');
 
   /* ----- Detect if running as installed PWA already ----- */
   function isStandalone(){
@@ -899,23 +877,16 @@ body.pwa-modal-open{overflow:hidden}
     return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   }
   function isAndroid(){ return /Android/i.test(navigator.userAgent); }
-  function isChromeBased(){
-    return /Chrome|Chromium|Edg|OPR|Brave/i.test(navigator.userAgent) && !/Edg/i.test(navigator.userAgent) === false || /Chrome/.test(navigator.userAgent);
-  }
 
-  /* ----- LocalStorage flags (with safe fallback) ----- */
-  function getFlag(k){ try { return localStorage.getItem(k) === '1'; } catch(e){ return false; } }
-  function setFlag(k,v){ try { localStorage.setItem(k, v?'1':'0'); } catch(e){} }
-  function getDismissed(){ return getFlag('votify_pwa_dismissed'); }
-  function setDismissed(){ setFlag('votify_pwa_dismissed', true); }
-  function getIOSshown(){ return getFlag('votify_pwa_ios_shown'); }
-  function setIOSshown(){ setFlag('votify_pwa_ios_shown', true); }
+  /* ----- Has the user already dismissed/installed? ----- */
+  function getDismissed(){ try { return localStorage.getItem('votify_pwa_dismissed') === '1'; } catch(e){ return false; } }
+  function setDismissed(){ try { localStorage.setItem('votify_pwa_dismissed','1'); } catch(e){} }
+  function getIOSshown(){ try { return localStorage.getItem('votify_pwa_ios_shown') === '1'; } catch(e){ return false; } }
+  function setIOSshown(){ try { localStorage.setItem('votify_pwa_ios_shown','1'); } catch(e){} }
 
   /* ----- Show / hide helpers ----- */
   function showBanner(){ if (banner) banner.style.display = 'block'; }
   function hideBanner(){ if (banner) banner.style.display = 'none'; }
-  function showFAB(){ if (fab) fab.style.display = 'flex'; }
-  function hideFAB(){ if (fab) fab.style.display = 'none'; }
   function showIOS(){
     if (!iosModal) return;
     iosModal.style.display = 'flex';
@@ -928,191 +899,109 @@ body.pwa-modal-open{overflow:hidden}
     setIOSshown();
   }
 
-  /* ----- Show the right install UI based on context ----- */
-  function refreshInstallUI(){
-    // If already installed as PWA, hide all install UI
-    if (isStandalone()){
-      hideBanner();
-      hideFAB();
-      return;
-    }
-    // Always show FAB (any time of day, any mode)
-    showFAB();
-    // Show banner if browser has fired beforeinstallprompt AND user hasn't dismissed
-    if (deferredPrompt && !getDismissed()){
-      showBanner();
-    } else {
-      hideBanner();
-    }
-  }
-
   /* ----- Capture install prompt ----- */
   window.addEventListener('beforeinstallprompt', function(e){
     e.preventDefault();
     deferredPrompt = e;
-    window._pwaPrompt = e;   // also expose to old pwaInstall() function
-    refreshInstallUI();
+    if (isStandalone() || getDismissed()) return;
+    showBanner();
   });
 
-  /* ----- Detect installed ----- */
-  window.addEventListener('appinstalled', function(){
-    deferredPrompt = null;
-    window._pwaPrompt = null;
-    hideBanner();
-    hideFAB();
-    try{
-      if (typeof window.toast === 'function') window.toast('Votify installed!', 'ok');
-      else if (typeof window.toastInfo === 'function') window.toastInfo('Votify installed!');
-    }catch(e){}
-    // Reload after install so the app opens in standalone mode
-    setTimeout(function(){ location.reload(); }, 1200);
-  });
-
-  /* ----- Main install trigger (called by FAB, banner button, and VotifyPWA.install) ----- */
-  function doInstall(){
-    if (isStandalone()){
-      try{ if (typeof window.toastInfo === 'function') window.toastInfo('Already installed'); }catch(e){}
-      return;
-    }
-    // iOS — show instructions modal
-    if (isIOS()){
-      showIOS();
-      return;
-    }
-    // If we have the deferred prompt, fire it
-    if (deferredPrompt){
-      try{
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(function(choice){
-          if (choice.outcome === 'accepted'){
-            // Hide UI, app will fire 'appinstalled' soon
-            hideBanner(); hideFAB();
-          } else {
-            setDismissed();
-            hideBanner();
-          }
-          deferredPrompt = null;
-          window._pwaPrompt = null;
-        }).catch(function(){
-          deferredPrompt = null;
-          window._pwaPrompt = null;
-          hideBanner();
-        });
-      }catch(e){
-        deferredPrompt = null;
-        showManualInstructions();
+  /* ----- Install button click ----- */
+  if (installBtn){
+    installBtn.addEventListener('click', function(){
+      if (!deferredPrompt){
+        // Fallback — show iOS guide on iOS, otherwise just hide
+        if (isIOS()) showIOS();
+        return;
       }
-    } else {
-      // Browser didn't fire beforeinstallprompt (common on desktop, Firefox, etc.)
-      showManualInstructions();
-    }
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function(choice){
+        if (choice.outcome === 'accepted'){
+          hideBanner();
+          if (typeof window.toast === 'function') window.toast('Votify installed!', 'ok');
+        } else {
+          setDismissed();
+        }
+        deferredPrompt = null;
+        hideBanner();
+      }).catch(function(){ deferredPrompt = null; hideBanner(); });
+    });
   }
 
-  /* ----- Manual instructions (fallback) ----- */
-  function showManualInstructions(){
-    var ua = navigator.userAgent || '';
-    var msg;
-    if (isIOS()){
-      showIOS();   // show the 3-step modal
-      return;
-    } else if (/android/i.test(ua)){
-      msg = 'Chrome ⋮ menu → Install app / Add to Home screen';
-    } else if (/Macintosh|Windows|Linux/.test(ua)){
-      msg = 'Browser address bar me install icon (⊕) dikh raha hai? Click karein. Ya ⋮ menu → Install Votify.';
-    } else {
-      msg = 'Browser ⋮ menu → Install app';
-    }
-    try{
-      if (typeof window.toastInfo === 'function') window.toastInfo('📱 '+msg, 4000);
-      else if (typeof window.toast === 'function') window.toast('📱 '+msg, 'info');
-      else alert('📱 '+msg);
-    }catch(e){ alert('📱 '+msg); }
-  }
-
-  /* ----- Wire up buttons ----- */
-  if (installBtn) installBtn.addEventListener('click', doInstall);
+  /* ----- Close banner ----- */
   if (closeBtn){
     closeBtn.addEventListener('click', function(){
       hideBanner();
       setDismissed();
-      // Don't dismiss the FAB — user can still install later
-    });
-  }
-  if (iosCloseBtn) iosCloseBtn.addEventListener('click', hideIOS);
-  if (iosModal){
-    iosModal.addEventListener('click', function(e){
-      if (e.target === iosModal) hideIOS();
     });
   }
 
-  /* ----- Public API (also used by older showInstallPopup / pwaInstall) ----- */
-  window.VotifyPWA = {
-    install: doInstall,
-    isInstalled: isStandalone,
-    isIOS: isIOS,
-    isAndroid: isAndroid,
-    showIOSGuide: showIOS,
-    showManualInstructions: showManualInstructions,
-    hasPrompt: function(){ return !!deferredPrompt; }
-  };
-
-  // Make older showInstallPopup() / triggerNativeInstall() also use the new flow
-  // so any UI button that calls them still works correctly.
-  if (typeof window.triggerNativeInstall !== 'function'){
-    window.triggerNativeInstall = doInstall;
-  } else {
-    // Wrap existing one — fall back to doInstall if _pwaPrompt is missing
-    var _origTNI = window.triggerNativeInstall;
-    window.triggerNativeInstall = function(){
-      if (deferredPrompt || isIOS()){
-        doInstall();
-      } else {
-        try{ _origTNI(); }catch(e){ doInstall(); }
-      }
-    };
-  }
-  if (typeof window.pwaInstall !== 'function'){
-    window.pwaInstall = doInstall;
+  /* ----- iOS modal close ----- */
+  if (iosCloseBtn){
+    iosCloseBtn.addEventListener('click', hideIOS);
+    if (iosModal){
+      iosModal.addEventListener('click', function(e){
+        if (e.target === iosModal) hideIOS();
+      });
+    }
   }
 
-  /* ----- iOS auto-show: show modal ONCE on first visit ----- */
+  /* ----- iOS auto-show: show modal ONCE on first visit (if not installed & not dismissed) ----- */
   function maybeShowIOSAuto(){
     if (isStandalone()) return;
     if (!isIOS()) return;
     if (getIOSshown() || getDismissed()) return;
-    // Wait 4s so splash screen can finish first
-    setTimeout(function(){ showIOS(); }, 4000);
+    // Wait 2.5s so splash screen can finish first
+    setTimeout(function(){ showIOS(); }, 2500);
   }
 
-  /* ----- Service Worker registration (required for installability + offline) -----
+  /* ----- Manual API: any button in the app can trigger this ----- */
+  window.VotifyPWA = {
+    install: function(){
+      if (deferredPrompt){
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function(c){
+          if (c.outcome === 'accepted'){ hideBanner(); }
+          deferredPrompt = null;
+        }).catch(function(){ deferredPrompt = null; });
+      } else if (isIOS()){
+        showIOS();
+      } else {
+        if (typeof window.toast === 'function'){
+          window.toast('Install option browser menu se use karein (⋮ → Install app)', 'info');
+        }
+      }
+    },
+    isInstalled: isStandalone,
+    isIOS: isIOS,
+    showIOSGuide: showIOS
+  };
+
+  /* ----- Service Worker registration (required for installability) -----
      IMPORTANT: relative path + scope './' so the SW works correctly
      even when deployed to a sub-path like
      https://username.github.io/repo-name/
      ------------------------------------------------------------------- */
   if ('serviceWorker' in navigator){
-    // Pre-cleanup: unregister any stale SWs (kills broken v1/v2 SWs)
-    navigator.serviceWorker.getRegistrations().then(function(regs){
-      regs.forEach(function(r){
-        var url = (r.active && r.active.scriptURL) || '';
-        var keep = /(?:service-worker|sw)\.js$/i.test(url);
-        if(!keep){ r.unregister().then(function(){ console.log('[PWA] unregistered stale SW:', url); }); }
-      });
-    }).catch(function(){});
-
     window.addEventListener('load', function(){
+      // Always use a path relative to the current page (not absolute '/')
       var swPath = './service-worker.js';
       navigator.serviceWorker.register(swPath, { scope: './' })
         .then(function(reg){
-          if (reg.waiting){ reg.waiting.postMessage('SKIP_WAITING'); }
+          // Check for updates periodically
+          if (reg.waiting){
+            // New version available — auto-activate
+            reg.waiting.postMessage('SKIP_WAITING');
+          }
           reg.addEventListener('updatefound', function(){
             var nw = reg.installing;
             if (!nw) return;
             nw.addEventListener('statechange', function(){
               if (nw.state === 'installed' && navigator.serviceWorker.controller){
-                try{ navigator.serviceWorker.controller.postMessage('SKIP_WAITING'); }catch(e){}
-                if (!sessionStorage.getItem('votify_reloaded')){
-                  sessionStorage.setItem('votify_reloaded','1');
-                  setTimeout(function(){ location.reload(); }, 600);
+                // New content available — could show toast here
+                if (typeof window.toast === 'function'){
+                  window.toast('Votify updated — reload to apply', 'info');
                 }
               }
             });
@@ -1120,51 +1009,16 @@ body.pwa-modal-open{overflow:hidden}
         })
         .catch(function(err){
           console.warn('[PWA] SW registration failed:', err);
-          // Still show the install UI even if SW fails
-          refreshInstallUI();
         });
-
-      // Also register sw.js (alias) — used by older HTML
-      navigator.serviceWorker.register('sw.js', { scope: './' }).catch(function(){});
-    });
-
-    // Reload when the controller changes (new SW took over)
-    var reloaded = false;
-    navigator.serviceWorker.addEventListener('controllerchange', function(){
-      if (reloaded) return; reloaded = true;
-      if (!sessionStorage.getItem('votify_reloaded')){
-        sessionStorage.setItem('votify_reloaded','1');
-        location.reload();
-      }
     });
   }
-
-  /* ----- Online/offline indicator ----- */
-  function updateOnlineStatus(){
-    if (navigator.onLine){
-      // online
-      try{ if (typeof window.toastInfo === 'function') window.toastInfo('Back online', 1500); }catch(e){}
-    } else {
-      try{ if (typeof window.toastInfo === 'function') window.toastInfo('You are offline — app still works', 2000); }catch(e){}
-    }
-  }
-  window.addEventListener('online',  updateOnlineStatus);
-  window.addEventListener('offline', updateOnlineStatus);
 
   /* ----- Run on DOM ready ----- */
-  function init(){
-    refreshInstallUI();
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', maybeShowIOSAuto);
+  } else {
     maybeShowIOSAuto();
   }
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-
-  // Re-check after a few seconds (in case beforeinstallprompt fires late)
-  setTimeout(refreshInstallUI, 3000);
-  setTimeout(refreshInstallUI, 8000);
 })();
 </script>
 
